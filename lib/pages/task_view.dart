@@ -71,47 +71,42 @@ class _TaskViewPageState extends State<TaskViewPage> {
     }
   }
 
-  void _onSavedName(String value) {
-    _taskData[selectedTask].name = value;
-  }
-
   @override
   void initState() {
     super.initState();
-
-    int i = 0;
-    _tasks = _taskData.asMap().map((i, data) => MapEntry(i,
-      InkWell(
-        child: Card(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: Icon(_getIcon(data.taskType)),
-                title: Text(data.name),
-                subtitle: Text(data.desc ?? ''),
-              ),
-            ],
-          ),
-        ),
-        onTap: () {
-          setState(() {
-            selectedTask = i - 1;
-          });
-        },
-        key: ValueKey(i++),
-      )
-    )).values.toList();
   }
 
   @override
   Widget build(BuildContext context) {
     void _onReorder(int oldIndex, int newIndex) {
       setState(() {
-        Widget task = _tasks.removeAt(oldIndex);
-        _tasks.insert(newIndex, task);
+        TaskData task = _taskData.removeAt(oldIndex);
+        _taskData.insert(newIndex, task);
       });
     }
+
+    _tasks = _taskData.asMap().map((i, data) => MapEntry(i,
+        InkWell(
+          child: Card(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                ListTile(
+                  leading: Icon(_getIcon(data.taskType)),
+                  title: Text(data.name),
+                  subtitle: Text(data.desc ?? ''),
+                ),
+              ],
+            ),
+          ),
+          onTap: () {
+            setState(() {
+              selectedTask = i - 1;
+            });
+          },
+          key: ValueKey(i++),
+        )
+    )).values.toList();
 
     ReorderableColumn col = ReorderableColumn(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -141,8 +136,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                         leading: Icon(_getIcon(_taskData[selectedTask].taskType)),
                         title: TextFormField(
                             initialValue: _taskData[selectedTask].name,
-                            onSaved: (String? value) {
-                              print(value);
+                            onFieldSubmitted: (String? value) {
                               _taskData[selectedTask].name = value!;
                             },
                             validator: (String? value) {
