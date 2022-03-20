@@ -54,6 +54,12 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<Widget> _screens = [const TaskViewPage(), const AccountPage()];
   int _pageIndex = 0;
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void _onPageChanged(int index) {
     setState(() {
     _pageIndex = index;
