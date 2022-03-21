@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 enum TaskType {
   Garbage,
@@ -14,11 +14,20 @@ enum TaskType {
 
 // A class to represent the data for a task
 class TaskData {
-  TaskData({required this.name, required this.taskType, this.desc});
+  late String name; // User provided name for a task
+  late TaskType taskType; // User provided type of task
+  late String desc; // User provided task description (optional)
+  late Color color;
 
-  String name; // User provided name for a task
-  TaskType taskType; // User provided type of task
-  String? desc; // User provided task description (optional)
+  TaskData({this.name = '', this.taskType = TaskType.Other, this.desc = '', this.color = Colors.white});
+
+  TaskData.fromTaskData(TaskData td) {
+    name = td.name;
+    taskType = td.taskType;
+    desc = td.desc;
+    color = td.color;
+  }
+
 }
 
 class TaskViewPage extends StatefulWidget {
@@ -39,7 +48,7 @@ class TaskViewPage extends StatefulWidget {
 }
 
 class _TaskViewPageState extends State<TaskViewPage> {
-  int selectedTask = -1; // The index of the task selected for editing, or -1 if no task is being edited
+  int _selectedTask = -1; // The index of the task selected for editing, or -1 if no task is being edited
   List<TaskData> _taskData = [
     TaskData(
         name: "Clean Sink",
@@ -49,21 +58,20 @@ class _TaskViewPageState extends State<TaskViewPage> {
     TaskData(
         name: "Take out trash",
         taskType: TaskType.Garbage,
-        desc: 'Garbage'
+        color: Colors.red
     ),
     TaskData(
         name: "Cook",
         taskType: TaskType.Cooking,
-        desc: 'Food'
+        desc: 'Food',
+        color: Colors.purple
     ),
   ];
-  late TextEditingController _controller;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  late TaskData _newTask;
+  bool _badData = false;
+  final List<Color> _availableColors = [Colors.red, Colors.orange, Colors.yellow, Colors.green,
+                                        Colors.blue, Colors.indigo, Colors.purple, Colors.grey];
+  final double _iconSize = 45;
 
   // A helper function to get the icon data based on a task type
   IconData _getIcon(TaskType tt) {
@@ -81,6 +89,41 @@ class _TaskViewPageState extends State<TaskViewPage> {
     }
   }
 
+  Widget _createTaskCard(int i) {
+    return InkWell(
+      child: Card(
+        color: _taskData[i].color,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            ListTile(
+              leading: Icon(_getIcon(_taskData[i].taskType)), // Put the icon for the type of task
+              title: Text(_taskData[i].name), // Name of task
+              subtitle: Text(_taskData[i].desc), // Description of task
+            ),
+          ],
+        ),
+      ),
+      onTap: () {editTask(i);},
+      key: ValueKey(i), // The reorderables package requires a key for each of its elements
+    );
+  }
+
+  // Causes the edit menu to pop up for a task with a given index. If index < 0 then a new task is created.
+  void editTask(int index) {
+    if (index >= 0) {
+      setState(() {
+        _selectedTask = index;
+        _newTask = TaskData.fromTaskData(_taskData.elementAt(index));
+      });
+    } else {
+      setState(() {
+        _selectedTask = _taskData.length;
+        _newTask = TaskData();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Function called when the user reorders the tasks
@@ -95,28 +138,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
     /* This widget is rebuilt on every reorder.
        So we must remake the list of task cards based on the list of task data.
      */
-    List<Widget> tasks = _taskData.asMap().map((i, data) => MapEntry(i,
-        InkWell(
-          child: Card(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                ListTile(
-                  leading: Icon(_getIcon(data.taskType)), // Put the icon for the type of task
-                  title: Text(data.name), // Name of task
-                  subtitle: Text(data.desc ?? ''), // Description if not null, otherwise nothing
-                ),
-              ],
-            ),
-          ),
-          onTap: () {
-            setState(() {
-              selectedTask = i; // When this card is tapped, make the editor show up for its index
-            });
-          },
-          key: ValueKey(i), // The reorderables package requires a key for each of its elements
-        )
-    )).values.toList();
+    List<Widget> tasks = List<Widget>.generate(_taskData.length, _createTaskCard);
 
     ReorderableColumn col = ReorderableColumn(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -131,66 +153,122 @@ class _TaskViewPageState extends State<TaskViewPage> {
         children: [
           Container(
             child: Opacity(
-              opacity: selectedTask >= 0 ? 0.5: 1, // Make transparent if Task is being edited
+              opacity: _selectedTask >= 0 ? 0.5: 1, // Make transparent if Task is being edited
               child: col
             ),
             alignment: Alignment.topCenter
           ),
           // Make editing card if task is being edited, or else just make an empty widget
-          selectedTask >= 0 ? Container(
+          _selectedTask >= 0 ? Container(
             padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
             child: Card(
                 child: Column(
-                    children:
-                    [
-                      ListTile(
-                        leading: ReactionButton<TaskType>(
-                          boxPosition: Position.TOP,
-                          boxElevation: 10,
-                          onReactionChanged: (TaskType? value) {
-                            print('Selected value: $value');
-                          },
-                          reactions: List<Reaction<TaskType>>.generate(
-                            TaskType.values.length,
-                            (int index) {
-                              return Reaction<TaskType>(
-                                  icon: Container(
-                                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                    child: Icon(_getIcon(TaskType.values.elementAt(index)))
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
+                            child: Card(
+                              shape: const CircleBorder(),
+                              child: ReactionButton<TaskType>(
+                                  boxPosition: Position.TOP,
+                                  boxElevation: 10,
+                                  onReactionChanged: (TaskType? value) {
+                                    _newTask.taskType = value ?? TaskType.Other;
+                                  },
+                                  initialReaction: Reaction<TaskType>(
+                                      icon: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                          child: Icon(_getIcon(_newTask.taskType), size: _iconSize)
+                                      ),
+                                      value: _newTask.taskType
                                   ),
-                                  value: TaskType.values.elementAt(index)
-                              );
-                            }
+                                  reactions: List<Reaction<TaskType>>.generate(
+                                      TaskType.values.length,
+                                          (int index) {
+                                        return Reaction<TaskType>(
+                                            icon: Container(
+                                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                                child: Icon(_getIcon(TaskType.values.elementAt(index)), size: _iconSize)
+                                            ),
+                                            value: TaskType.values.elementAt(index)
+                                        );
+                                      }
+                                  ),
+                                  boxDuration: const Duration(milliseconds: 100),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    flex: 1,
+                                    child: TextFormField(
+                                      initialValue: _newTask.name,
+                                      onFieldSubmitted: (String? value) {
+                                        _newTask.name = value ?? '';
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 5, height: 5),
+                                  Flexible(
+                                    flex: 1,
+                                    child: TextFormField(
+                                      initialValue: _newTask.desc,
+                                      onChanged: (String? value) {
+                                        _newTask.desc = value ?? '';
+                                      },
+                                    ),
+                                  )
+                                ]
+                            )
                           )
-                        ),
-                        title: TextFormField(
-                            initialValue: _taskData[selectedTask].name,
-                            onFieldSubmitted: (String? value) {
-                              _taskData[selectedTask].name = value!;
+                        ]
+                      ),
+                      Flexible(
+                        child: BlockPicker(
+                            pickerColor: _newTask.color,
+                            onColorChanged: (Color newColor) {
+                              _newTask.color = newColor;
                             },
-                        ),
-                        subtitle: TextFormField(
-                          keyboardType: TextInputType.multiline,
-                          minLines: 1,
-                          maxLines: 3,
-                          initialValue: _taskData[selectedTask].desc ?? '',
-                          onChanged: (String? value) {
-                            _taskData[selectedTask].desc = value;
-                          },
+                            availableColors: _availableColors
                         ),
                       ),
                       Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             TextButton(
+                                child: const Text('Save'),
+                                onPressed: () {
+                                  if (_newTask.name == '') {
+                                    setState(() {
+                                      _badData = true;
+                                    });
+                                  } else {
+                                    setState(() {
+                                      _taskData[_selectedTask] = TaskData.fromTaskData(_newTask);
+                                      _selectedTask = -1;
+                                      _badData = false;
+                                    });
+                                  }
+                                }
+                            ),
+                            TextButton(
                                 child: const Text('Cancel'),
                                 onPressed: () {
                                   setState(() {
-                                    selectedTask = -1;
+                                    _selectedTask = -1;
                                   });
                                 }
                             )
                           ]
+                      ),
+                      !_badData ? const SizedBox.shrink() : const ListTile(
+                        leading: Icon(Icons.warning),
+                        title: Text('Invalid Name'),
+                        subtitle: Text('Please assign a name to this task.'),
                       )
                     ]
                 )

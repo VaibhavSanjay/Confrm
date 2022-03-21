@@ -37,6 +37,7 @@ dependencies:
   reorderables: ^0.4.3
   font_awesome_flutter: ^10.0.0
   flutter_reaction_button: ^2.0.0+1
+  flutter_colorpicker: ^1.0.3
 
 dev_dependencies:
   flutter_test:
