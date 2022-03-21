@@ -5,11 +5,11 @@ import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 enum TaskType {
-  Garbage,
-  Shopping,
-  Cooking,
-  Cleaning,
-  Other
+  garbage,
+  shopping,
+  cooking,
+  cleaning,
+  other
 }
 
 // A class to represent the data for a task
@@ -19,7 +19,7 @@ class TaskData {
   late String desc; // User provided task description (optional)
   late Color color;
 
-  TaskData({this.name = '', this.taskType = TaskType.Other, this.desc = '', this.color = Colors.white});
+  TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey});
 
   TaskData.fromTaskData(TaskData td) {
     name = td.name;
@@ -52,17 +52,17 @@ class _TaskViewPageState extends State<TaskViewPage> {
   List<TaskData> _taskData = [
     TaskData(
         name: "Clean Sink",
-        taskType: TaskType.Cleaning,
+        taskType: TaskType.cleaning,
         desc: 'Please clean the sink'
     ),
     TaskData(
         name: "Take out trash",
-        taskType: TaskType.Garbage,
+        taskType: TaskType.garbage,
         color: Colors.red
     ),
     TaskData(
         name: "Cook",
-        taskType: TaskType.Cooking,
+        taskType: TaskType.cooking,
         desc: 'Food',
         color: Colors.purple
     ),
@@ -71,20 +71,20 @@ class _TaskViewPageState extends State<TaskViewPage> {
   bool _badData = false;
   final List<Color> _availableColors = [Colors.red, Colors.orange, Colors.yellow, Colors.green,
                                         Colors.blue, Colors.indigo, Colors.purple, Colors.grey];
-  final double _iconSize = 45;
+  final double _iconSize = 40;
 
   // A helper function to get the icon data based on a task type
   IconData _getIcon(TaskType tt) {
     switch (tt) {
-      case TaskType.Garbage:
+      case TaskType.garbage:
         return FontAwesomeIcons.trash;
-      case TaskType.Cleaning:
-        return FontAwesomeIcons.broom;
-      case TaskType.Cooking:
+      case TaskType.cleaning:
+        return FontAwesomeIcons.soap;
+      case TaskType.cooking:
         return FontAwesomeIcons.utensils;
-      case TaskType.Shopping:
+      case TaskType.shopping:
         return FontAwesomeIcons.cartShopping;
-      case TaskType.Other:
+      case TaskType.other:
         return FontAwesomeIcons.star;
     }
   }
@@ -168,64 +168,76 @@ class _TaskViewPageState extends State<TaskViewPage> {
                         children: [
                           Container(
                             margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
-                            child: Card(
-                              shape: const CircleBorder(),
-                              child: ReactionButton<TaskType>(
-                                  boxPosition: Position.TOP,
-                                  boxElevation: 10,
-                                  onReactionChanged: (TaskType? value) {
-                                    _newTask.taskType = value ?? TaskType.Other;
-                                  },
-                                  initialReaction: Reaction<TaskType>(
-                                      icon: Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                          child: Icon(_getIcon(_newTask.taskType), size: _iconSize)
-                                      ),
-                                      value: _newTask.taskType
+                            child: ReactionButton<TaskType>(
+                              boxPosition: Position.TOP,
+                              boxElevation: 10,
+                              onReactionChanged: (TaskType? value) {
+                                _newTask.taskType = value ?? TaskType.other;
+                              },
+                              initialReaction: Reaction<TaskType>(
+                                  icon: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Icon(_getIcon(_newTask.taskType), size: _iconSize)
                                   ),
-                                  reactions: List<Reaction<TaskType>>.generate(
-                                      TaskType.values.length,
-                                          (int index) {
-                                        return Reaction<TaskType>(
-                                            icon: Container(
-                                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                                child: Icon(_getIcon(TaskType.values.elementAt(index)), size: _iconSize)
-                                            ),
-                                            value: TaskType.values.elementAt(index)
-                                        );
-                                      }
-                                  ),
-                                  boxDuration: const Duration(milliseconds: 100),
+                                  value: _newTask.taskType
                               ),
+                              reactions: List<Reaction<TaskType>>.generate(
+                                  TaskType.values.length,
+                                      (int index) {
+                                    return Reaction<TaskType>(
+                                        previewIcon: Container(
+                                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                            child: Icon(_getIcon(TaskType.values.elementAt(index)), size: _iconSize/2)
+                                        ),
+                                        icon: Container(
+                                            padding: const EdgeInsets.all(10),
+                                            child: Icon(_getIcon(TaskType.values.elementAt(index)), size: _iconSize)
+                                        ),
+                                        value: TaskType.values.elementAt(index)
+                                    );
+                                  }
+                              ),
+                              boxDuration: const Duration(milliseconds: 100),
                             ),
                           ),
-                          Expanded(
-                            child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Flexible(
-                                    flex: 1,
-                                    child: TextFormField(
-                                      initialValue: _newTask.name,
-                                      onFieldSubmitted: (String? value) {
-                                        _newTask.name = value ?? '';
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5, height: 5),
-                                  Flexible(
-                                    flex: 1,
-                                    child: TextFormField(
-                                      initialValue: _newTask.desc,
-                                      onChanged: (String? value) {
-                                        _newTask.desc = value ?? '';
-                                      },
-                                    ),
-                                  )
-                                ]
-                            )
-                          )
                         ]
+                      ),
+                      Expanded(
+                          child: Container(
+                              padding: const EdgeInsets.only(left: 15, right: 20, bottom: 30),
+                              child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      flex: 1,
+                                      child: TextFormField(
+                                        decoration: const InputDecoration(
+                                            hintText: 'Task Name',
+                                            border: OutlineInputBorder()
+                                        ),
+                                        initialValue: _newTask.name,
+                                        onFieldSubmitted: (String? value) {
+                                          _newTask.name = value ?? '';
+                                        },
+                                      ),
+                                    ),
+                                    Flexible(
+                                      flex: 1,
+                                      child: TextFormField(
+                                        decoration: const InputDecoration(
+                                            hintText: 'Task Description',
+                                            border: OutlineInputBorder()
+                                        ),
+                                        initialValue: _newTask.desc,
+                                        onChanged: (String? value) {
+                                          _newTask.desc = value ?? '';
+                                        },
+                                      ),
+                                    )
+                                  ]
+                              )
+                          )
                       ),
                       Flexible(
                         child: BlockPicker(
@@ -243,9 +255,9 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                 child: const Text('Save'),
                                 onPressed: () {
                                   if (_newTask.name == '') {
-                                    setState(() {
-                                      _badData = true;
-                                    });
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                      content: Text('Task must have a name'),
+                                    ));
                                   } else {
                                     setState(() {
                                       _taskData[_selectedTask] = TaskData.fromTaskData(_newTask);
@@ -265,11 +277,6 @@ class _TaskViewPageState extends State<TaskViewPage> {
                             )
                           ]
                       ),
-                      !_badData ? const SizedBox.shrink() : const ListTile(
-                        leading: Icon(Icons.warning),
-                        title: Text('Invalid Name'),
-                        subtitle: Text('Please assign a name to this task.'),
-                      )
                     ]
                 )
             )
