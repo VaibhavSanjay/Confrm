@@ -12,20 +12,28 @@ enum TaskType {
   other
 }
 
+enum Status {
+  inProgress,
+  start,
+  complete
+}
+
 // A class to represent the data for a task
 class TaskData {
   late String name; // User provided name for a task
   late TaskType taskType; // User provided type of task
   late String desc; // User provided task description (optional)
   late Color color;
+  late Status status;
 
-  TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey});
+  TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey, this.status = Status.inProgress});
 
   TaskData.fromTaskData(TaskData td) {
     name = td.name;
     taskType = td.taskType;
     desc = td.desc;
     color = td.color;
+    status = td.status;
   }
 
 }
@@ -53,28 +61,30 @@ class _TaskViewPageState extends State<TaskViewPage> {
     TaskData(
         name: "Clean Sink",
         taskType: TaskType.cleaning,
-        desc: 'Please clean the sink'
+        desc: 'Please clean the sink',
+        status: Status.inProgress
     ),
     TaskData(
         name: "Take out trash",
         taskType: TaskType.garbage,
-        color: Colors.red
+        color: Colors.red,
+        status: Status.complete
     ),
     TaskData(
         name: "Cook",
         taskType: TaskType.cooking,
         desc: 'Food',
-        color: Colors.purple
+        color: Colors.purple,
+        status: Status.start
     ),
   ];
   late TaskData _newTask;
-  bool _badData = false;
   final List<Color> _availableColors = [Colors.red, Colors.orange, Colors.yellow, Colors.green,
                                         Colors.blue, Colors.indigo, Colors.purple, Colors.grey];
   final double _iconSize = 40;
 
   // A helper function to get the icon data based on a task type
-  IconData _getIcon(TaskType tt) {
+  IconData _getIconForTaskType(TaskType tt) {
     switch (tt) {
       case TaskType.garbage:
         return FontAwesomeIcons.trash;
@@ -89,6 +99,28 @@ class _TaskViewPageState extends State<TaskViewPage> {
     }
   }
 
+  IconData _getIconForStatus(Status s) {
+    switch (s) {
+      case Status.complete:
+        return Icons.check_circle;
+      case Status.start:
+        return FontAwesomeIcons.hourglassStart;
+      case Status.inProgress:
+        return Icons.timelapse;
+    }
+  }
+
+  Color _getColorForStatus(Status s) {
+    switch (s) {
+      case Status.complete:
+        return Colors.greenAccent;
+      case Status.start:
+        return Colors.black;
+      case Status.inProgress:
+        return Colors.amber;
+    }
+  }
+
   Widget _createTaskCard(int i) {
     return InkWell(
       child: Card(
@@ -97,9 +129,14 @@ class _TaskViewPageState extends State<TaskViewPage> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             ListTile(
-              leading: Icon(_getIcon(_taskData[i].taskType)), // Put the icon for the type of task
+              leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
               title: Text(_taskData[i].name), // Name of task
               subtitle: Text(_taskData[i].desc), // Description of task
+              trailing: Icon(
+                _getIconForStatus(_taskData[i].status),
+                color: _getColorForStatus(_taskData[i].status),
+                size: 30
+              )
             ),
           ],
         ),
@@ -126,27 +163,11 @@ class _TaskViewPageState extends State<TaskViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Function called when the user reorders the tasks
-    void _onReorder(int oldIndex, int newIndex) {
-      setState(() {
-        // Remove task and add it back in appropriate position
-        TaskData task = _taskData.removeAt(oldIndex);
-        _taskData.insert(newIndex, task);
-      });
-    }
-
     /* This widget is rebuilt on every reorder.
        So we must remake the list of task cards based on the list of task data.
      */
     List<Widget> tasks = List<Widget>.generate(_taskData.length, _createTaskCard);
 
-    ReorderableColumn col = ReorderableColumn(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-        children: tasks,
-        onReorder: _onReorder,
-        needsLongPressDraggable: false,
-    );
     return Stack(
         alignment: AlignmentDirectional.center,
         fit: StackFit.expand,
@@ -154,7 +175,19 @@ class _TaskViewPageState extends State<TaskViewPage> {
           Container(
             child: Opacity(
               opacity: _selectedTask >= 0 ? 0.5: 1, // Make transparent if Task is being edited
-              child: col
+              child: ReorderableColumn(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                children: tasks,
+                onReorder: (int oldIndex, int newIndex) {
+                  setState(() {
+                    // Remove task and add it back in appropriate position
+                    TaskData task = _taskData.removeAt(oldIndex);
+                    _taskData.insert(newIndex, task);
+                  });
+                },
+                needsLongPressDraggable: false,
+              )
             ),
             alignment: Alignment.topCenter
           ),
@@ -177,7 +210,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                               initialReaction: Reaction<TaskType>(
                                   icon: Container(
                                       padding: const EdgeInsets.all(10),
-                                      child: Icon(_getIcon(_newTask.taskType), size: _iconSize)
+                                      child: Icon(_getIconForTaskType(_newTask.taskType), size: _iconSize)
                                   ),
                                   value: _newTask.taskType
                               ),
@@ -187,11 +220,11 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                     return Reaction<TaskType>(
                                         previewIcon: Container(
                                             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                            child: Icon(_getIcon(TaskType.values.elementAt(index)), size: _iconSize/2)
+                                            child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _iconSize/2)
                                         ),
                                         icon: Container(
                                             padding: const EdgeInsets.all(10),
-                                            child: Icon(_getIcon(TaskType.values.elementAt(index)), size: _iconSize)
+                                            child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _iconSize)
                                         ),
                                         value: TaskType.values.elementAt(index)
                                     );
@@ -262,7 +295,6 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                     setState(() {
                                       _taskData[_selectedTask] = TaskData.fromTaskData(_newTask);
                                       _selectedTask = -1;
-                                      _badData = false;
                                     });
                                   }
                                 }
