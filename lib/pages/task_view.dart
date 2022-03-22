@@ -1,3 +1,5 @@
+import 'dart:core';
+
 import 'package:flutter/material.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -25,8 +27,10 @@ class TaskData {
   late String desc; // User provided task description (optional)
   late Color color;
   late Status status;
+  late DateTime due;
 
-  TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey, this.status = Status.inProgress});
+  TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
+            this.status = Status.inProgress, DateTime? due}) : due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
 
   TaskData.fromTaskData(TaskData td) {
     name = td.name;
@@ -34,6 +38,7 @@ class TaskData {
     desc = td.desc;
     color = td.color;
     status = td.status;
+    due = td.due;
   }
 
 }
@@ -75,7 +80,8 @@ class _TaskViewPageState extends State<TaskViewPage> {
         taskType: TaskType.cooking,
         desc: 'Food',
         color: Colors.purple,
-        status: Status.start
+        status: Status.start,
+        due: DateTime.now().add(Duration(minutes: 10))
     ),
   ];
   late TaskData _newTask;
@@ -84,6 +90,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
   final double _iconSize = 40;
   late final List<Reaction<Status>> _statusReactions;
   late final List<Reaction<TaskType>> _taskTypeReactions;
+  final List<String> daysOfWeek = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   @override
   void initState() {
@@ -175,7 +182,8 @@ class _TaskViewPageState extends State<TaskViewPage> {
             ListTile(
               leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
               title: Text(_taskData[i].name), // Name of task
-              subtitle: Text(_taskData[i].desc), // Description of task
+              subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
+                  '${_taskData[i].due.toLocal().hour}:${_taskData[i].due.toLocal().minute}'), // Due date
               trailing: ReactionButton<Status>(
                 boxPosition: Position.TOP,
                 boxElevation: 10,
@@ -215,6 +223,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
         _newTask = TaskData();
       });
     }
+
   }
 
   @override
@@ -253,28 +262,55 @@ class _TaskViewPageState extends State<TaskViewPage> {
             child: Card(
                 child: Column(
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(top: 10, left: 10, right: 10),
-                            child: ReactionButton<TaskType>(
-                              boxPosition: Position.TOP,
-                              boxElevation: 10,
-                              onReactionChanged: (TaskType? value) {
-                                _newTask.taskType = value ?? TaskType.other;
-                              },
-                              initialReaction: Reaction<TaskType>(
-                                  icon: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      child: Icon(_getIconForTaskType(_newTask.taskType), size: _iconSize)
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        child: Row(
+                            children: [
+                              Card(
+                                elevation: 5,
+                                child: ReactionButton<TaskType>(
+                                  boxPosition: Position.TOP,
+                                  boxElevation: 10,
+                                  onReactionChanged: (TaskType? value) {
+                                    _newTask.taskType = value ?? TaskType.other;
+                                  },
+                                  initialReaction: Reaction<TaskType>(
+                                      icon: Container(
+                                          padding: const EdgeInsets.all(10),
+                                          child: Icon(_getIconForTaskType(_newTask.taskType), size: _iconSize)
+                                      ),
+                                      value: _newTask.taskType
                                   ),
-                                  value: _newTask.taskType
+                                  reactions: _taskTypeReactions,
+                                  boxDuration: const Duration(milliseconds: 100),
+                                ),
                               ),
-                              reactions: _taskTypeReactions,
-                              boxDuration: const Duration(milliseconds: 100),
-                            ),
-                          ),
-                        ]
+                              Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                                  child: TextButton(
+                                      style: TextButton.styleFrom(elevation: 5,
+                                          backgroundColor: Colors.white,
+                                          textStyle: TextStyle(fontSize: 18)
+                                      ),
+                                      onPressed: () async {
+                                        DateTime? picked = await showDatePicker(
+                                            context: context,
+                                            initialDate: _newTask.due.toLocal(),
+                                            firstDate: DateTime(2022),
+                                            lastDate: DateTime(2100));
+                                        if (picked != null) {
+                                          picked = picked.toLocal();
+                                          setState(() {
+                                            _newTask.due = DateTime((picked!).year, picked.month, picked.day, _newTask.due.hour, _newTask.due.minute);
+                                          });
+                                        }
+                                      },
+                                      child: Text('${daysOfWeek[_newTask.due.toLocal().weekday]}, '
+                                          '${_newTask.due.toLocal().month}/${_newTask.due.toLocal().day}')
+                                  )
+                              )
+                            ]
+                        ),
                       ),
                       Expanded(
                           child: Container(
@@ -291,6 +327,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                             border: OutlineInputBorder()
                                         ),
                                         initialValue: _newTask.name,
+                                        maxLength: 30,
                                         onFieldSubmitted: (String? value) {
                                           _newTask.name = value ?? '';
                                         },
