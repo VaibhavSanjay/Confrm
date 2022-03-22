@@ -82,6 +82,50 @@ class _TaskViewPageState extends State<TaskViewPage> {
   final List<Color> _availableColors = [Colors.red, Colors.orange, Colors.yellow, Colors.green,
                                         Colors.blue, Colors.indigo, Colors.purple, Colors.grey];
   final double _iconSize = 40;
+  late final List<Reaction<Status>> _statusReactions;
+  late final List<Reaction<TaskType>> _taskTypeReactions;
+
+  @override
+  void initState() {
+    super.initState();
+    _statusReactions = List<Reaction<Status>>.generate(
+        Status.values.length,
+            (int index) {
+          return Reaction<Status>(
+              previewIcon: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                child: Icon(
+                    _getIconForStatus(Status.values.elementAt(index)),
+                    color: _getColorForStatus(Status.values.elementAt(index)),
+                    size: _iconSize/2
+                )
+              ),
+              icon: Icon(
+                  _getIconForStatus(Status.values.elementAt(index)),
+                  color: _getColorForStatus(Status.values.elementAt(index)),
+                  size: _iconSize
+              ),
+              value: Status.values.elementAt(index)
+          );
+        }
+    );
+    _taskTypeReactions = List<Reaction<TaskType>>.generate(
+        TaskType.values.length,
+            (int index) {
+          return Reaction<TaskType>(
+              previewIcon: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                  child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _iconSize/2)
+              ),
+              icon: Container(
+                  padding: const EdgeInsets.all(10),
+                  child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _iconSize)
+              ),
+              value: TaskType.values.elementAt(index)
+          );
+        }
+    );
+  }
 
   // A helper function to get the icon data based on a task type
   IconData _getIconForTaskType(TaskType tt) {
@@ -132,11 +176,23 @@ class _TaskViewPageState extends State<TaskViewPage> {
               leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
               title: Text(_taskData[i].name), // Name of task
               subtitle: Text(_taskData[i].desc), // Description of task
-              trailing: Icon(
-                _getIconForStatus(_taskData[i].status),
-                color: _getColorForStatus(_taskData[i].status),
-                size: 30
-              )
+              trailing: ReactionButton<Status>(
+                boxPosition: Position.TOP,
+                boxElevation: 10,
+                onReactionChanged: (Status? value) {
+                  _taskData[i].status = value ?? Status.inProgress;
+                },
+                initialReaction: Reaction<Status>(
+                    icon: Icon(
+                        _getIconForStatus(_taskData[i].status),
+                        color: _getColorForStatus(_taskData[i].status),
+                        size: _iconSize
+                    ),
+                    value: _taskData[i].status
+                    ),
+                reactions: _statusReactions,
+                boxDuration: const Duration(milliseconds: 100),
+              ),
             ),
           ],
         ),
@@ -214,22 +270,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                   ),
                                   value: _newTask.taskType
                               ),
-                              reactions: List<Reaction<TaskType>>.generate(
-                                  TaskType.values.length,
-                                      (int index) {
-                                    return Reaction<TaskType>(
-                                        previewIcon: Container(
-                                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                            child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _iconSize/2)
-                                        ),
-                                        icon: Container(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _iconSize)
-                                        ),
-                                        value: TaskType.values.elementAt(index)
-                                    );
-                                  }
-                              ),
+                              reactions: _taskTypeReactions,
                               boxDuration: const Duration(milliseconds: 100),
                             ),
                           ),
