@@ -38,6 +38,7 @@ dependencies:
   font_awesome_flutter: ^10.0.0
   flutter_reaction_button: ^2.0.0+1
   flutter_colorpicker: ^1.0.3
+  intl: ^0.17.0
 
 dev_dependencies:
   flutter_test:

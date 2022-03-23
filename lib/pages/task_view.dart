@@ -1,10 +1,10 @@
 import 'dart:core';
-
 import 'package:flutter/material.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:intl/intl.dart';
 
 enum TaskType {
   garbage,
@@ -87,10 +87,10 @@ class _TaskViewPageState extends State<TaskViewPage> {
   late TaskData _newTask;
   final List<Color> _availableColors = [Colors.red, Colors.orange, Colors.yellow, Colors.green,
                                         Colors.blue, Colors.indigo, Colors.purple, Colors.grey];
-  final double _iconSize = 40;
+  final double _editIconSize = 50;
   late final List<Reaction<Status>> _statusReactions;
   late final List<Reaction<TaskType>> _taskTypeReactions;
-  final List<String> daysOfWeek = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  final List<String> daysOfWeek = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   @override
   void initState() {
@@ -104,13 +104,16 @@ class _TaskViewPageState extends State<TaskViewPage> {
                 child: Icon(
                     _getIconForStatus(Status.values.elementAt(index)),
                     color: _getColorForStatus(Status.values.elementAt(index)),
-                    size: _iconSize/2
+                    size: _editIconSize/2
                 )
               ),
-              icon: Icon(
-                  _getIconForStatus(Status.values.elementAt(index)),
-                  color: _getColorForStatus(Status.values.elementAt(index)),
-                  size: _iconSize
+              icon: Container(
+                padding: const EdgeInsets.all(10),
+                child: Icon(
+                    _getIconForStatus(Status.values.elementAt(index)),
+                    color: _getColorForStatus(Status.values.elementAt(index)),
+                    size: _editIconSize
+                ),
               ),
               value: Status.values.elementAt(index)
           );
@@ -122,11 +125,11 @@ class _TaskViewPageState extends State<TaskViewPage> {
           return Reaction<TaskType>(
               previewIcon: Container(
                   padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                  child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _iconSize/2)
+                  child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _editIconSize/2)
               ),
               icon: Container(
                   padding: const EdgeInsets.all(10),
-                  child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _iconSize)
+                  child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _editIconSize)
               ),
               value: TaskType.values.elementAt(index)
           );
@@ -194,7 +197,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                     icon: Icon(
                         _getIconForStatus(_taskData[i].status),
                         color: _getColorForStatus(_taskData[i].status),
-                        size: _iconSize
+                        size: _editIconSize
                     ),
                     value: _taskData[i].status
                     ),
@@ -265,7 +268,32 @@ class _TaskViewPageState extends State<TaskViewPage> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Card(
+                                elevation: 5,
+                                child: ReactionButton<Status>(
+                                  boxPosition: Position.TOP,
+                                  boxElevation: 10,
+                                  onReactionChanged: (Status? value) {
+                                    _newTask.status = value ?? Status.inProgress;
+                                  },
+                                  initialReaction: Reaction<Status>(
+                                      icon: Container(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Icon(
+                                            _getIconForStatus(_newTask.status),
+                                            color: _getColorForStatus(_newTask.status),
+                                            size: _editIconSize
+                                        ),
+                                      ),
+                                      value: _newTask.status
+                                  ),
+                                  reactions: _statusReactions,
+                                  boxDuration: const Duration(milliseconds: 100),
+                                ),
+                              ),
                               Card(
                                 elevation: 5,
                                 child: ReactionButton<TaskType>(
@@ -277,7 +305,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                   initialReaction: Reaction<TaskType>(
                                       icon: Container(
                                           padding: const EdgeInsets.all(10),
-                                          child: Icon(_getIconForTaskType(_newTask.taskType), size: _iconSize)
+                                          child: Icon(_getIconForTaskType(_newTask.taskType), size: _editIconSize)
                                       ),
                                       value: _newTask.taskType
                                   ),
@@ -285,12 +313,13 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                   boxDuration: const Duration(milliseconds: 100),
                                 ),
                               ),
-                              Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
-                                  child: TextButton(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  TextButton(
                                       style: TextButton.styleFrom(elevation: 5,
                                           backgroundColor: Colors.white,
-                                          textStyle: TextStyle(fontSize: 18)
+                                          textStyle: const TextStyle(fontSize: 18)
                                       ),
                                       onPressed: () async {
                                         DateTime? picked = await showDatePicker(
@@ -299,7 +328,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                             firstDate: DateTime(2022),
                                             lastDate: DateTime(2100));
                                         if (picked != null) {
-                                          picked = picked.toLocal();
+                                          picked = picked.toUtc();
                                           setState(() {
                                             _newTask.due = DateTime((picked!).year, picked.month, picked.day, _newTask.due.hour, _newTask.due.minute);
                                           });
@@ -307,7 +336,27 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                       },
                                       child: Text('${daysOfWeek[_newTask.due.toLocal().weekday]}, '
                                           '${_newTask.due.toLocal().month}/${_newTask.due.toLocal().day}')
-                                  )
+                                  ),
+                                  TextButton(
+                                      style: TextButton.styleFrom(elevation: 5,
+                                          backgroundColor: Colors.white,
+                                          textStyle: const TextStyle(fontSize: 18)
+                                      ),
+                                      onPressed: () async {
+                                        TimeOfDay? picked = await showTimePicker(
+                                            context: context,
+                                            initialTime: TimeOfDay.fromDateTime(_newTask.due.toLocal())
+                                        );
+                                        if (picked != null) {
+                                          setState(() {
+                                            _newTask.due = DateTime(_newTask.due.toLocal().year, _newTask.due.toLocal().month,
+                                                _newTask.due.toLocal().day, picked.hour, picked.minute).toUtc();
+                                          });
+                                        }
+                                      },
+                                      child: Text(DateFormat('h:mm a').format(_newTask.due.toLocal()))
+                                  ),
+                                ]
                               )
                             ]
                         ),
@@ -324,7 +373,8 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                       child: TextFormField(
                                         decoration: const InputDecoration(
                                             hintText: 'Task Name',
-                                            border: OutlineInputBorder()
+                                            border: OutlineInputBorder(),
+                                            counterText: ''
                                         ),
                                         initialValue: _newTask.name,
                                         maxLength: 30,
@@ -338,9 +388,11 @@ class _TaskViewPageState extends State<TaskViewPage> {
                                       child: TextFormField(
                                         decoration: const InputDecoration(
                                             hintText: 'Task Description',
-                                            border: OutlineInputBorder()
+                                            border: OutlineInputBorder(),
+                                            counterText: ''
                                         ),
                                         initialValue: _newTask.desc,
+                                        maxLength: 60,
                                         onChanged: (String? value) {
                                           _newTask.desc = value ?? '';
                                         },
