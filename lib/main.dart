@@ -1,8 +1,11 @@
+import 'package:family_tasks/Services/database.dart';
 import 'package:flutter/material.dart';
 import 'package:family_tasks/pages/account.dart';
 import 'package:family_tasks/pages/task_view.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DatabaseService.initializeFirebase();
   runApp(const FamilyTasks());
 }
 

@@ -1,47 +1,12 @@
 import 'dart:core';
+import 'package:family_tasks/Services/database.dart';
 import 'package:flutter/material.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:intl/intl.dart';
-
-enum TaskType {
-  garbage,
-  shopping,
-  cooking,
-  cleaning,
-  other
-}
-
-enum Status {
-  inProgress,
-  start,
-  complete
-}
-
-// A class to represent the data for a task
-class TaskData {
-  late String name; // User provided name for a task
-  late TaskType taskType; // User provided type of task
-  late String desc; // User provided task description (optional)
-  late Color color;
-  late Status status;
-  late DateTime due;
-
-  TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
-            this.status = Status.inProgress, DateTime? due}) : due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
-
-  TaskData.fromTaskData(TaskData td) {
-    name = td.name;
-    taskType = td.taskType;
-    desc = td.desc;
-    color = td.color;
-    status = td.status;
-    due = td.due;
-  }
-
-}
+import 'package:family_tasks/models/family_task_data.dart';
 
 class TaskViewPage extends StatefulWidget {
   const TaskViewPage({Key? key}) : super(key: key);
@@ -235,6 +200,19 @@ class _TaskViewPageState extends State<TaskViewPage> {
        So we must remake the list of task cards based on the list of task data.
      */
     List<Widget> tasks = List<Widget>.generate(_taskData.length, _createTaskCard);
+    tasks.add(
+      StreamBuilder<FamilyTaskData>(
+        key: ValueKey(100),
+        stream: DatabaseService('100').taskDataForFamily,
+        builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
+          if (snapshot.connectionState == ConnectionState.active) {
+            return Text(snapshot.data!.name);
+          } else {
+            return const Text('Loading');
+          }
+        }
+      )
+    );
 
     return Stack(
         alignment: AlignmentDirectional.center,
