@@ -4,11 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
-import 'package:intl/intl.dart';
 import 'package:family_tasks/models/family_task_data.dart';
-import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 
 import 'Helpers/hero_dialogue_route.dart';
+import 'Helpers/task_view_cards.dart';
 
 class TaskViewPage extends StatefulWidget {
   const TaskViewPage({Key? key}) : super(key: key);
@@ -28,7 +27,6 @@ class TaskViewPage extends StatefulWidget {
 }
 
 class _TaskViewPageState extends State<TaskViewPage> {
-  int _selectedTask = -1; // The index of the task selected for editing, or -1 if no task is being edited
   List<TaskData> _taskData = [
     TaskData(
         name: "Clean Sink",
@@ -51,54 +49,32 @@ class _TaskViewPageState extends State<TaskViewPage> {
         due: DateTime.now().add(Duration(minutes: 10))
     ),
   ];
-  late TaskData _newTask;
-  final List<ColorSwatch> _availableColors = [Colors.red, Colors.orange, Colors.yellow, Colors.green,
-                                        Colors.blue, Colors.indigo, Colors.purple, Colors.grey];
-  final double _editIconSize = 50;
-  late final List<Reaction<Status>> _statusReactions;
-  late final List<Reaction<TaskType>> _taskTypeReactions;
+  final double _statusIconSize = 30;
+  late final List<Reaction<Status>> _statusCardReactions;
   final List<String> daysOfWeek = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   @override
   void initState() {
     super.initState();
-    _statusReactions = List<Reaction<Status>>.generate(
+
+    _statusCardReactions = List<Reaction<Status>>.generate(
         Status.values.length,
             (int index) {
           return Reaction<Status>(
               previewIcon: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                child: Icon(
-                    _getIconForStatus(Status.values.elementAt(index)),
-                    color: _getColorForStatus(Status.values.elementAt(index)),
-                    size: _editIconSize/2
-                )
-              ),
-              icon: Container(
                 padding: const EdgeInsets.all(10),
                 child: Icon(
                     _getIconForStatus(Status.values.elementAt(index)),
                     color: _getColorForStatus(Status.values.elementAt(index)),
-                    size: _editIconSize
+                    size: _statusIconSize
                 ),
               ),
+              icon: Icon(
+                  _getIconForStatus(Status.values.elementAt(index)),
+                  color: _getColorForStatus(Status.values.elementAt(index)),
+                  size: _statusIconSize
+              ),
               value: Status.values.elementAt(index)
-          );
-        }
-    );
-    _taskTypeReactions = List<Reaction<TaskType>>.generate(
-        TaskType.values.length,
-            (int index) {
-          return Reaction<TaskType>(
-              previewIcon: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                  child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _editIconSize/2)
-              ),
-              icon: Container(
-                  padding: const EdgeInsets.all(10),
-                  child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _editIconSize)
-              ),
-              value: TaskType.values.elementAt(index)
           );
         }
     );
@@ -157,7 +133,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                 subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
                     '${_taskData[i].due.toLocal().hour}:${_taskData[i].due.toLocal().minute}'), // Due date
                 trailing: ReactionButton<Status>(
-                  boxPosition: Position.TOP,
+                  boxPosition: Position.BOTTOM,
                   boxElevation: 10,
                   onReactionChanged: (Status? value) {
                     _taskData[i].status = value ?? Status.inProgress;
@@ -166,11 +142,11 @@ class _TaskViewPageState extends State<TaskViewPage> {
                       icon: Icon(
                           _getIconForStatus(_taskData[i].status),
                           color: _getColorForStatus(_taskData[i].status),
-                          size: _editIconSize
+                          size: _statusIconSize
                       ),
                       value: _taskData[i].status
                       ),
-                  reactions: _statusReactions,
+                  reactions: _statusCardReactions,
                   boxDuration: const Duration(milliseconds: 100),
                 ),
               ),
@@ -179,208 +155,23 @@ class _TaskViewPageState extends State<TaskViewPage> {
         ),
       ),
       onTap: () {
-        _newTask = TaskData.fromTaskData(_taskData.elementAt(i));
         Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-          return _createTaskEditCard(context, i);
+          return EditTaskData(
+            selectedTask: i,
+            taskData: TaskData.fromTaskData(_taskData.elementAt(i)),
+            padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/6, left: 30, right: 30, bottom: MediaQuery.of(context).size.height/6),
+            onExit: (TaskData? data) {
+              if (data != null) {
+                _taskData[i] = TaskData.fromTaskData(data);
+              }
+              Navigator.of(context).pop();
+              setState((){});
+            },
+          );
+          //return _createTaskEditCard(context, i);
         }));
       },
       key: ValueKey(i), // The reorderables package requires a key for each of its elements
-    );
-  }
-
-  Widget _createTaskEditCard(BuildContext context, int selectedTask) {
-    return Container(
-        padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/6, left: 30, right: 30, bottom: MediaQuery.of(context).size.height/6),
-        child: Hero(
-          tag: selectedTask,
-          child: Card(
-              child: SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: MediaQuery.of(context).size.height*2/3,
-                  ),
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Card(
-                                  elevation: 5,
-                                  child: ReactionButton<Status>(
-                                    boxPosition: Position.TOP,
-                                    boxElevation: 10,
-                                    onReactionChanged: (Status? value) {
-                                      _newTask.status = value ?? Status.inProgress;
-                                    },
-                                    initialReaction: Reaction<Status>(
-                                        icon: Container(
-                                          padding: const EdgeInsets.all(10),
-                                          child: Icon(
-                                              _getIconForStatus(_newTask.status),
-                                              color: _getColorForStatus(_newTask.status),
-                                              size: _editIconSize
-                                          ),
-                                        ),
-                                        value: _newTask.status
-                                    ),
-                                    reactions: _statusReactions,
-                                    boxDuration: const Duration(milliseconds: 100),
-                                  ),
-                                ),
-                                Card(
-                                  elevation: 5,
-                                  child: ReactionButton<TaskType>(
-                                    boxPosition: Position.TOP,
-                                    boxElevation: 10,
-                                    onReactionChanged: (TaskType? value) {
-                                      _newTask.taskType = value ?? TaskType.other;
-                                    },
-                                    initialReaction: Reaction<TaskType>(
-                                        icon: Container(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Icon(_getIconForTaskType(_newTask.taskType), size: _editIconSize)
-                                        ),
-                                        value: _newTask.taskType
-                                    ),
-                                    reactions: _taskTypeReactions,
-                                    boxDuration: const Duration(milliseconds: 100),
-                                  ),
-                                ),
-                                Column(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      TextButton(
-                                          style: TextButton.styleFrom(elevation: 5,
-                                              backgroundColor: Colors.white,
-                                              textStyle: const TextStyle(fontSize: 18)
-                                          ),
-                                          onPressed: () async {
-                                            DateTime? picked = await showDatePicker(
-                                                context: context,
-                                                initialDate: _newTask.due.toLocal(),
-                                                firstDate: DateTime(2022),
-                                                lastDate: DateTime(2100));
-                                            if (picked != null) {
-                                              picked = picked.toUtc();
-                                              setState(() {
-                                                _newTask.due = DateTime((picked!).year, picked.month, picked.day, _newTask.due.hour, _newTask.due.minute);
-                                              });
-                                            }
-                                          },
-                                          child: Text('${daysOfWeek[_newTask.due.toLocal().weekday]}, '
-                                              '${_newTask.due.toLocal().month}/${_newTask.due.toLocal().day}')
-                                      ),
-                                      TextButton(
-                                          style: TextButton.styleFrom(elevation: 5,
-                                              backgroundColor: Colors.white,
-                                              textStyle: const TextStyle(fontSize: 18)
-                                          ),
-                                          onPressed: () async {
-                                            TimeOfDay? picked = await showTimePicker(
-                                                context: context,
-                                                initialTime: TimeOfDay.fromDateTime(_newTask.due.toLocal())
-                                            );
-                                            if (picked != null) {
-                                              setState(() {
-                                                _newTask.due = DateTime(_newTask.due.toLocal().year, _newTask.due.toLocal().month,
-                                                    _newTask.due.toLocal().day, picked.hour, picked.minute).toUtc();
-                                              });
-                                            }
-                                          },
-                                          child: Text(DateFormat('h:mm a').format(_newTask.due.toLocal()))
-                                      ),
-                                    ]
-                                )
-                              ]
-                          ),
-                        ),
-                        Container(
-                            padding: const EdgeInsets.all(10),
-                            child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Flexible(
-                                    fit: FlexFit.loose,
-                                    child: Container(
-                                      margin: const EdgeInsets.only(bottom: 10),
-                                      child: TextFormField(
-                                        decoration: const InputDecoration(
-                                            hintText: 'Task Name',
-                                            border: OutlineInputBorder(),
-                                            counterText: ''
-                                        ),
-                                        initialValue: _newTask.name,
-                                        maxLength: 30,
-                                        onFieldSubmitted: (String? value) {
-                                          _newTask.name = value ?? '';
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  Flexible(
-                                    fit: FlexFit.loose,
-                                    child: TextFormField(
-                                      decoration: const InputDecoration(
-                                          hintText: 'Task Description',
-                                          border: OutlineInputBorder(),
-                                          counterText: ''
-                                      ),
-                                      initialValue: _newTask.desc,
-                                      maxLength: 60,
-                                      onChanged: (String? value) {
-                                        _newTask.desc = value ?? '';
-                                      },
-                                    ),
-                                  )
-                                ]
-                            )
-                        ),
-                        MaterialColorPicker(
-                          selectedColor: _newTask.color,
-                          allowShades: false,
-                          onMainColorChange: (newColor) {
-                            _newTask.color = Color.fromRGBO(newColor?.red ?? 0, newColor?.green ?? 0, newColor?.blue ?? 0, 1);
-                          },
-                          colors: _availableColors
-                        ),
-                        Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton(
-                                  child: const Text('Save'),
-                                  onPressed: () {
-                                    if (_newTask.name == '') {
-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                        content: Text('Task must have a name'),
-                                      ));
-                                    } else {
-                                      _taskData[selectedTask] = TaskData.fromTaskData(_newTask);
-                                      Navigator.of(context).pop();
-                                      setState((){});
-                                    }
-                                  }
-                              ),
-                              TextButton(
-                                  child: const Text('Cancel'),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  }
-                              )
-                            ]
-                        ),
-                      ]
-                  ),
-                ),
-              )
-          ),
-        )
     );
   }
 
