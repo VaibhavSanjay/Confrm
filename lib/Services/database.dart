@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 class DatabaseService {
   final String famID;
-  final List<Color> _availableColors = [Colors.red, Colors.orange, Colors.yellow, Colors.green,
+  final List<ColorSwatch> _availableColors = [Colors.red, Colors.orange, Colors.yellow, Colors.green,
     Colors.blue, Colors.indigo, Colors.purple, Colors.grey];
   DatabaseService(this.famID);
 
@@ -31,10 +31,22 @@ class DatabaseService {
             status: Status.values[data['data'][index]['status']],
             due: (data['data'][index]['due'] as Timestamp).toDate(),
             color: _availableColors[data['data'][index]['color']],
-            order: data['data'][index]['order'].toDouble()
           )
         ),
         name: data['name']
     );
+  }
+
+  Future<void> updateTaskData(List<TaskData> taskData) async {
+    return await taskDataCollection.doc(famID).update({
+      'data': taskData.map((td) => {
+        'name': td.name,
+        'desc': td.desc,
+        'taskType': TaskType.values.indexOf(td.taskType),
+        'status': Status.values.indexOf(td.status),
+        'due': Timestamp.fromDate(td.due),
+        'color': _availableColors.indexOf(td.color),
+      }).toList()
+    });
   }
 }

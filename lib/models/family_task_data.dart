@@ -19,13 +19,12 @@ class TaskData {
   late String name; // User provided name for a task
   late TaskType taskType; // User provided type of task
   late String desc; // User provided task description (optional)
-  late Color color;
+  late ColorSwatch color;
   late Status status;
   late DateTime due;
-  late double order;
 
   TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
-    this.status = Status.inProgress, DateTime? due, this.order = -1}) : due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
+    this.status = Status.inProgress, DateTime? due}) : due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
 
   TaskData.fromTaskData(TaskData td) {
     name = td.name;

@@ -28,31 +28,11 @@ class TaskViewPage extends StatefulWidget {
 }
 
 class _TaskViewPageState extends State<TaskViewPage> {
-  List<TaskData> _taskData = [
-    TaskData(
-        name: "Clean Sink",
-        taskType: TaskType.cleaning,
-        desc: 'Please clean the sink',
-        status: Status.inProgress
-    ),
-    TaskData(
-        name: "Take out trash",
-        taskType: TaskType.garbage,
-        color: Colors.red,
-        status: Status.complete
-    ),
-    TaskData(
-        name: "Cook",
-        taskType: TaskType.cooking,
-        desc: 'Food',
-        color: Colors.purple,
-        status: Status.start,
-        due: DateTime.now().add(Duration(minutes: 10))
-    ),
-  ];
+  List<TaskData> _taskData = [];
   final double _statusIconSize = 30;
   late final List<Reaction<Status>> _statusCardReactions;
   final List<String> daysOfWeek = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  DatabaseService ds = DatabaseService('100');
 
   @override
   void initState() {
@@ -138,6 +118,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                   boxElevation: 10,
                   onReactionChanged: (Status? value) {
                     _taskData[i].status = value ?? Status.inProgress;
+                    ds.updateTaskData(_taskData);
                   },
                   initialReaction: Reaction<Status>(
                       icon: Icon(
@@ -164,12 +145,12 @@ class _TaskViewPageState extends State<TaskViewPage> {
             onExit: (TaskData? data) {
               if (data != null) {
                 _taskData[i] = TaskData.fromTaskData(data);
+                ds.updateTaskData(_taskData);
               }
               Navigator.of(context).pop();
               setState((){});
             },
           );
-          //return _createTaskEditCard(context, i);
         }));
       },
       key: ValueKey(i), // The reorderables package requires a key for each of its elements
@@ -183,7 +164,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
      */
 
     return StreamBuilder<FamilyTaskData>(
-      stream: DatabaseService('100').taskDataForFamily,
+      stream: ds.taskDataForFamily,
       builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
         if (snapshot.hasError) {
           return Column(
@@ -197,20 +178,27 @@ class _TaskViewPageState extends State<TaskViewPage> {
           switch (snapshot.connectionState) {
             case ConnectionState.none:
             case ConnectionState.waiting:
-              return const Center(
-                child: SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: CircularProgressIndicator(),
-                )
-              );
+              if (_taskData.isEmpty) {
+                return const Center(
+                    child: SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: CircularProgressIndicator(),
+                    )
+                );
+              } else {
+                List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: tasks,
+                  ),
+                );
+              }
             case ConnectionState.active:
+              print(Colors.green == Colors.green);
               _taskData = snapshot.data == null ? [] : snapshot.data!.tasks;
-              print(_taskData[0].name);
-              print(_taskData[0].order);
-              print(_taskData[1].order);
-              _taskData.sort((a, b) => a.order.compareTo(b.order));
-              print(_taskData[0].name);
               List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
               return ReorderableColumn(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -221,6 +209,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                     // Remove task and add it back in appropriate position
                     TaskData task = _taskData.removeAt(oldIndex);
                     _taskData.insert(newIndex, task);
+                    ds.updateTaskData(_taskData);
                   });
                 },
                 needsLongPressDraggable: false,

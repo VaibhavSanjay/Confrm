@@ -273,7 +273,7 @@ class _EditTaskDataState extends State<EditTaskData> {
                             selectedColor: _newTask.color,
                             allowShades: false,
                             onMainColorChange: (newColor) {
-                              _newTask.color = Color.fromRGBO(newColor?.red ?? 0, newColor?.green ?? 0, newColor?.blue ?? 0, 1);
+                              _newTask.color = newColor ?? Colors.grey;
                             },
                             colors: _availableColors
                         ),
