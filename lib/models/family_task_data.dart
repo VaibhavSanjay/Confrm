@@ -22,9 +22,10 @@ class TaskData {
   late Color color;
   late Status status;
   late DateTime due;
+  late double order;
 
   TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
-    this.status = Status.inProgress, DateTime? due}) : due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
+    this.status = Status.inProgress, DateTime? due, this.order = -1}) : due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
 
   TaskData.fromTaskData(TaskData td) {
     name = td.name;

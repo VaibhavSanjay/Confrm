@@ -1,6 +1,7 @@
 import 'dart:core';
 import 'package:family_tasks/Services/database.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:reorderables/reorderables.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
@@ -131,7 +132,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
                 leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
                 title: Text(_taskData[i].name), // Name of task
                 subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
-                    '${_taskData[i].due.toLocal().hour}:${_taskData[i].due.toLocal().minute}'), // Due date
+                    '${DateFormat('h:mm a').format(_taskData[i].due.toLocal())}'), // Due date
                 trailing: ReactionButton<Status>(
                   boxPosition: Position.BOTTOM,
                   boxElevation: 10,
@@ -180,33 +181,57 @@ class _TaskViewPageState extends State<TaskViewPage> {
     /* This widget is rebuilt on every reorder.
        So we must remake the list of task cards based on the list of task data.
      */
-    List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
-    tasks.add(
-      StreamBuilder<FamilyTaskData>(
-        key: ValueKey(100),
-        stream: DatabaseService('100').taskDataForFamily,
-        builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
-          if (snapshot.connectionState == ConnectionState.active) {
-            return Text(snapshot.data!.name);
-          } else {
-            return const Text('Loading');
+
+    return StreamBuilder<FamilyTaskData>(
+      stream: DatabaseService('100').taskDataForFamily,
+      builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
+        if (snapshot.hasError) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: const [
+              Icon(Icons.error_outline, size: 100),
+              Text('Error!', style: TextStyle(fontSize: 30))
+            ]
+          );
+        } else {
+          switch (snapshot.connectionState) {
+            case ConnectionState.none:
+            case ConnectionState.waiting:
+              return const Center(
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: CircularProgressIndicator(),
+                )
+              );
+            case ConnectionState.active:
+              _taskData = snapshot.data == null ? [] : snapshot.data!.tasks;
+              print(_taskData[0].name);
+              print(_taskData[0].order);
+              print(_taskData[1].order);
+              _taskData.sort((a, b) => a.order.compareTo(b.order));
+              print(_taskData[0].name);
+              List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
+              return ReorderableColumn(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                children: tasks,
+                onReorder: (int oldIndex, int newIndex) {
+                  setState(() {
+                    // Remove task and add it back in appropriate position
+                    TaskData task = _taskData.removeAt(oldIndex);
+                    _taskData.insert(newIndex, task);
+                  });
+                },
+                needsLongPressDraggable: false,
+              );
+            case ConnectionState.done:
+              return const Center(
+                child: Text('Connection Closed', style: TextStyle(fontSize: 30))
+              );
           }
         }
-      )
-    );
-
-    return ReorderableColumn(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-      children: tasks,
-      onReorder: (int oldIndex, int newIndex) {
-        setState(() {
-          // Remove task and add it back in appropriate position
-          TaskData task = _taskData.removeAt(oldIndex);
-          _taskData.insert(newIndex, task);
-        });
-      },
-      needsLongPressDraggable: false,
+      }
     );
   }
 }
