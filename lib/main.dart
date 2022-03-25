@@ -68,7 +68,12 @@ class _MyHomePageState extends State<MyHomePage> {
       prefs.setString('famID', '100');
       TaskViewPageState.setFamID(prefs.getString('famID'));
       AccountPageState.setFamID(prefs.getString('famID'));
-      setState((){});
+      if (_keyAccount.currentState != null) {
+        _keyAccount.currentState!.setState((){});
+      }
+      if (_keyTaskView.currentState != null) {
+        _keyTaskView.currentState!.setState((){});
+      }
     });
   }
 

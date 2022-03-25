@@ -198,11 +198,7 @@ class TaskViewPageState extends State<TaskViewPage> {
 
   Widget createArchiveCardList(EdgeInsets padding) {
     DateTime hourAgo = DateTime.now().toUtc().subtract(const Duration(hours: 1));
-    for (int i = 0; i < _archivedTaskData.length; i++) {
-      if (!_archivedTaskData[i].archived.isAfter(hourAgo)) {
-        _archivedTaskData.removeAt(i);
-      }
-    }
+    _archivedTaskData = _archivedTaskData.where((td) => td.archived.isAfter(hourAgo)).toList();
     ds.updateArchiveData(_archivedTaskData);
     return ArchiveTaskData(
         padding: padding,
@@ -222,10 +218,6 @@ class TaskViewPageState extends State<TaskViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    /* This widget is rebuilt on every reorder.
-       So we must remake the list of task cards based on the list of task data.
-     */
-
     if (setID) {
       return famID != null ? StreamBuilder<FamilyTaskData>(
           stream: stream,

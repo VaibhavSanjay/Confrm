@@ -1,5 +1,7 @@
 import 'package:family_tasks/pages/Helpers/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
 import '../Services/database.dart';
@@ -96,10 +98,14 @@ class AccountPageState extends State<AccountPage> {
               case ConnectionState.active:
                 String name = snapshot.data == null ? '' : snapshot.data!.name;
                 int taskCount = snapshot.data == null ? 0 : snapshot.data!.tasks.length;
-                List<TaskData> archive = (snapshot.data == null ? [] : snapshot.data!.archive)
-                  ..sort((a, b) => a.archived.isAfter(b.archived) ? 1 : -1);
+
+                List<TaskData> archive = snapshot.data == null ? [] : snapshot.data!.archive;
+                DateTime hourAgo = DateTime.now().toUtc().subtract(const Duration(hours: 1));
+                archive = archive.where((td) => td.archived.isAfter(hourAgo)).toList();
+                ds.updateArchiveData(archive);
+
                 int archiveCount = archive.length;
-                DateTime? lastArchived = archiveCount > 0 ? archive[0].archived.toLocal() : null;
+                DateTime? lastArchived = archiveCount > 0 ? archive[archiveCount - 1].archived.toLocal() : null;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -110,24 +116,53 @@ class AccountPageState extends State<AccountPage> {
                         elevation: 5,
                         child: Container(
                           padding: const EdgeInsets.all(10),
-                          child: Text(name, style: const TextStyle(fontSize: 30))
+                          child: Text(name, style: const TextStyle(fontSize: 50))
                         )
                       )
                     ),
-                    Card(
-                      elevation: 5,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Tasks Remaining: $taskCount', style: const TextStyle(fontSize: 20)),
-                          Text('Tasks Archived: $archiveCount', style: const TextStyle(fontSize: 20)),
-                          lastArchived != null ?
-                          Text('Last Archived Task: ${archive[0].name}, '
-                              '${daysOfWeek[lastArchived.weekday]} '
-                              '${DateFormat('h:mm a').format(lastArchived)}'
-                          ) : const SizedBox.shrink()
-                        ]
+                    Container(
+                      padding: const EdgeInsets.only(left: 10, right: 10),
+                      child: Card(
+                        elevation: 5,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.only(left: 10, top: 10, bottom: 30),
+                              child: Text('Tasks Remaining: $taskCount', style: const TextStyle(fontSize: 30))
+                            ),
+                            Container(
+                              padding: const EdgeInsets.only(left: 10),
+                              child: Text('Tasks Archived: $archiveCount', style: const TextStyle(fontSize: 30))
+                            ),
+                            lastArchived != null ?
+                            Container(
+                              padding: const EdgeInsets.only(left: 10, bottom: 10),
+                              child: Text('Last Archived Task: ${archive[0].name}, '
+                                  '${daysOfWeek[lastArchived.weekday]} '
+                                  '${DateFormat('h:mm a').format(lastArchived)}',
+                                style: const TextStyle(fontSize: 20, color: Colors.grey)
+                              ),
+                            ) : const SizedBox.shrink()
+                          ]
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: TextButton(
+                        style: TextButton.styleFrom(elevation: 5,
+                            backgroundColor: Colors.white,
+                            textStyle: const TextStyle(fontSize: 18)
+                        ),
+                        child: const Text('View Family ID'),
+                        onPressed: () {
+                          showDialog<void>(
+                            context: context,
+                            builder: (cont) {
+                              return FamilyIDWidget(famID: famID!);
+                            }
+                          );
+                        },
                       ),
                     )
                   ]
@@ -150,5 +185,47 @@ class AccountPageState extends State<AccountPage> {
       );
     }
 
+  }
+}
+
+class FamilyIDWidget extends StatefulWidget {
+  final String famID;
+
+  const FamilyIDWidget({Key? key, required this.famID}) : super(key: key);
+
+  @override
+  State<FamilyIDWidget> createState() => _FamilyIDWidgetState();
+}
+
+class _FamilyIDWidgetState extends State<FamilyIDWidget> {
+  IconData _curIcon = Icons.copy;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Center(child: Text('Family ID', style: TextStyle(fontWeight: FontWeight.bold))),
+      content: Row(
+        children: [
+          Flexible(
+            flex: 1,
+            child: Container(
+                decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey)
+                ),
+                child: Text('73WakrfVbNJBaAmhQtEeDv', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30))
+            ),
+          ),
+          IconButton(
+              icon: Icon(_curIcon, size: 30),
+              onPressed: (){
+                setState(() {
+                  _curIcon = FontAwesomeIcons.clipboardCheck;
+                  Clipboard.setData(ClipboardData(text: widget.famID));
+                });
+              }
+          )
+        ],
+      ),
+    );
   }
 }
