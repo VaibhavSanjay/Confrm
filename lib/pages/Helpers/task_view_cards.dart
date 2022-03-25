@@ -372,6 +372,7 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
         itemCount: _taskData.length,
         itemBuilder: (BuildContext context, int i) {
           return Card(
+            elevation: 5,
             color: _taskData[i].color,
             child: Column(
               mainAxisSize: MainAxisSize.min,

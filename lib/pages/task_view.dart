@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:core';
 import 'package:family_tasks/Services/database.dart';
 import 'package:flutter/material.dart';
@@ -34,14 +33,14 @@ class TaskViewPageState extends State<TaskViewPage> {
   List<TaskData> _archivedTaskData = [];
   final double _statusIconSize = 30;
   late final List<Reaction<Status>> _statusCardReactions;
-  DatabaseService ds = DatabaseService('100');
-  late Stream<FamilyTaskData> stream;
+  static late DatabaseService ds;
+  static late Stream<FamilyTaskData> stream;
+  static late String? famID;
+  static bool setID = false;
 
   @override
   void initState() {
     super.initState();
-
-    stream = ds.taskDataForFamily;
 
     _statusCardReactions = List<Reaction<Status>>.generate(
         Status.values.length,
@@ -64,6 +63,15 @@ class TaskViewPageState extends State<TaskViewPage> {
           );
         }
     );
+  }
+
+  static void setFamID(String? ID) {
+    famID = ID;
+    setID = true;
+    if (famID != null) {
+      ds = DatabaseService(famID!);
+      stream = ds.taskDataForFamily;
+    }
   }
 
   void addTask() {
@@ -122,6 +130,7 @@ class TaskViewPageState extends State<TaskViewPage> {
       child: Hero(
         tag: i,
         child: Card(
+          elevation: 5,
           color: _taskData[i].color,
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -217,64 +226,74 @@ class TaskViewPageState extends State<TaskViewPage> {
        So we must remake the list of task cards based on the list of task data.
      */
 
-    return StreamBuilder<FamilyTaskData>(
-      stream: stream,
-      builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
-        if (snapshot.hasError) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: const [
-              Icon(Icons.error_outline, size: 100),
-              Text('Error!', style: TextStyle(fontSize: 30))
-            ]
-          );
-        } else {
-          switch (snapshot.connectionState) {
-            case ConnectionState.none:
-            case ConnectionState.waiting:
-              if (_taskData.isEmpty) {
-                return const Center(
-                    child: SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: CircularProgressIndicator(),
-                    )
-                );
-              } else {
-                List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
-                return Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                  child: Column(
+    if (setID) {
+      return famID != null ? StreamBuilder<FamilyTaskData>(
+          stream: stream,
+          builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
+            if (snapshot.hasError) {
+              return Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.error_outline, size: 100),
+                    Text('Error!', style: TextStyle(fontSize: 30))
+                  ]
+              );
+            } else {
+              switch (snapshot.connectionState) {
+                case ConnectionState.none:
+                case ConnectionState.waiting:
+                  if (_taskData.isEmpty) {
+                    return const Center(
+                        child: SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: CircularProgressIndicator(),
+                        )
+                    );
+                  } else {
+                    List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
+                    return Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: tasks,
+                      ),
+                    );
+                  }
+                case ConnectionState.active:
+                  _taskData = snapshot.data == null ? [] : snapshot.data!.tasks;
+                  _archivedTaskData = snapshot.data == null ? [] : snapshot.data!.archive;
+                  List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
+                  return ReorderableColumn(
                     crossAxisAlignment: CrossAxisAlignment.center,
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                     children: tasks,
-                  ),
-                );
+                    onReorder: (int oldIndex, int newIndex) {
+                      setState(() {
+                        // Remove task and add it back in appropriate position
+                        TaskData task = _taskData.removeAt(oldIndex);
+                        _taskData.insert(newIndex, task);
+                        ds.updateTaskData(_taskData);
+                      });
+                    },
+                    needsLongPressDraggable: false,
+                  );
+                case ConnectionState.done:
+                  return const Center(
+                      child: Text('Connection Closed', style: TextStyle(fontSize: 30))
+                  );
               }
-            case ConnectionState.active:
-              _taskData = snapshot.data == null ? [] : snapshot.data!.tasks;
-              _archivedTaskData = snapshot.data == null ? [] : snapshot.data!.archive;
-              List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
-              return ReorderableColumn(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                children: tasks,
-                onReorder: (int oldIndex, int newIndex) {
-                  setState(() {
-                    // Remove task and add it back in appropriate position
-                    TaskData task = _taskData.removeAt(oldIndex);
-                    _taskData.insert(newIndex, task);
-                    ds.updateTaskData(_taskData);
-                  });
-                },
-                needsLongPressDraggable: false,
-              );
-            case ConnectionState.done:
-              return const Center(
-                child: Text('Connection Closed', style: TextStyle(fontSize: 30))
-              );
+            }
           }
-        }
-      }
-    );
+      ) : const Text('Please set ID');
+    } else {
+      return const Center(
+          child: SizedBox(
+            width: 60,
+            height: 60,
+            child: CircularProgressIndicator(),
+          )
+      );
+    }
   }
 }

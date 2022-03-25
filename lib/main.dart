@@ -3,6 +3,7 @@ import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
 import 'package:flutter/material.dart';
 import 'package:family_tasks/pages/account.dart';
 import 'package:family_tasks/pages/task_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,14 +56,30 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final PageController _pageController = PageController();
-  final GlobalKey<TaskViewPageState> _keyTaskView = GlobalKey();
-  late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView), const AccountPage()];
+  final GlobalKey<TaskViewPageState> _keyTaskView = GlobalKey(), _keyAccount = GlobalKey();
+  late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView), AccountPage(key: _keyAccount)];
   int _pageIndex = 0;
+  late SharedPreferences prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializePreference().whenComplete(() {
+      prefs.setString('famID', '100');
+      TaskViewPageState.setFamID(prefs.getString('famID'));
+      AccountPageState.setFamID(prefs.getString('famID'));
+      setState((){});
+    });
+  }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _initializePreference() async{
+    prefs = await SharedPreferences.getInstance();
   }
 
   void _onPageChanged(int index) {
