@@ -22,18 +22,23 @@ class TaskData {
   late ColorSwatch color;
   late Status status;
   late DateTime due;
+  late DateTime archived;
 
   TaskData({this.name = 'New Task', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
-    this.status = Status.start, DateTime? due}) : due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
+    this.status = Status.start, DateTime? due, DateTime? archived}) {
+      this.due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
+      this.archived = archived ?? DateTime(2101);
+    }
 
-  TaskData.fromTaskData(TaskData td) {
-    name = td.name;
-    taskType = td.taskType;
-    desc = td.desc;
-    color = td.color;
-    status = td.status;
-    due = td.due;
-  }
+    TaskData.fromTaskData(TaskData td) {
+      name = td.name;
+      taskType = td.taskType;
+      desc = td.desc;
+      color = td.color;
+      status = td.status;
+      due = td.due;
+      archived = td.archived;
+    }
 
 }
 

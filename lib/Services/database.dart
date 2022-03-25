@@ -40,6 +40,7 @@ class DatabaseService {
               status: Status.values[data['archive'][index]['status']],
               due: (data['archive'][index]['due'] as Timestamp).toDate(),
               color: availableColors[data['archive'][index]['color']],
+              archived: (data['archive'][index]['archived'] as Timestamp).toDate()
             )
         ),
         name: data['name']
@@ -57,8 +58,6 @@ class DatabaseService {
         'color': availableColors.indexOf(td.color),
       }).toList()
     });
-
-
   }
 
   Future<void> updateArchiveData(List<TaskData> taskData) async {
@@ -71,6 +70,7 @@ class DatabaseService {
         'status': Status.values.indexOf(td.status),
         'due': Timestamp.fromDate(td.due),
         'color': availableColors.indexOf(td.color),
+        'archived': Timestamp.fromDate(td.archived)
       }).toList()
     });
   }

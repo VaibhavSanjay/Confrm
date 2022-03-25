@@ -111,7 +111,7 @@ class TaskViewPageState extends State<TaskViewPage> {
 
   void _archiveTask(int index) {
     if (index >= 0) {
-      _archivedTaskData.add(_taskData.removeAt(index));
+      _archivedTaskData.add(_taskData.removeAt(index)..archived = DateTime.now().toUtc());
       ds.updateTaskData(_taskData);
       ds.updateArchiveData(_archivedTaskData);
     }
@@ -188,11 +188,18 @@ class TaskViewPageState extends State<TaskViewPage> {
   }
 
   Widget createArchiveCardList(EdgeInsets padding) {
+    DateTime hourAgo = DateTime.now().toUtc().subtract(const Duration(hours: 1));
+    for (int i = 0; i < _archivedTaskData.length; i++) {
+      if (!_archivedTaskData[i].archived.isAfter(hourAgo)) {
+        _archivedTaskData.removeAt(i);
+      }
+    }
+    ds.updateArchiveData(_archivedTaskData);
     return ArchiveTaskData(
         padding: padding,
         archivedTasks: _archivedTaskData,
         onUnarchive: (int i) {
-          _taskData.add(_archivedTaskData.removeAt(i)..status = Status.inProgress);
+          _taskData.add(_archivedTaskData.removeAt(i)..status = Status.inProgress..archived = DateTime(2101));
           ds.updateTaskData(_taskData);
           ds.updateArchiveData(_archivedTaskData);
         },
