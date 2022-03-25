@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -342,12 +341,14 @@ class _EditTaskDataState extends State<EditTaskData> {
 
 class ArchiveTaskData extends StatefulWidget {
   final EdgeInsets padding;
-  final void Function(int?) onExit;
+  final void Function(int) onUnarchive;
+  final void Function(int) onDelete;
   final List<TaskData> archivedTasks;
   final Stream<FamilyTaskData> stream;
 
   const ArchiveTaskData({Key? key, this.padding = const EdgeInsets.all(0),
-    required this.archivedTasks, required this.onExit, required this.stream}) : super(key: key);
+    required this.archivedTasks, required this.onUnarchive, required this.onDelete,
+    required this.stream}) : super(key: key);
 
   @override
   State<ArchiveTaskData> createState() => _ArchiveTaskDataState();
@@ -366,6 +367,7 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
   Widget build(BuildContext context) {
     Widget _buildList() {
       return ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         itemCount: _taskData.length,
         itemBuilder: (BuildContext context, int i) {
@@ -379,7 +381,40 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
                     title: Text(_taskData[i].name), // Name of task
                     subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
                         '${DateFormat('h:mm a').format(_taskData[i].due.toLocal())}'), // Due date
-                    trailing: const Icon(Icons.outbox)
+                    trailing: ReactionButton<String>(
+                      boxPosition: Position.BOTTOM,
+                      boxElevation: 10,
+                      onReactionChanged: (String? value) {
+                        if (value == 'unarchive') {
+                          widget.onUnarchive(i);
+                        } else if (value == 'delete') {
+                          widget.onDelete(i);
+                        }
+                      },
+                      initialReaction: Reaction<String>(
+                          icon: const Icon(Icons.more_vert),
+                          value: 'edit'
+                      ),
+                      reactions: [
+                        Reaction<String>(
+                            previewIcon: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                child: const Icon(Icons.outbox, size: 30)
+                            ),
+                            icon: const SizedBox.shrink(),
+                            value: 'unarchive'
+                        ),
+                        Reaction<String>(
+                            previewIcon: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                child: const Icon(Icons.delete_forever, size: 30)
+                            ),
+                            icon: const SizedBox.shrink(),
+                            value: 'delete'
+                        )
+                      ],
+                      boxDuration: const Duration(milliseconds: 100),
+                    ),
                 ),
               ],
             ),
@@ -397,7 +432,10 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text('Archived', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 40)),
+                    Container(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: const Text('Archived', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 40))
+                    ),
                     StreamBuilder<FamilyTaskData>(
                       stream: widget.stream,
                       initialData: FamilyTaskData(archive: widget.archivedTasks),

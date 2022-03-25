@@ -67,10 +67,8 @@ class TaskViewPageState extends State<TaskViewPage> {
   }
 
   void addTask() {
-    setState(() {
-      _taskData.add(TaskData());
-      ds.updateTaskData(_taskData);
-    });
+    _taskData.add(TaskData());
+    ds.updateTaskData(_taskData);
   }
 
   // A helper function to get the icon data based on a task type
@@ -111,6 +109,14 @@ class TaskViewPageState extends State<TaskViewPage> {
     }
   }
 
+  void _archiveTask(int index) {
+    if (index >= 0) {
+      _archivedTaskData.add(_taskData.removeAt(index));
+      ds.updateTaskData(_taskData);
+      ds.updateArchiveData(_archivedTaskData);
+    }
+  }
+
   Widget _createTaskCard(BuildContext context, int i) {
     return InkWell(
       child: Hero(
@@ -130,7 +136,11 @@ class TaskViewPageState extends State<TaskViewPage> {
                   boxElevation: 10,
                   onReactionChanged: (Status? value) {
                     _taskData[i].status = value ?? Status.inProgress;
-                    ds.updateTaskData(_taskData);
+                    if (value == Status.complete) {
+                      _archiveTask(i);
+                    } else {
+                      ds.updateTaskData(_taskData);
+                    }
                   },
                   initialReaction: Reaction<Status>(
                       icon: Icon(
@@ -156,11 +166,17 @@ class TaskViewPageState extends State<TaskViewPage> {
             padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/6, left: 30, right: 30, bottom: MediaQuery.of(context).size.height/6),
             onExit: (TaskData? data) {
               if (data != null) {
-                _taskData[i] = TaskData.fromTaskData(data);
+                if (data.status == Status.complete) {
+                  _archiveTask(i);
+                } else {
+                  _taskData[i] = TaskData.fromTaskData(data);
+                  ds.updateTaskData(_taskData);
+                }
               } else {
                 _taskData.removeAt(i);
+                ds.updateTaskData(_taskData);
               }
-              ds.updateTaskData(_taskData);
+
               Navigator.of(context).pop();
               setState((){});
             },
@@ -172,7 +188,20 @@ class TaskViewPageState extends State<TaskViewPage> {
   }
 
   Widget createArchiveCardList(EdgeInsets padding) {
-    return ArchiveTaskData(padding: padding, archivedTasks: _archivedTaskData, onExit:(x){}, stream: stream);
+    return ArchiveTaskData(
+        padding: padding,
+        archivedTasks: _archivedTaskData,
+        onUnarchive: (int i) {
+          _taskData.add(_archivedTaskData.removeAt(i)..status = Status.inProgress);
+          ds.updateTaskData(_taskData);
+          ds.updateArchiveData(_archivedTaskData);
+        },
+        onDelete: (int i) {
+          _archivedTaskData.removeAt(i);
+          ds.updateArchiveData(_archivedTaskData);
+        },
+        stream: stream
+    );
   }
 
   @override
