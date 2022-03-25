@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/family_task_data.dart';
+import 'constants.dart';
 
 // A helper function to get the icon data based on a task type
 IconData _getIconForTaskType(TaskType tt) {
@@ -59,12 +63,9 @@ class EditTaskData extends StatefulWidget {
 
 class _EditTaskDataState extends State<EditTaskData> {
   final double _editIconSize = 50;
-  final List<String> daysOfWeek = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   late TaskData _newTask;
   late final List<Reaction<Status>> _statusReactions;
   late final List<Reaction<TaskType>> _taskTypeReactions;
-  final List<ColorSwatch> _availableColors = [Colors.red, Colors.orange, Colors.yellow, Colors.green,
-    Colors.blue, Colors.indigo, Colors.purple, Colors.grey];
 
   @override
   void initState() {
@@ -245,7 +246,7 @@ class _EditTaskDataState extends State<EditTaskData> {
                                         ),
                                         initialValue: _newTask.name,
                                         maxLength: 30,
-                                        onFieldSubmitted: (String? value) {
+                                        onChanged: (String? value) {
                                           _newTask.name = value ?? '';
                                         },
                                       ),
@@ -270,12 +271,13 @@ class _EditTaskDataState extends State<EditTaskData> {
                             )
                         ),
                         MaterialColorPicker(
+                            physics: const NeverScrollableScrollPhysics(),
                             selectedColor: _newTask.color,
                             allowShades: false,
                             onMainColorChange: (newColor) {
                               _newTask.color = newColor ?? Colors.grey;
                             },
-                            colors: _availableColors
+                            colors: availableColors
                         ),
                         Row(
                             mainAxisAlignment: MainAxisAlignment.end,
@@ -295,8 +297,36 @@ class _EditTaskDataState extends State<EditTaskData> {
                               TextButton(
                                   child: const Text('Cancel'),
                                   onPressed: () {
-                                    widget.onExit(null);
+                                    widget.onExit(widget.taskData);
                                   }
+                              ),
+                              TextButton(
+                                  onPressed: () async {
+                                    showDialog<void>(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: const Text('Delete Task', style: TextStyle(fontWeight: FontWeight.bold)),
+                                          content: const Text('Are you sure you want to delete this task?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              child: const Text('Cancel')
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                                widget.onExit(null);
+                                              },
+                                              child: const Text('Delete')
+                                            )
+                                          ]
+                                        );
+                                      }
+                                    );
+                                  },
+                                  child: const Text('Delete')
                               )
                             ]
                         ),
@@ -309,3 +339,106 @@ class _EditTaskDataState extends State<EditTaskData> {
     );
   }
 }
+
+class ArchiveTaskData extends StatefulWidget {
+  final EdgeInsets padding;
+  final void Function(int?) onExit;
+  final List<TaskData> archivedTasks;
+  final Stream<FamilyTaskData> stream;
+
+  const ArchiveTaskData({Key? key, this.padding = const EdgeInsets.all(0),
+    required this.archivedTasks, required this.onExit, required this.stream}) : super(key: key);
+
+  @override
+  State<ArchiveTaskData> createState() => _ArchiveTaskDataState();
+}
+
+class _ArchiveTaskDataState extends State<ArchiveTaskData> {
+  late List<TaskData> _taskData;
+
+  @override
+  void initState() {
+    super.initState();
+    _taskData = widget.archivedTasks;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget _buildList() {
+      return ListView.builder(
+        shrinkWrap: true,
+        itemCount: _taskData.length,
+        itemBuilder: (BuildContext context, int i) {
+          return Card(
+            color: _taskData[i].color,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                ListTile(
+                    leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
+                    title: Text(_taskData[i].name), // Name of task
+                    subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
+                        '${DateFormat('h:mm a').format(_taskData[i].due.toLocal())}'), // Due date
+                    trailing: const Icon(Icons.outbox)
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+
+    return Container(
+      padding: widget.padding,
+      child: Hero(
+        tag: 'archive',
+        child: Card(
+            child: SingleChildScrollView(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text('Archived', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 40)),
+                    StreamBuilder<FamilyTaskData>(
+                      stream: widget.stream,
+                      initialData: FamilyTaskData(archive: widget.archivedTasks),
+                      builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
+                        if (snapshot.hasError) {
+                          return Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.error_outline, size: 100),
+                                Text('Error!', style: TextStyle(fontSize: 30))
+                              ]
+                          );
+                        } else {
+                          switch (snapshot.connectionState) {
+                            case ConnectionState.none:
+                              return const Center(
+                                  child: SizedBox(
+                                    width: 60,
+                                    height: 60,
+                                    child: CircularProgressIndicator(),
+                                  )
+                              );
+                            case ConnectionState.waiting:
+                              return _buildList();
+                            case ConnectionState.active:
+                              _taskData = snapshot.data == null ? [] : snapshot.data!.archive;
+                              return _buildList();
+                            case ConnectionState.done:
+                              return const Center(
+                                  child: Text('Connection Closed', style: TextStyle(fontSize: 30))
+                              );
+                          }
+                        }
+                      }
+                    )
+                  ]
+              ),
+            )
+        ),
+      )
+    );
+  }
+}
+

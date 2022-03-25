@@ -1,4 +1,5 @@
 import 'package:family_tasks/Services/database.dart';
+import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
 import 'package:flutter/material.dart';
 import 'package:family_tasks/pages/account.dart';
 import 'package:family_tasks/pages/task_view.dart';
@@ -54,7 +55,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final PageController _pageController = PageController();
-  final List<Widget> _screens = [const TaskViewPage(), const AccountPage()];
+  final GlobalKey<TaskViewPageState> _keyTaskView = GlobalKey();
+  late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView), const AccountPage()];
   int _pageIndex = 0;
 
   @override
@@ -79,6 +81,31 @@ class _MyHomePageState extends State<MyHomePage> {
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(widget.title),
+        actions: [
+          Hero(
+            tag: 'archive',
+            child: Material(
+              color: Colors.transparent,
+              child: IconButton(
+                icon: const Icon(Icons.inbox),
+                onPressed: () {
+                  Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                    if (_keyTaskView.currentState != null) {
+                      return _keyTaskView.currentState!.createArchiveCardList(
+                          EdgeInsets.only(top: MediaQuery.of(context).size.height/6,
+                              left: 30,
+                              right: 30,
+                              bottom: MediaQuery.of(context).size.height/6
+                          )
+                      );
+                    }
+                    return const Text('yep');
+                  }));
+                }
+              ),
+            ),
+          )
+        ]
       ),
       body: PageView(
         controller: _pageController,
@@ -86,7 +113,11 @@ class _MyHomePageState extends State<MyHomePage> {
         onPageChanged: _onPageChanged,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {  },
+        onPressed: () {
+          if (_keyTaskView.currentState != null) {
+            _keyTaskView.currentState!.addTask();
+          }
+        },
         child: const Icon(Icons.add)
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,

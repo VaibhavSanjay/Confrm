@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:core';
 import 'package:family_tasks/Services/database.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:family_tasks/models/family_task_data.dart';
 
+import 'Helpers/constants.dart';
 import 'Helpers/hero_dialogue_route.dart';
 import 'Helpers/task_view_cards.dart';
 
@@ -24,19 +26,22 @@ class TaskViewPage extends StatefulWidget {
 
 
   @override
-  State<TaskViewPage> createState() => _TaskViewPageState();
+  State<TaskViewPage> createState() => TaskViewPageState();
 }
 
-class _TaskViewPageState extends State<TaskViewPage> {
+class TaskViewPageState extends State<TaskViewPage> {
   List<TaskData> _taskData = [];
+  List<TaskData> _archivedTaskData = [];
   final double _statusIconSize = 30;
   late final List<Reaction<Status>> _statusCardReactions;
-  final List<String> daysOfWeek = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   DatabaseService ds = DatabaseService('100');
+  late Stream<FamilyTaskData> stream;
 
   @override
   void initState() {
     super.initState();
+
+    stream = ds.taskDataForFamily;
 
     _statusCardReactions = List<Reaction<Status>>.generate(
         Status.values.length,
@@ -59,6 +64,13 @@ class _TaskViewPageState extends State<TaskViewPage> {
           );
         }
     );
+  }
+
+  void addTask() {
+    setState(() {
+      _taskData.add(TaskData());
+      ds.updateTaskData(_taskData);
+    });
   }
 
   // A helper function to get the icon data based on a task type
@@ -145,8 +157,10 @@ class _TaskViewPageState extends State<TaskViewPage> {
             onExit: (TaskData? data) {
               if (data != null) {
                 _taskData[i] = TaskData.fromTaskData(data);
-                ds.updateTaskData(_taskData);
+              } else {
+                _taskData.removeAt(i);
               }
+              ds.updateTaskData(_taskData);
               Navigator.of(context).pop();
               setState((){});
             },
@@ -157,6 +171,10 @@ class _TaskViewPageState extends State<TaskViewPage> {
     );
   }
 
+  Widget createArchiveCardList(EdgeInsets padding) {
+    return ArchiveTaskData(padding: padding, archivedTasks: _archivedTaskData, onExit:(x){}, stream: stream);
+  }
+
   @override
   Widget build(BuildContext context) {
     /* This widget is rebuilt on every reorder.
@@ -164,7 +182,7 @@ class _TaskViewPageState extends State<TaskViewPage> {
      */
 
     return StreamBuilder<FamilyTaskData>(
-      stream: ds.taskDataForFamily,
+      stream: stream,
       builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
         if (snapshot.hasError) {
           return Column(
@@ -197,8 +215,8 @@ class _TaskViewPageState extends State<TaskViewPage> {
                 );
               }
             case ConnectionState.active:
-              print(Colors.green == Colors.green);
               _taskData = snapshot.data == null ? [] : snapshot.data!.tasks;
+              _archivedTaskData = snapshot.data == null ? [] : snapshot.data!.archive;
               List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
               return ReorderableColumn(
                 crossAxisAlignment: CrossAxisAlignment.center,

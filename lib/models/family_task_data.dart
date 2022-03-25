@@ -23,8 +23,8 @@ class TaskData {
   late Status status;
   late DateTime due;
 
-  TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
-    this.status = Status.inProgress, DateTime? due}) : due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
+  TaskData({this.name = 'New Task', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
+    this.status = Status.start, DateTime? due}) : due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
 
   TaskData.fromTaskData(TaskData td) {
     name = td.name;
@@ -39,7 +39,8 @@ class TaskData {
 
 class FamilyTaskData {
   final List<TaskData> tasks;
+  final List<TaskData> archive;
   final String name;
 
-  FamilyTaskData({this.tasks = const [], this.name = 'New Family'});
+  FamilyTaskData({this.tasks = const [], this.name = 'New Family', this.archive = const []});
 }
