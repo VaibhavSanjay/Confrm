@@ -41,6 +41,7 @@ dependencies:
   cloud_firestore: ^3.1.10
   flutter_material_color_picker: ^1.1.0+2
   shared_preferences: ^2.0.13
+  flutter_speed_dial: ^5.0.0+1
 
 dev_dependencies:
   flutter_test:

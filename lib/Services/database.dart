@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import '../pages/Helpers/constants.dart';
 
 class DatabaseService {
-  final String famID;
+  final String? famID;
   DatabaseService(this.famID);
 
   final CollectionReference taskDataCollection = FirebaseFirestore.instance.collection('family_tasks');
@@ -48,7 +48,7 @@ class DatabaseService {
   }
 
   Future<void> updateTaskData(List<TaskData> taskData) async {
-    return await taskDataCollection.doc(famID).update({
+    await taskDataCollection.doc(famID).update({
       'data': taskData.map((td) => {
         'name': td.name,
         'desc': td.desc,
@@ -61,7 +61,7 @@ class DatabaseService {
   }
 
   Future<void> updateArchiveData(List<TaskData> taskData) async {
-    return await taskDataCollection.doc(famID).update({
+    await taskDataCollection.doc(famID).update({
       'archive': taskData.map((td) =>
       {
         'name': td.name,
@@ -73,6 +73,18 @@ class DatabaseService {
         'archived': Timestamp.fromDate(td.archived)
       }).toList()
     });
+  }
+
+  Future<String> addNewFamily(String name) async {
+    return (await taskDataCollection.add({
+      'name': name,
+      'data': [],
+      'archive': []
+    })).id;
+  }
+
+  Future<bool> famExists(String name) async {
+    return (await taskDataCollection.doc(name).get()).exists;
   }
 
 }

@@ -8,16 +8,9 @@ import '../Services/database.dart';
 import '../models/family_task_data.dart';
 
 class AccountPage extends StatefulWidget {
-  const AccountPage({Key? key}) : super(key: key);
+  const AccountPage({Key? key, required this.onJoinOrCreate}) : super(key: key);
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
+  final Function(String famID) onJoinOrCreate;
 
 
   @override
@@ -29,27 +22,32 @@ class AccountPageState extends State<AccountPage> {
   static bool setID = false;
   static late DatabaseService ds;
   static late Stream<FamilyTaskData> stream;
+  String _input = '';
+  final _formKey = GlobalKey<FormState>();
+  bool _foundFamily = false;
 
   static void setFamID(String? ID) {
     famID = ID;
     setID = true;
+    ds = DatabaseService(famID);
     if (famID != null) {
-      ds = DatabaseService(famID!);
       stream = ds.taskDataForFamily;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget _getButton(IconData icon, String text) {
-      return SizedBox(
-        width: 205,
+    Widget _getButton(IconData icon, String text, Function() onPressed) {
+      return Container(
+        margin: const EdgeInsets.only(right: 20, left: 10),
         child: TextButton(
-            onPressed: (){},
+            onPressed: onPressed,
             child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                      padding: const EdgeInsets.only(right: 30),
+                      padding: const EdgeInsets.only(right: 20),
                       child: Icon(icon, size: 40)
                   ),
                   Text(text, style: const TextStyle(fontSize: 40))
@@ -62,15 +60,142 @@ class AccountPageState extends State<AccountPage> {
     if (setID) {
       return famID == null ? Column(
           children: [
-            const Text('Organize your Family!', style: TextStyle(fontSize: 30)),
             Container(
-                padding: const EdgeInsets.only(top: 30),
+              padding: const EdgeInsets.all(10),
+              child: Card(
+                elevation: 5,
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  child: const Text('Organize your Family!', style: TextStyle(fontSize: 30))
+                )
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(10),
+              child: Card(
+                elevation: 5,
                 child: Column(
                   children: [
-                    _getButton(Icons.add_circle, 'Create'),
-                    _getButton(Icons.people, 'Join')
+                    Container(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: _getButton(
+                        FontAwesomeIcons.personCirclePlus,
+                        'Create',
+                        () {
+                          _input = '';
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return Form(
+                                key: _formKey,
+                                child: AlertDialog(
+                                  title: const Text('Create New Family', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  contentPadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
+                                  content: TextFormField(
+                                    maxLength: 20,
+                                    decoration: const InputDecoration(
+                                        hintText: 'Family Name',
+                                        border: OutlineInputBorder(),
+                                        counterText: ''
+                                    ),
+                                    onChanged: (String? value) {
+                                      _input = value ?? '';
+                                    },
+                                    validator: (String? value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter a family name';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                        child: const Text('Cancel'),
+                                        onPressed: (){
+                                          Navigator.pop(context);
+                                        }
+                                    ),
+                                    TextButton(
+                                      child: const Text('Create'),
+                                      onPressed: () async {
+                                        if (_formKey.currentState!.validate()) {
+                                          Navigator.pop(context);
+                                          famID = await ds.addNewFamily(_input);
+                                          widget.onJoinOrCreate(famID!);
+                                        }
+                                      }
+                                    ),
+                                  ]
+                                ),
+                              );
+                            }
+                          );
+                        }
+                      )
+                    ),
+                    Container(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: const Text('Or', style: TextStyle(fontSize: 30))
+                    ),
+                    Container(
+                      alignment: Alignment.centerRight,
+                      child: _getButton(
+                        Icons.people,
+                        'Join',
+                         () {
+                            _input = '';
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return Form(
+                                  key: _formKey,
+                                  child: AlertDialog(
+                                      title: const Text('Join Family', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      contentPadding: const EdgeInsets.only(top: 20, right: 24, left: 24),
+                                      content: TextFormField(
+                                        maxLength: 30,
+                                        decoration: const InputDecoration(
+                                            hintText: 'Family ID',
+                                            border: OutlineInputBorder(),
+                                            counterText: ''
+                                        ),
+                                        onChanged: (String? value) {
+                                          _input = value ?? '';
+                                        },
+                                        validator: (String? value) {
+                                          return _foundFamily ? null : 'Invalid ID';
+                                        },
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                            child: const Text('Cancel'),
+                                            onPressed: (){
+                                              Navigator.pop(context);
+                                            }
+                                        ),
+                                        TextButton(
+                                            child: const Text('Join'),
+                                            onPressed: () async {
+                                              _foundFamily = await ds.famExists(_input.isEmpty ? '0' : _input);
+                                              if (_formKey.currentState!.validate()) {
+                                                Navigator.pop(context);
+                                                famID = _input;
+                                                widget.onJoinOrCreate(famID!);
+                                              }
+                                            }
+                                        ),
+                                      ]
+                                  ),
+                                );
+                              }
+                            );
+                         }
+                      )
+                    )
                   ],
-                )
+                ),
+              ),
             )
           ]
       ) : StreamBuilder<FamilyTaskData>(
@@ -201,6 +326,7 @@ class _FamilyIDWidgetState extends State<FamilyIDWidget> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Center(child: Text('Family ID', style: TextStyle(fontWeight: FontWeight.bold))),
+      contentPadding: const EdgeInsets.only(top: 20, left: 12, bottom: 24, right: 0),
       content: Row(
         children: [
           Flexible(
@@ -209,7 +335,7 @@ class _FamilyIDWidgetState extends State<FamilyIDWidget> {
                 decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey)
                 ),
-                child: Text('73WakrfVbNJBaAmhQtEeDv', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30))
+                child: Text(widget.famID, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30))
             ),
           ),
           IconButton(

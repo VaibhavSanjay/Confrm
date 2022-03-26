@@ -3,6 +3,8 @@ import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
 import 'package:flutter/material.dart';
 import 'package:family_tasks/pages/account.dart';
 import 'package:family_tasks/pages/task_view.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
@@ -57,24 +59,35 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final PageController _pageController = PageController();
   final GlobalKey<TaskViewPageState> _keyTaskView = GlobalKey(), _keyAccount = GlobalKey();
-  late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView), AccountPage(key: _keyAccount)];
-  int _pageIndex = 0;
+  late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView),
+                                      AccountPage(key: _keyAccount, onJoinOrCreate: _resetFamID)];
   late SharedPreferences prefs;
+  int _curPage = 0;
 
   @override
   void initState() {
     super.initState();
     _initializePreference().whenComplete(() {
-      prefs.setString('famID', '100');
-      TaskViewPageState.setFamID(prefs.getString('famID'));
-      AccountPageState.setFamID(prefs.getString('famID'));
-      if (_keyAccount.currentState != null) {
-        _keyAccount.currentState!.setState((){});
-      }
-      if (_keyTaskView.currentState != null) {
-        _keyTaskView.currentState!.setState((){});
-      }
+      prefs.remove('famID');
+      _setFamID();
     });
+  }
+
+  void _resetFamID(String famID) {
+    prefs.setString('famID', famID);
+    _setFamID();
+    _pageController.animateToPage(0, curve: Curves.easeOut, duration: const Duration(milliseconds: 500));
+  }
+
+  void _setFamID() {
+    TaskViewPageState.setFamID(prefs.getString('famID'));
+    AccountPageState.setFamID(prefs.getString('famID'));
+    if (_keyAccount.currentState != null) {
+      _keyAccount.currentState!.setState((){});
+    }
+    if (_keyTaskView.currentState != null) {
+      _keyTaskView.currentState!.setState((){});
+    }
   }
 
   @override
@@ -89,12 +102,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _onPageChanged(int index) {
     setState(() {
-    _pageIndex = index;
+      _curPage = index;
     });
-  }
-
-  void _onItemTap(int index) {
-    _pageController.jumpToPage(index);
   }
 
   @override
@@ -103,69 +112,67 @@ class _MyHomePageState extends State<MyHomePage> {
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text(widget.title),
-        actions: [
-          Hero(
-            tag: 'archive',
-            createRectTween: (begin, end) {
-              return CustomRectTween(begin: begin, end: end);
-            },
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                width: 100,
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  icon: const Icon(Icons.inbox),
-                  onPressed: () {
-                    Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-                      if (_keyTaskView.currentState != null) {
-                        return _keyTaskView.currentState!.createArchiveCardList(
-                            EdgeInsets.only(top: MediaQuery.of(context).size.height/6,
-                                left: 30,
-                                right: 30,
-                                bottom: MediaQuery.of(context).size.height/6
-                            )
-                        );
-                      }
-                      return const Text('yep');
-                    }));
-                  }
-                ),
-              ),
-            ),
-          )
-        ]
       ),
       body: PageView(
         controller: _pageController,
         children: _screens,
         onPageChanged: _onPageChanged,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (_keyTaskView.currentState != null) {
-            _keyTaskView.currentState!.addTask();
-          }
-        },
-        child: const Icon(Icons.add)
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomNavigationBar(
-        onTap: _onItemTap,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-            backgroundColor: Colors.purple
+      floatingActionButton: SpeedDial(
+        heroTag: 'archive',
+        child: const Icon(FontAwesomeIcons.bars),
+        children: [
+          SpeedDialChild(
+            child: const Icon(Icons.add),
+            backgroundColor: Colors.green,
+            label: 'New Task',
+            onTap: () async {
+              _pageController.animateToPage(0,
+                  curve: Curves.easeOut,
+                  duration: const Duration(milliseconds: 500)
+              );
+              Future.delayed(const Duration(milliseconds: 500)).whenComplete(() {
+                if (_keyTaskView.currentState != null) {
+                  _keyTaskView.currentState!.addTask();
+                }
+              });
+            }
           ),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Account',
-              backgroundColor: Colors.black
+          SpeedDialChild(
+              child: const Icon(Icons.inbox),
+              backgroundColor: Colors.orange,
+              label: 'Archive',
+              onTap: () async {
+                _pageController.animateToPage(0,
+                    curve: Curves.easeOut,
+                    duration: const Duration(milliseconds: 500)
+                );
+                Future.delayed(const Duration(milliseconds: 500)).whenComplete(() {
+                  Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                    if (_keyTaskView.currentState != null) {
+                      return _keyTaskView.currentState!.createArchiveCardList(
+                          EdgeInsets.only(top: MediaQuery.of(context).size.height / 6, left: 30, right: 30,
+                              bottom: MediaQuery.of(context).size.height / 6
+                          )
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }));
+                });
+              }
+          ),
+          SpeedDialChild(
+            backgroundColor: Colors.grey,
+            child: _curPage == 0 ? const Icon(Icons.people) : const Icon(FontAwesomeIcons.clipboard),
+            label: _curPage == 0 ? 'Family' : 'Tasks',
+            onTap: () {
+              _pageController.animateToPage(1 - _curPage,
+                  curve: Curves.easeOut,
+                  duration: const Duration(milliseconds: 500)
+              );
+            }
           )
-        ],
-        currentIndex: _pageIndex,
-        selectedItemColor: Colors.blue
+        ]
       ),
     );
   }
