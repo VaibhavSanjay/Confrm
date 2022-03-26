@@ -345,10 +345,11 @@ class ArchiveTaskData extends StatefulWidget {
   final void Function(int) onDelete;
   final List<TaskData> archivedTasks;
   final Stream<FamilyTaskData> stream;
+  final void Function() onClean;
 
   const ArchiveTaskData({Key? key, this.padding = const EdgeInsets.all(0),
     required this.archivedTasks, required this.onUnarchive, required this.onDelete,
-    required this.stream}) : super(key: key);
+    required this.stream, required this.onClean}) : super(key: key);
 
   @override
   State<ArchiveTaskData> createState() => _ArchiveTaskDataState();
@@ -366,61 +367,65 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
   @override
   Widget build(BuildContext context) {
     Widget _buildList() {
-      return ListView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        itemCount: _taskData.length,
-        itemBuilder: (BuildContext context, int i) {
-          return Card(
-            elevation: 5,
-            color: _taskData[i].color,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                ListTile(
-                    leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
-                    title: Text(_taskData[i].name), // Name of task
-                    subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
-                        '${DateFormat('h:mm a').format(_taskData[i].due.toLocal())}'), // Due date
-                    trailing: ReactionButton<String>(
-                      boxPosition: Position.BOTTOM,
-                      boxElevation: 10,
-                      onReactionChanged: (String? value) {
-                        if (value == 'unarchive') {
-                          widget.onUnarchive(i);
-                        } else if (value == 'delete') {
-                          widget.onDelete(i);
-                        }
-                      },
-                      initialReaction: Reaction<String>(
-                          icon: const Icon(Icons.more_vert),
-                          value: 'edit'
-                      ),
-                      reactions: [
-                        Reaction<String>(
-                            previewIcon: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                child: const Icon(Icons.outbox, size: 30)
-                            ),
-                            icon: const SizedBox.shrink(),
-                            value: 'unarchive'
+      return MediaQuery.removePadding(
+        removeTop: true,
+        context: context,
+        child: ListView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: _taskData.length,
+          itemBuilder: (BuildContext context, int i) {
+            return Card(
+              elevation: 5,
+              color: _taskData[i].color,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  ListTile(
+                      leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
+                      title: Text(_taskData[i].name), // Name of task
+                      subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
+                          '${DateFormat('h:mm a').format(_taskData[i].due.toLocal())}'), // Due date
+                      trailing: ReactionButton<String>(
+                        boxPosition: Position.BOTTOM,
+                        boxElevation: 10,
+                        onReactionChanged: (String? value) {
+                          if (value == 'unarchive') {
+                            widget.onUnarchive(i);
+                          } else if (value == 'delete') {
+                            widget.onDelete(i);
+                          }
+                        },
+                        initialReaction: Reaction<String>(
+                            icon: const Icon(Icons.more_vert),
+                            value: 'edit'
                         ),
-                        Reaction<String>(
-                            previewIcon: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                child: const Icon(Icons.delete_forever, size: 30)
-                            ),
-                            icon: const SizedBox.shrink(),
-                            value: 'delete'
-                        )
-                      ],
-                      boxDuration: const Duration(milliseconds: 100),
-                    ),
-                ),
-              ],
-            ),
-          );
-        },
+                        reactions: [
+                          Reaction<String>(
+                              previewIcon: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                  child: const Icon(Icons.outbox, size: 30)
+                              ),
+                              icon: const SizedBox.shrink(),
+                              value: 'unarchive'
+                          ),
+                          Reaction<String>(
+                              previewIcon: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                  child: const Icon(Icons.delete_forever, size: 30)
+                              ),
+                              icon: const SizedBox.shrink(),
+                              value: 'delete'
+                          )
+                        ],
+                        boxDuration: const Duration(milliseconds: 100),
+                      ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       );
     }
 
@@ -436,6 +441,14 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
                     Container(
                       padding: const EdgeInsets.only(top: 20),
                       child: const Text('Archived', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 40))
+                    ),
+                    TextButton(
+                      style: TextButton.styleFrom(elevation: 5,
+                          backgroundColor: Colors.white,
+                          textStyle: const TextStyle(fontSize: 18)
+                      ),
+                      child: const Text('Clean'),
+                      onPressed: widget.onClean
                     ),
                     StreamBuilder<FamilyTaskData>(
                       stream: widget.stream,

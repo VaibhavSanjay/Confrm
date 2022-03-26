@@ -117,6 +117,8 @@ class TaskViewPageState extends State<TaskViewPage> {
     }
   }
 
+
+
   void _archiveTask(int index) {
     if (index >= 0) {
       _archivedTaskData.add(_taskData.removeAt(index)..archived = DateTime.now().toUtc());
@@ -129,6 +131,9 @@ class TaskViewPageState extends State<TaskViewPage> {
     return InkWell(
       child: Hero(
         tag: i,
+        createRectTween: (begin, end) {
+          return CustomRectTween(begin: begin, end: end);
+        },
         child: Card(
           elevation: 5,
           color: _taskData[i].color,
@@ -197,9 +202,6 @@ class TaskViewPageState extends State<TaskViewPage> {
   }
 
   Widget createArchiveCardList(EdgeInsets padding) {
-    DateTime hourAgo = DateTime.now().toUtc().subtract(const Duration(hours: 1));
-    _archivedTaskData = _archivedTaskData.where((td) => td.archived.isAfter(hourAgo)).toList();
-    ds.updateArchiveData(_archivedTaskData);
     return ArchiveTaskData(
         padding: padding,
         archivedTasks: _archivedTaskData,
@@ -210,6 +212,11 @@ class TaskViewPageState extends State<TaskViewPage> {
         },
         onDelete: (int i) {
           _archivedTaskData.removeAt(i);
+          ds.updateArchiveData(_archivedTaskData);
+        },
+        onClean: () {
+          DateTime hourAgo = DateTime.now().toUtc().subtract(const Duration(hours: 1));
+          _archivedTaskData = _archivedTaskData.where((td) => td.archived.isAfter(hourAgo)).toList();
           ds.updateArchiveData(_archivedTaskData);
         },
         stream: stream

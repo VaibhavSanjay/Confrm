@@ -100,12 +100,9 @@ class AccountPageState extends State<AccountPage> {
                 int taskCount = snapshot.data == null ? 0 : snapshot.data!.tasks.length;
 
                 List<TaskData> archive = snapshot.data == null ? [] : snapshot.data!.archive;
-                DateTime hourAgo = DateTime.now().toUtc().subtract(const Duration(hours: 1));
-                archive = archive.where((td) => td.archived.isAfter(hourAgo)).toList();
-                ds.updateArchiveData(archive);
-
                 int archiveCount = archive.length;
                 DateTime? lastArchived = archiveCount > 0 ? archive[archiveCount - 1].archived.toLocal() : null;
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

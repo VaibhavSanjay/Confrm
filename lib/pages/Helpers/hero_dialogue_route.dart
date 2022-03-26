@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
+
 
 // Grabbed from https://github.com/funwithflutter/flutter_ui_tips/tree/master/tip_003_popup_card
 class HeroDialogRoute<T> extends PageRoute<T> {
@@ -40,4 +42,23 @@ class HeroDialogRoute<T> extends PageRoute<T> {
 
   @override
   String get barrierLabel => 'Popup dialog open';
+}
+
+class CustomRectTween extends RectTween {
+  /// {@macro custom_rect_tween}
+  CustomRectTween({
+    required Rect? begin,
+    required Rect? end,
+  }) : super(begin: begin, end: end);
+
+  @override
+  Rect lerp(double t) {
+    final elasticCurveValue = Curves.easeOut.transform(t);
+    return Rect.fromLTRB(
+      lerpDouble(begin?.left, end?.left, elasticCurveValue) ?? 0,
+      lerpDouble(begin?.top, end?.top, elasticCurveValue) ?? 0,
+      lerpDouble(begin?.right, end?.right, elasticCurveValue) ?? 0,
+      lerpDouble(begin?.bottom, end?.bottom, elasticCurveValue) ?? 0,
+    );
+  }
 }

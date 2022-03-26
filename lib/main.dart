@@ -106,24 +106,31 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           Hero(
             tag: 'archive',
+            createRectTween: (begin, end) {
+              return CustomRectTween(begin: begin, end: end);
+            },
             child: Material(
               color: Colors.transparent,
-              child: IconButton(
-                icon: const Icon(Icons.inbox),
-                onPressed: () {
-                  Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-                    if (_keyTaskView.currentState != null) {
-                      return _keyTaskView.currentState!.createArchiveCardList(
-                          EdgeInsets.only(top: MediaQuery.of(context).size.height/6,
-                              left: 30,
-                              right: 30,
-                              bottom: MediaQuery.of(context).size.height/6
-                          )
-                      );
-                    }
-                    return const Text('yep');
-                  }));
-                }
+              child: Container(
+                width: 100,
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  icon: const Icon(Icons.inbox),
+                  onPressed: () {
+                    Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                      if (_keyTaskView.currentState != null) {
+                        return _keyTaskView.currentState!.createArchiveCardList(
+                            EdgeInsets.only(top: MediaQuery.of(context).size.height/6,
+                                left: 30,
+                                right: 30,
+                                bottom: MediaQuery.of(context).size.height/6
+                            )
+                        );
+                      }
+                      return const Text('yep');
+                    }));
+                  }
+                ),
               ),
             ),
           )
