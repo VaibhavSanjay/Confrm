@@ -60,9 +60,10 @@ class _MyHomePageState extends State<MyHomePage> {
   final PageController _pageController = PageController();
   final GlobalKey<TaskViewPageState> _keyTaskView = GlobalKey(), _keyAccount = GlobalKey();
   late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView),
-                                      AccountPage(key: _keyAccount, onJoinOrCreate: _resetFamID)];
+                                      AccountPage(key: _keyAccount, onJoinOrCreate: _resetFamID, onLeave: _onLeave)];
   late SharedPreferences prefs;
   int _curPage = 0;
+  bool _haveSetFamID = false;
 
   @override
   void initState() {
@@ -79,9 +80,17 @@ class _MyHomePageState extends State<MyHomePage> {
     _pageController.animateToPage(0, curve: Curves.easeOut, duration: const Duration(milliseconds: 500));
   }
 
+  void _onLeave() {
+    prefs.remove('famID');
+    _setFamID();
+    _pageController.animateToPage(0, curve: Curves.easeOut, duration: const Duration(milliseconds: 500));
+  }
+
   void _setFamID() {
-    TaskViewPageState.setFamID(prefs.getString('famID'));
-    AccountPageState.setFamID(prefs.getString('famID'));
+    String? ID = prefs.getString('famID');
+    _haveSetFamID = ID != null;
+    TaskViewPageState.setFamID(ID);
+    AccountPageState.setFamID(ID);
     if (_keyAccount.currentState != null) {
       _keyAccount.currentState!.setState((){});
     }
@@ -113,16 +122,38 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: PageView(
-        controller: _pageController,
-        children: _screens,
-        onPageChanged: _onPageChanged,
+      body: Container(
+        decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              stops: [
+                0.1,
+                0.4,
+                0.6,
+                0.9,
+              ],
+              colors: [
+                Colors.yellow,
+                Colors.red,
+                Colors.indigo,
+                Colors.teal,
+              ],
+            )
+        ),
+        child: PageView(
+          controller: _pageController,
+          children: _screens,
+          onPageChanged: _onPageChanged,
+        ),
       ),
       floatingActionButton: SpeedDial(
+        spaceBetweenChildren: 12,
         heroTag: 'archive',
         child: const Icon(FontAwesomeIcons.bars),
         children: [
           SpeedDialChild(
+            visible: _haveSetFamID,
             child: const Icon(Icons.add),
             backgroundColor: Colors.green,
             label: 'New Task',
@@ -131,7 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   curve: Curves.easeOut,
                   duration: const Duration(milliseconds: 500)
               );
-              Future.delayed(const Duration(milliseconds: 500)).whenComplete(() {
+              Future.delayed(Duration(milliseconds: _curPage == 0 ? 0 : 500)).whenComplete(() {
                 if (_keyTaskView.currentState != null) {
                   _keyTaskView.currentState!.addTask();
                 }
@@ -139,6 +170,7 @@ class _MyHomePageState extends State<MyHomePage> {
             }
           ),
           SpeedDialChild(
+            visible: _haveSetFamID,
               child: const Icon(Icons.inbox),
               backgroundColor: Colors.orange,
               label: 'Archive',
@@ -147,7 +179,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     curve: Curves.easeOut,
                     duration: const Duration(milliseconds: 500)
                 );
-                Future.delayed(const Duration(milliseconds: 500)).whenComplete(() {
+                Future.delayed(Duration(milliseconds: _curPage == 0 ? 0 : 500)).whenComplete(() {
                   Navigator.of(context).push(HeroDialogRoute(builder: (context) {
                     if (_keyTaskView.currentState != null) {
                       return _keyTaskView.currentState!.createArchiveCardList(

@@ -1,5 +1,6 @@
 import 'dart:core';
 import 'package:family_tasks/Services/database.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:reorderables/reorderables.dart';
@@ -264,6 +265,18 @@ class TaskViewPageState extends State<TaskViewPage> {
                   _archivedTaskData = snapshot.data == null ? [] : snapshot.data!.archive;
                   List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
                   return ReorderableColumn(
+                    header: _taskData.isEmpty ? Card(
+                      elevation: 5,
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        child: Column(
+                          children: const [
+                            Text('Create a task!', style: TextStyle(fontSize: 30)),
+                            Text('Click the icon on the bottom right.', style: TextStyle(color: Colors.grey))
+                          ],
+                        ),
+                      )
+                    ) : null,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                     children: tasks,

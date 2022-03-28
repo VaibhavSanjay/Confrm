@@ -75,6 +75,12 @@ class DatabaseService {
     });
   }
 
+  Future<void> updateFamilyName(String name) async {
+    await taskDataCollection.doc(famID).update({
+      'name': name
+    });
+  }
+
   Future<String> addNewFamily(String name) async {
     return (await taskDataCollection.add({
       'name': name,
