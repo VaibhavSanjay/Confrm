@@ -64,6 +64,22 @@ class _MyHomePageState extends State<MyHomePage> {
   late SharedPreferences prefs;
   int _curPage = 0;
   bool _haveSetFamID = false;
+  final BoxDecoration _taskViewGradient = const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        stops: [0.1, 0.3, 0.5, 0.7, 0.9],
+        colors: [Colors.indigoAccent, Colors.blueAccent, Colors.blue, Colors.lightBlue, Colors.lightBlueAccent],
+      )
+  );
+  final BoxDecoration _accountGradient = const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        stops: [0.2, 0.5, 0.7, 0.9],
+        colors: [Colors.indigo, Colors.indigoAccent, Colors.blueAccent, Colors.blue],
+      )
+  );
 
   @override
   void initState() {
@@ -122,25 +138,9 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Container(
-        decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              stops: [
-                0.1,
-                0.4,
-                0.6,
-                0.9,
-              ],
-              colors: [
-                Colors.yellow,
-                Colors.red,
-                Colors.indigo,
-                Colors.teal,
-              ],
-            )
-        ),
+      body: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        decoration: _curPage == 0 ? _taskViewGradient : _accountGradient,
         child: PageView(
           controller: _pageController,
           children: _screens,
