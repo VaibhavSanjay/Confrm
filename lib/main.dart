@@ -105,6 +105,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void _setFamID() {
     String? ID = prefs.getString('famID');
     _haveSetFamID = ID != null;
+    if (!_haveSetFamID) {
+      _pageController.animateToPage(1, duration: const Duration(milliseconds: 500), curve: Curves.easeOut);
+    }
     TaskViewPageState.setFamID(ID);
     AccountPageState.setFamID(ID);
     if (_keyAccount.currentState != null) {
@@ -145,6 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
           controller: _pageController,
           children: _screens,
           onPageChanged: _onPageChanged,
+          physics: _haveSetFamID ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
         ),
       ),
       floatingActionButton: SpeedDial(

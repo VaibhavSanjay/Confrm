@@ -297,7 +297,7 @@ class TaskViewPageState extends State<TaskViewPage> {
               }
             }
           }
-      ) : const Text('Please set ID');
+      ) : const SizedBox.shrink();
     } else {
       return const Center(
           child: SizedBox(
