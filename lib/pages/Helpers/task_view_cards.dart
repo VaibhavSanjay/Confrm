@@ -384,8 +384,8 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
                   ListTile(
                       leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
                       title: Text(_taskData[i].name), // Name of task
-                      subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
-                          '${DateFormat('h:mm a').format(_taskData[i].due.toLocal())}'), // Due date
+                      subtitle: Text('Completed: ${daysOfWeek[_taskData[i].archived.toLocal().weekday]}, '
+                          '${DateFormat('h:mm a').format(_taskData[i].archived.toLocal())}'), // Due date
                       trailing: ReactionButton<String>(
                         boxPosition: Position.BOTTOM,
                         boxElevation: 10,

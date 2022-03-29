@@ -28,6 +28,7 @@ class AccountPageState extends State<AccountPage> {
   bool _foundFamily = false;
 
   static void setFamID(String? ID) {
+    print(ID);
     famID = ID;
     setID = true;
     ds = DatabaseService(famID);
@@ -261,6 +262,7 @@ class AccountPageState extends State<AccountPage> {
                                   title: const Text('Edit Family Name', style: TextStyle(fontWeight: FontWeight.bold)),
                                   contentPadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
                                   content: TextFormField(
+                                    initialValue: name,
                                     maxLength: 20,
                                     decoration: const InputDecoration(
                                         hintText: 'Family Name',
@@ -378,85 +380,93 @@ class AccountPageState extends State<AccountPage> {
                         )
                       ),
                     ) : const SizedBox.shrink(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        TextButton(
-                          style: TextButton.styleFrom(
-                              elevation: 5,
-                              backgroundColor: Colors.white,
-                              textStyle: const TextStyle(fontSize: 20)
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Padding(
-                                padding: EdgeInsets.only(left: 8.0),
-                                child: Icon(Icons.perm_identity),
+                    Container(
+                      alignment: Alignment.centerRight,
+                      padding: EdgeInsets.only(top: lastArchived != null ? 0 : 15, right: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: TextButton(
+                              style: TextButton.styleFrom(
+                                  elevation: 5,
+                                  backgroundColor: Colors.white,
+                                  textStyle: const TextStyle(fontSize: 20)
                               ),
-                              Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Text('Family ID'),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 8.0),
+                                    child: Icon(Icons.perm_identity),
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Text('Family ID'),
+                                  ),
+                                ],
                               ),
-                            ],
+                              onPressed: () {
+                                showDialog<void>(
+                                  context: context,
+                                  builder: (cont) {
+                                    return FamilyIDWidget(famID: famID!);
+                                  }
+                                );
+                              },
+                            ),
                           ),
-                          onPressed: () {
-                            showDialog<void>(
-                              context: context,
-                              builder: (cont) {
-                                return FamilyIDWidget(famID: famID!);
-                              }
-                            );
-                          },
-                        ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                              primary: Colors.white,
-                              elevation: 5,
-                              backgroundColor: Colors.red,
-                              textStyle: const TextStyle(fontSize: 20, color: Colors.white)
+                          TextButton(
+                            style: TextButton.styleFrom(
+                                primary: Colors.white,
+                                elevation: 5,
+                                backgroundColor: Colors.red,
+                                textStyle: const TextStyle(fontSize: 20, color: Colors.white)
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Padding(
+                                  padding: EdgeInsets.only(left: 8.0),
+                                  child: Icon(Icons.exit_to_app, color: Colors.white),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Text('Leave'),
+                                ),
+                              ],
+                            ),
+                            onPressed: () {
+                              showDialog(
+                                  context: context,
+                                  builder: (cont) {
+                                    return AlertDialog(
+                                      title: const Text('Leave Family'),
+                                      content: const Text('Are you sure you want to leave this family?'),
+                                      actions: [
+                                        TextButton(
+                                          child: const Text('Cancel'),
+                                          onPressed: () {
+                                            Navigator.pop(cont);
+                                          },
+                                        ),
+                                        TextButton(
+                                          child: const Text('Confirm'),
+                                          onPressed: () {
+                                            Navigator.pop(cont);
+                                            widget.onLeave();
+                                            setState(() {});
+                                          }
+                                        )
+                                      ]
+                                    );
+                                  }
+                              );
+                            },
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              Padding(
-                                padding: EdgeInsets.only(left: 8.0),
-                                child: Icon(Icons.exit_to_app, color: Colors.white),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child: Text('Leave'),
-                              ),
-                            ],
-                          ),
-                          onPressed: () {
-                            showDialog(
-                                context: context,
-                                builder: (cont) {
-                                  return AlertDialog(
-                                    title: const Text('Leave Family'),
-                                    content: const Text('Are you sure you want to leave this family?'),
-                                    actions: [
-                                      TextButton(
-                                        child: const Text('Cancel'),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                        },
-                                      ),
-                                      TextButton(
-                                        child: const Text('Confirm'),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          widget.onLeave();
-                                        }
-                                      )
-                                    ]
-                                  );
-                                }
-                            );
-                          },
-                        ),
-                      ],
+                        ],
+                      ),
                     )
                   ]
                 );

@@ -20,17 +20,8 @@ class FamilyTasks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Family Tasks',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
@@ -68,16 +59,16 @@ class _MyHomePageState extends State<MyHomePage> {
       gradient: LinearGradient(
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,
-        stops: [0.1, 0.3, 0.5, 0.7, 0.9],
-        colors: [Colors.indigoAccent, Colors.blueAccent, Colors.blue, Colors.lightBlue, Colors.lightBlueAccent],
+        stops: [0.1, 0.3, 0.5, 0.7, 0.95, 0.99],
+        colors: [Colors.indigoAccent, Colors.blueAccent, Colors.blue, Colors.lightBlue, Colors.yellow, Colors.orangeAccent],
       )
   );
   final BoxDecoration _accountGradient = const BoxDecoration(
       gradient: LinearGradient(
         begin: Alignment.topRight,
         end: Alignment.bottomLeft,
-        stops: [0.2, 0.5, 0.7, 0.9],
-        colors: [Colors.indigo, Colors.indigoAccent, Colors.blueAccent, Colors.blue],
+        stops: [0.2, 0.5, 0.7, 0.95, 0.99],
+        colors: [Colors.indigo, Colors.indigoAccent, Colors.blueAccent, Colors.purpleAccent, Colors.purple],
       )
   );
 
@@ -99,7 +90,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void _onLeave() {
     prefs.remove('famID');
     _setFamID();
-    _pageController.animateToPage(0, curve: Curves.easeOut, duration: const Duration(milliseconds: 500));
   }
 
   void _setFamID() {
@@ -110,12 +100,14 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     TaskViewPageState.setFamID(ID);
     AccountPageState.setFamID(ID);
-    if (_keyAccount.currentState != null) {
-      _keyAccount.currentState!.setState((){});
-    }
-    if (_keyTaskView.currentState != null) {
-      _keyTaskView.currentState!.setState((){});
-    }
+    // if (_keyAccount.currentState != null) {
+    //   print('set state');
+    //   _keyAccount.currentState!.setState((){});
+    // }
+    // if (_keyTaskView.currentState != null) {
+    //   _keyTaskView.currentState!.setState((){});
+    // }
+    setState(() {});
   }
 
   @override
@@ -151,13 +143,12 @@ class _MyHomePageState extends State<MyHomePage> {
           physics: _haveSetFamID ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
         ),
       ),
-      floatingActionButton: SpeedDial(
+      floatingActionButton: _haveSetFamID ? SpeedDial(
         spaceBetweenChildren: 12,
         heroTag: 'archive',
         child: const Icon(FontAwesomeIcons.bars),
         children: [
           SpeedDialChild(
-            visible: _haveSetFamID,
             child: const Icon(Icons.add),
             backgroundColor: Colors.green,
             label: 'New Task',
@@ -166,15 +157,18 @@ class _MyHomePageState extends State<MyHomePage> {
                   curve: Curves.easeOut,
                   duration: const Duration(milliseconds: 500)
               );
-              Future.delayed(Duration(milliseconds: _curPage == 0 ? 0 : 500)).whenComplete(() {
+              Future.delayed(Duration(milliseconds: _curPage == 0 ? 0 : 500)).whenComplete(() async {
                 if (_keyTaskView.currentState != null) {
-                  _keyTaskView.currentState!.addTask();
+                  if (! (await _keyTaskView.currentState!.addTask())) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Maximum of 20 tasks reached.')
+                    ));
+                  }
                 }
               });
             }
           ),
           SpeedDialChild(
-            visible: _haveSetFamID,
               child: const Icon(Icons.inbox),
               backgroundColor: Colors.orange,
               label: 'Archive',
@@ -209,7 +203,7 @@ class _MyHomePageState extends State<MyHomePage> {
             }
           )
         ]
-      ),
+      ) : null,
     );
   }
 }

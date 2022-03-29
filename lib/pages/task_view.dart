@@ -75,9 +75,13 @@ class TaskViewPageState extends State<TaskViewPage> {
     }
   }
 
-  void addTask() {
+  Future<bool> addTask() async {
+    if (_taskData.length >= 20) {
+      return false;
+    }
     _taskData.add(TaskData());
-    ds.updateTaskData(_taskData);
+    await ds.updateTaskData(_taskData);
+    return true;
   }
 
   // A helper function to get the icon data based on a task type
@@ -123,6 +127,9 @@ class TaskViewPageState extends State<TaskViewPage> {
   void _archiveTask(int index) {
     if (index >= 0) {
       _archivedTaskData.add(_taskData.removeAt(index)..archived = DateTime.now().toUtc());
+      if (_archivedTaskData.length > 20) {
+        _archivedTaskData.removeAt(0);
+      }
       ds.updateTaskData(_taskData);
       ds.updateArchiveData(_archivedTaskData);
     }
@@ -278,7 +285,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                       )
                     ) : null,
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 25),
                     children: tasks,
                     onReorder: (int oldIndex, int newIndex) {
                       setState(() {
