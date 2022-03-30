@@ -75,15 +75,24 @@ class AccountPageState extends State<AccountPage> {
       return famID == null ? Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Container(
-              padding: const EdgeInsets.only(top: 10),
-              child: Card(
-                elevation: 5,
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  child: const Text('Organize your Family!', style: TextStyle(fontSize: 35))
-                )
-              ),
+            Card(
+              elevation: 5,
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                child: const AutoSizeText(
+                    'Welcome!',
+                    style: TextStyle(
+                      fontSize: 50,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 6.0,
+                          color: Colors.blue
+                        ),
+                      ]
+                    ),
+                    maxLines: 1)
+              )
             ),
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -160,7 +169,7 @@ class AccountPageState extends State<AccountPage> {
                       Container(
                         padding: const EdgeInsets.only(top: 20),
                         child: _getButton(
-                          FontAwesomeIcons.users,
+                          FontAwesomeIcons.peopleRoof,
                           'Join',
                           'If someone already created a group, join it with their ID.',
                            () {
