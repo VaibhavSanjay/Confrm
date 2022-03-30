@@ -126,7 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   TextItem(
                     text: const Text(
-                      'Confrm',
+                      'Confrm!',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -134,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                     space: 8,
-                    startAngle: -90,
+                    startAngle: -87,
                     startAngleAlignment: StartAngleAlignment.center
                   )
                 ],
