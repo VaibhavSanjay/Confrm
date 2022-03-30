@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 import '../Services/database.dart';
 import '../models/family_task_data.dart';
@@ -28,7 +29,6 @@ class AccountPageState extends State<AccountPage> {
   bool _foundFamily = false;
 
   static void setFamID(String? ID) {
-    print(ID);
     famID = ID;
     setID = true;
     ds = DatabaseService(famID);
@@ -250,141 +250,148 @@ class AccountPageState extends State<AccountPage> {
                 DateTime? lastArchived = archiveCount > 0 ? archive[archiveCount - 1].archived.toLocal() : null;
 
                 return Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    InkWell(
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (cont) {
-                            return Form(
-                              key: _formKey,
-                              child: AlertDialog(
-                                  title: const Text('Edit Family Name', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  contentPadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
-                                  content: TextFormField(
-                                    initialValue: name,
-                                    maxLength: 20,
-                                    decoration: const InputDecoration(
-                                        hintText: 'Family Name',
-                                        border: OutlineInputBorder(),
-                                        counterText: ''
+                    Column(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            showDialog(
+                                context: context,
+                                builder: (cont) {
+                                  return Form(
+                                    key: _formKey,
+                                    child: AlertDialog(
+                                        title: const Text('Edit Family Name', style: TextStyle(fontWeight: FontWeight.bold)),
+                                        contentPadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
+                                        content: TextFormField(
+                                          initialValue: name,
+                                          maxLength: 20,
+                                          decoration: const InputDecoration(
+                                              hintText: 'Family Name',
+                                              border: OutlineInputBorder(),
+                                              counterText: ''
+                                          ),
+                                          onChanged: (String? value) {
+                                            _input = value ?? '';
+                                          },
+                                          validator: (String? value) {
+                                            if (value == null || value.isEmpty) {
+                                              return 'Please enter a family name';
+                                            }
+                                            return null;
+                                          },
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                              child: const Text('Cancel'),
+                                              onPressed: (){
+                                                Navigator.pop(context);
+                                              }
+                                          ),
+                                          TextButton(
+                                              child: const Text('Update'),
+                                              onPressed: () async {
+                                                if (_formKey.currentState!.validate()) {
+                                                  Navigator.pop(context);
+                                                  await ds.updateFamilyName(_input);
+                                                }
+                                              }
+                                          ),
+                                        ]
                                     ),
-                                    onChanged: (String? value) {
-                                      _input = value ?? '';
-                                    },
-                                    validator: (String? value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter a family name';
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                        child: const Text('Cancel'),
-                                        onPressed: (){
-                                          Navigator.pop(context);
-                                        }
-                                    ),
-                                    TextButton(
-                                        child: const Text('Update'),
-                                        onPressed: () async {
-                                          if (_formKey.currentState!.validate()) {
-                                            Navigator.pop(context);
-                                            await ds.updateFamilyName(_input);
-                                          }
-                                        }
-                                    ),
-                                  ]
-                              ),
+                                  );
+                                }
                             );
-                          }
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        alignment: Alignment.center,
-                        child: Card(
-                          elevation: 5,
+                          },
                           child: Container(
-                            padding: const EdgeInsets.all(10),
-                            child: Text(name, style: const TextStyle(fontSize: 50))
-                          )
-                        )
-                      ),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                              alignment: Alignment.center,
+                              child: Card(
+                                  elevation: 5,
+                                  child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      child: AutoSizeText(name, style: const TextStyle(fontSize: 40), maxLines: 2)
+                                  )
+                              )
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Card(
+                                    elevation: 5,
+                                    child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              Container(
+                                                  padding: const EdgeInsets.only(top: 10, bottom: 10),
+                                                  child: const Icon(FontAwesomeIcons.clipboard, size: 110)
+                                              ),
+                                              Text('$taskCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold))
+                                            ],
+                                          ),
+                                          Container(
+                                              padding: const EdgeInsets.only(left: 25, right: 25, bottom: 20),
+                                              child: const Text('To Do', style: TextStyle(fontSize: 30))
+                                          ),
+                                        ]
+                                    )
+                                ),
+                                Card(
+                                    elevation: 5,
+                                    child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              Container(
+                                                  padding: const EdgeInsets.only(top: 20),
+                                                  child: const Icon(Icons.inbox, size: 110)
+                                              ),
+                                              Text('$archiveCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold))
+                                            ],
+                                          ),
+                                          Container(
+                                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 20),
+                                              child: const Text('Archived', style: TextStyle(fontSize: 30))
+                                          ),
+                                        ]
+                                    )
+                                )
+                              ]
+                          ),
+                        ),
+                        lastArchived != null ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                          child: Card(
+                              elevation: 5,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+                                child: AutoSizeText('Last Archived: ${archive[0].name}, '
+                                    '${daysOfWeek[lastArchived.weekday]} '
+                                    '${DateFormat('h:mm a').format(lastArchived)}',
+                                    style: const TextStyle(fontSize: 20),
+                                    maxLines: 1,
+                                ),
+                              )
+                          ),
+                        ) : const SizedBox.shrink(),
+
+                      ]
                     ),
                     Container(
-                      padding: const EdgeInsets.only(left: 10, right: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Card(
-                            elevation: 5,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                      child: const Icon(FontAwesomeIcons.clipboard, size: 110)
-                                    ),
-                                    Text('$taskCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold))
-                                  ],
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.only(left: 25, right: 25, bottom: 20),
-                                  child: const Text('To Do', style: TextStyle(fontSize: 30))
-                                ),
-                              ]
-                            )
-                          ),
-                          Card(
-                            elevation: 5,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.only(top: 20),
-                                      child: const Icon(Icons.inbox, size: 110)
-                                    ),
-                                    Text('$archiveCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold))
-                                  ],
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.only(left: 10, right: 10, bottom: 20),
-                                  child: const Text('Archived', style: TextStyle(fontSize: 30))
-                                ),
-                              ]
-                            )
-                          )
-                        ]
-                      ),
-                    ),
-                    lastArchived != null ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-                      child: Card(
-                        elevation: 5,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-                          child: Text('Last Archived: ${archive[0].name}, '
-                              '${daysOfWeek[lastArchived.weekday]} '
-                              '${DateFormat('h:mm a').format(lastArchived)}',
-                              style: const TextStyle(fontSize: 20)
-                          ),
-                        )
-                      ),
-                    ) : const SizedBox.shrink(),
-                    Container(
-                      alignment: Alignment.centerRight,
-                      padding: EdgeInsets.only(top: lastArchived != null ? 0 : 15, right: 10),
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.all(30),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
                             padding: const EdgeInsets.only(bottom: 10),
@@ -409,10 +416,10 @@ class AccountPageState extends State<AccountPage> {
                               ),
                               onPressed: () {
                                 showDialog<void>(
-                                  context: context,
-                                  builder: (cont) {
-                                    return FamilyIDWidget(famID: famID!);
-                                  }
+                                    context: context,
+                                    builder: (cont) {
+                                      return FamilyIDWidget(famID: famID!);
+                                    }
                                 );
                               },
                             ),
@@ -442,24 +449,24 @@ class AccountPageState extends State<AccountPage> {
                                   context: context,
                                   builder: (cont) {
                                     return AlertDialog(
-                                      title: const Text('Leave Family'),
-                                      content: const Text('Are you sure you want to leave this family?'),
-                                      actions: [
-                                        TextButton(
-                                          child: const Text('Cancel'),
-                                          onPressed: () {
-                                            Navigator.pop(cont);
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: const Text('Confirm'),
-                                          onPressed: () {
-                                            Navigator.pop(cont);
-                                            widget.onLeave();
-                                            setState(() {});
-                                          }
-                                        )
-                                      ]
+                                        title: const Text('Leave Family'),
+                                        content: const Text('Are you sure you want to leave this family?'),
+                                        actions: [
+                                          TextButton(
+                                            child: const Text('Cancel'),
+                                            onPressed: () {
+                                              Navigator.pop(cont);
+                                            },
+                                          ),
+                                          TextButton(
+                                              child: const Text('Confirm'),
+                                              onPressed: () {
+                                                Navigator.pop(cont);
+                                                widget.onLeave();
+                                                setState(() {});
+                                              }
+                                          )
+                                        ]
                                     );
                                   }
                               );
@@ -506,7 +513,7 @@ class _FamilyIDWidgetState extends State<FamilyIDWidget> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Center(child: Text('Family ID', style: TextStyle(fontWeight: FontWeight.bold))),
+      title: const Center(child: Text('Copy and send to others!', style: TextStyle(fontWeight: FontWeight.bold))),
       contentPadding: const EdgeInsets.only(top: 20, left: 12, bottom: 24, right: 0),
       content: Row(
         children: [

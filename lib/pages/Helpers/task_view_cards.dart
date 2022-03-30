@@ -136,47 +136,63 @@ class _EditTaskDataState extends State<EditTaskData> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Card(
-                                  elevation: 5,
-                                  child: ReactionButton<Status>(
-                                    boxPosition: Position.TOP,
-                                    boxElevation: 10,
-                                    onReactionChanged: (Status? value) {
-                                      _newTask.status = value ?? Status.inProgress;
-                                    },
-                                    initialReaction: Reaction<Status>(
-                                        icon: Container(
-                                          padding: const EdgeInsets.all(10),
-                                          child: Icon(
-                                              _getIconForStatus(_newTask.status),
-                                              color: _getColorForStatus(_newTask.status),
-                                              size: _editIconSize
-                                          ),
+                                Column(
+                                  children: [
+                                    Card(
+                                      elevation: 5,
+                                      child: ReactionButton<Status>(
+                                        boxPosition: Position.TOP,
+                                        boxElevation: 10,
+                                        onReactionChanged: (Status? value) {
+                                          _newTask.status = value ?? Status.inProgress;
+                                        },
+                                        initialReaction: Reaction<Status>(
+                                            icon: Container(
+                                              padding: const EdgeInsets.all(10),
+                                              child: Icon(
+                                                  _getIconForStatus(_newTask.status),
+                                                  color: _getColorForStatus(_newTask.status),
+                                                  size: _editIconSize
+                                              ),
+                                            ),
+                                            value: _newTask.status
                                         ),
-                                        value: _newTask.status
+                                        reactions: _statusReactions,
+                                        boxDuration: const Duration(milliseconds: 100),
+                                      ),
                                     ),
-                                    reactions: _statusReactions,
-                                    boxDuration: const Duration(milliseconds: 100),
-                                  ),
+                                    Container(
+                                      padding: const EdgeInsets.only(top: 5),
+                                      child: const Text('Progress', style: TextStyle(fontSize: 18))
+                                    )
+                                  ],
                                 ),
-                                Card(
-                                  elevation: 5,
-                                  child: ReactionButton<TaskType>(
-                                    boxPosition: Position.TOP,
-                                    boxElevation: 10,
-                                    onReactionChanged: (TaskType? value) {
-                                      _newTask.taskType = value ?? TaskType.other;
-                                    },
-                                    initialReaction: Reaction<TaskType>(
-                                        icon: Container(
-                                            padding: const EdgeInsets.all(10),
-                                            child: Icon(_getIconForTaskType(_newTask.taskType), size: _editIconSize)
+                                Column(
+                                  children: [
+                                    Card(
+                                      elevation: 5,
+                                      child: ReactionButton<TaskType>(
+                                        boxPosition: Position.TOP,
+                                        boxElevation: 10,
+                                        onReactionChanged: (TaskType? value) {
+                                          _newTask.taskType = value ?? TaskType.other;
+                                        },
+                                        initialReaction: Reaction<TaskType>(
+                                            icon: Container(
+                                                padding: const EdgeInsets.all(10),
+                                                child: Icon(_getIconForTaskType(_newTask.taskType), size: _editIconSize)
+                                            ),
+                                            value: _newTask.taskType
                                         ),
-                                        value: _newTask.taskType
+                                        reactions: _taskTypeReactions,
+                                        boxDuration: const Duration(milliseconds: 100),
+                                      ),
                                     ),
-                                    reactions: _taskTypeReactions,
-                                    boxDuration: const Duration(milliseconds: 100),
-                                  ),
+                                    Container(
+                                      padding: const EdgeInsets.only(top: 5),
+                                      child: const Text('Type', style: TextStyle(fontSize: 18))
+                                    )
+                                  ],
                                 ),
                                 Column(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

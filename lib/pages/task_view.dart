@@ -285,7 +285,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                       )
                     ) : null,
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 25),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                     children: tasks,
                     onReorder: (int oldIndex, int newIndex) {
                       setState(() {
@@ -295,7 +295,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                         ds.updateTaskData(_taskData);
                       });
                     },
-                    needsLongPressDraggable: false,
+                    needsLongPressDraggable: true,
                   );
                 case ConnectionState.done:
                   return const Center(

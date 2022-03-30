@@ -55,30 +55,40 @@ class _MyHomePageState extends State<MyHomePage> {
   late SharedPreferences prefs;
   int _curPage = 0;
   bool _haveSetFamID = false;
-  final BoxDecoration _taskViewGradient = const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topRight,
-        end: Alignment.bottomLeft,
-        stops: [0.1, 0.3, 0.5, 0.7, 0.95, 0.99],
-        colors: [Colors.indigoAccent, Colors.blueAccent, Colors.blue, Colors.lightBlue, Colors.yellow, Colors.orangeAccent],
-      )
-  );
-  final BoxDecoration _accountGradient = const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topRight,
-        end: Alignment.bottomLeft,
-        stops: [0.2, 0.5, 0.7, 0.95, 0.99],
-        colors: [Colors.indigo, Colors.indigoAccent, Colors.blueAccent, Colors.purpleAccent, Colors.purple],
-      )
-  );
+  late BoxDecoration _taskViewGradient;
+  late BoxDecoration _accountGradient;
 
   @override
   void initState() {
     super.initState();
-    _initializePreference().whenComplete(() {
-      prefs.remove('famID');
-      _setFamID();
-    });
+    _taskViewGradient = const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          stops: [0.1, 0.3, 0.5, 0.7, 0.95, 0.99],
+          colors: [Colors.indigoAccent, Colors.blueAccent, Colors.blue, Colors.lightBlue, Colors.yellow, Colors.orangeAccent],
+        ),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(40.0),
+          bottomLeft: Radius.circular(40.0),
+        )
+    );
+    _accountGradient = BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          stops: [0.2, 0.5, 0.7, 0.97, 0.99],
+          colors: [Colors.indigo, Colors.indigoAccent, Colors.blueAccent, Colors.white, Colors.white70],
+        ),
+        borderRadius: BorderRadius.only(
+          topRight: const Radius.circular(40),
+          bottomRight: const Radius.circular(40.0),
+          topLeft: _haveSetFamID ? Radius.zero : const Radius.circular(40.0),
+          bottomLeft: _haveSetFamID ? Radius.zero : const Radius.circular(40.0),
+        )
+    );
+
+    _initializePreference().whenComplete(_setFamID);
   }
 
   void _resetFamID(String famID) {
@@ -100,13 +110,12 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     TaskViewPageState.setFamID(ID);
     AccountPageState.setFamID(ID);
-    // if (_keyAccount.currentState != null) {
-    //   print('set state');
-    //   _keyAccount.currentState!.setState((){});
-    // }
-    // if (_keyTaskView.currentState != null) {
-    //   _keyTaskView.currentState!.setState((){});
-    // }
+    if (_keyAccount.currentState != null) {
+      _keyAccount.currentState!.setState((){});
+    }
+    if (_keyTaskView.currentState != null) {
+      _keyTaskView.currentState!.setState((){});
+    }
     setState(() {});
   }
 
@@ -133,14 +142,41 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: AnimatedContainer(
-        duration: const Duration(milliseconds: 500),
-        decoration: _curPage == 0 ? _taskViewGradient : _accountGradient,
-        child: PageView(
-          controller: _pageController,
-          children: _screens,
-          onPageChanged: _onPageChanged,
-          physics: _haveSetFamID ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          decoration: _curPage == 0 ? const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                stops: [0.1, 0.3, 0.5, 0.7, 0.95, 0.99],
+                colors: [Colors.indigoAccent, Colors.blueAccent, Colors.blue, Colors.lightBlue, Colors.yellow, Colors.orangeAccent],
+              ),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(27),
+                bottomLeft: Radius.circular(27),
+              )
+          ) : BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                stops: [0.2, 0.5, 0.7, 0.97, 0.99],
+                colors: [Colors.indigo, Colors.indigoAccent, Colors.blueAccent, Colors.white, Colors.white70],
+              ),
+              borderRadius: BorderRadius.only(
+                topRight: const Radius.circular(27),
+                bottomRight: const Radius.circular(27),
+                topLeft: _haveSetFamID ? Radius.zero : const Radius.circular(27),
+                bottomLeft: _haveSetFamID ? Radius.zero : const Radius.circular(27),
+              )
+          ),
+          child: PageView(
+            controller: _pageController,
+            children: _screens,
+            onPageChanged: _onPageChanged,
+            physics: _haveSetFamID ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
+          ),
         ),
       ),
       floatingActionButton: _haveSetFamID ? SpeedDial(
