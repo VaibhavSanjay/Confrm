@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:analog_clock/analog_clock.dart';
 
 import '../Services/database.dart';
 import '../models/family_task_data.dart';
@@ -289,7 +290,10 @@ class AccountPageState extends State<AccountPage> {
 
                 List<TaskData> archive = snapshot.data == null ? [] : snapshot.data!.archive;
                 int archiveCount = archive.length;
+
                 DateTime? lastArchived = archiveCount > 0 ? archive[archiveCount - 1].archived.toLocal() : null;
+                Duration? sinceLastArchived = archiveCount > 0 ? DateTime.now().difference(lastArchived!) : null;
+                TaskData? lastTask = archiveCount > 0 ? archive[archiveCount - 1] : null;
 
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -347,27 +351,48 @@ class AccountPageState extends State<AccountPage> {
                             );
                           },
                           child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                              padding: const EdgeInsets.only(left: 20, bottom: 20),
                               alignment: Alignment.center,
-                              child: Card(
+                              child: Material(
                                   elevation: 5,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(
-                                        child: Container(
-                                            padding: const EdgeInsets.all(10),
-                                            child: AutoSizeText(name, style: const TextStyle(fontSize: 40), maxLines: 2)
+                                  color: Colors.transparent,
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                        borderRadius: BorderRadius.only(
+                                          topRight: Radius.circular(27),
+                                        )
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Flexible(
+                                          child: Container(
+                                              padding: const EdgeInsets.all(10),
+                                              child: AutoSizeText(name, textAlign: TextAlign.right, style: const TextStyle(fontSize: 40), maxLines: 2)
+                                          ),
                                         ),
-                                      ),
-                                      Container(padding: const EdgeInsets.only(right: 10), child: const Icon(Icons.edit, size: 40))
-                                    ],
+                                        Container(padding: const EdgeInsets.only(right: 10), child: const Icon(Icons.edit, size: 40))
+                                      ],
+                                    ),
                                   )
                               )
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          transform: Matrix4.translationValues(0, -20, 0),
+                          margin: const EdgeInsets.only(left: 20),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurpleAccent,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.5),
+                                blurRadius: 7,
+                                offset: const Offset(0, -1), // changes position of shadow
+                              ),
+                            ],
+                          ),
                           child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               crossAxisAlignment: CrossAxisAlignment.end,
@@ -419,27 +444,79 @@ class AccountPageState extends State<AccountPage> {
                               ]
                           ),
                         ),
-                        lastArchived != null ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
-                          child: Card(
-                              elevation: 5,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-                                child: AutoSizeText('Last Archived: ${archive[0].name}, '
-                                    '${daysOfWeek[lastArchived.weekday]} '
-                                    '${DateFormat('h:mm a').format(lastArchived)}',
-                                    style: const TextStyle(fontSize: 20),
-                                    maxLines: 1,
+                        lastArchived != null ? Stack(
+                          alignment: Alignment.topCenter,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
+                              child: Card(
+                                  color: lastTask!.color,
+                                  elevation: 5,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 20),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        AnalogClock(
+                                          width: 150,
+                                          height: 150,
+                                          isLive: false,
+                                          showNumbers: true,
+                                          datetime: lastArchived,
+                                          showSecondHand: false,
+                                          showDigitalClock: false,
+                                          textScaleFactor: 2,
+                                        ),
+                                        Flexible(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
+                                            child: AutoSizeText(lastTask.name, maxLines: 3, style: const TextStyle(fontSize: 20), textAlign: TextAlign.right),
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  )
+                              ),
+                            ),
+                            Material(
+                              elevation: 10,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                    'Completed ${sinceLastArchived!.inHours > 0 ? sinceLastArchived.inHours : sinceLastArchived.inMinutes} ${sinceLastArchived.inHours > 0 ? 'hours' : 'minutes'} ago',
+                                    style: const TextStyle(fontSize: 20)
                                 ),
                               )
-                          ),
-                        ) : const SizedBox.shrink(),
+                            )
+                          ],
+                        ) : Card(
+                          elevation: 5,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                Opacity(
+                                  opacity: 0.5,
+                                  child: Icon(FontAwesomeIcons.boxOpen, size: 150)
+                                ),
+                                Column(
+                                  children: [
+                                    Text('Archive Empty', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                                    Text('Complete some Tasks!', style: TextStyle(fontSize: 20))
+                                  ],
+                                )
+                              ],
+                            ),
+                          )
+                        ),
 
                       ]
                     ),
                     Container(
                       alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.all(30),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -499,8 +576,8 @@ class AccountPageState extends State<AccountPage> {
                                   context: context,
                                   builder: (cont) {
                                     return AlertDialog(
-                                        title: const Text('Leave Family'),
-                                        content: const Text('Are you sure you want to leave this family?'),
+                                        title: const Text('Leave Group'),
+                                        content: const Text('Are you sure you want to leave?'),
                                         actions: [
                                           TextButton(
                                             child: const Text('Cancel'),
