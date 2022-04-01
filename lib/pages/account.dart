@@ -409,7 +409,7 @@ class AccountPageState extends State<AccountPage> {
                                                   padding: const EdgeInsets.only(top: 10, bottom: 10),
                                                   child: const Icon(FontAwesomeIcons.clipboard, size: 110)
                                               ),
-                                              Text('$taskCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold))
+                                              Text('$taskCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900))
                                             ],
                                           ),
                                           Container(
@@ -431,7 +431,7 @@ class AccountPageState extends State<AccountPage> {
                                                   padding: const EdgeInsets.only(top: 20),
                                                   child: const Icon(Icons.inbox, size: 110)
                                               ),
-                                              Text('$archiveCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold))
+                                              Text('$archiveCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900))
                                             ],
                                           ),
                                           Container(
@@ -497,12 +497,12 @@ class AccountPageState extends State<AccountPage> {
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                Opacity(
+                                const Opacity(
                                   opacity: 0.5,
                                   child: Icon(FontAwesomeIcons.boxOpen, size: 150)
                                 ),
                                 Column(
-                                  children: [
+                                  children: const [
                                     Text('Archive Empty', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
                                     Text('Complete some Tasks!', style: TextStyle(fontSize: 20))
                                   ],
