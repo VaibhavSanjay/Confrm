@@ -30,19 +30,20 @@ class TaskViewPage extends StatefulWidget {
 }
 
 class TaskViewPageState extends State<TaskViewPage> {
-  List<TaskData> _taskData = [];
-  List<TaskData> _archivedTaskData = [];
-  final double _statusIconSize = 30;
-  late final List<Reaction<Status>> _statusCardReactions;
-  static late DatabaseService ds;
-  static late Stream<FamilyTaskData> stream;
-  static late String? famID;
-  static bool setID = false;
+  List<TaskData> _taskData = []; // Hold all the task data
+  List<TaskData> _archivedTaskData = []; // Hold all the archive data
+  final double _statusIconSize = 30; // Icon size for the status on right side of card
+  late final List<Reaction<Status>> _statusCardReactions; // Reaction objects for statuses
+  static late DatabaseService ds; // Get data from Database
+  static late Stream<FamilyTaskData> stream; // Put data in the stream
+  static late String? famID; // The family ID
+  static bool setID = false; // If ID has been attempted to be set
 
   @override
   void initState() {
     super.initState();
 
+    // Populate status card reactions
     _statusCardReactions = List<Reaction<Status>>.generate(
         Status.values.length,
             (int index) {
@@ -66,6 +67,7 @@ class TaskViewPageState extends State<TaskViewPage> {
     );
   }
 
+  // Called from main to set ID
   static void setFamID(String? ID) {
     famID = ID;
     setID = true;
@@ -75,12 +77,14 @@ class TaskViewPageState extends State<TaskViewPage> {
     }
   }
 
+  // When user adds a new task
   Future<bool> addTask() async {
-    if (_taskData.length >= 20) {
+    // Maximum of MAX_TASKS
+    if (_taskData.length >= MAX_TASKS) {
       return false;
     }
     _taskData.add(TaskData());
-    await ds.updateTaskData(_taskData);
+    await ds.updateTaskData(_taskData); // Send data to Firebase
     return true;
   }
 
@@ -122,12 +126,11 @@ class TaskViewPageState extends State<TaskViewPage> {
     }
   }
 
-
-
   void _archiveTask(int index) {
     if (index >= 0) {
       _archivedTaskData.add(_taskData.removeAt(index)..archived = DateTime.now().toUtc());
-      if (_archivedTaskData.length > 20) {
+      // Remove the earliest completed task if more than MAX_TASKS archived
+      if (_archivedTaskData.length > MAX_TASKS) {
         _archivedTaskData.removeAt(0);
       }
       ds.updateTaskData(_taskData);
@@ -138,7 +141,7 @@ class TaskViewPageState extends State<TaskViewPage> {
   Widget _createTaskCard(BuildContext context, int i) {
     return InkWell(
       child: Hero(
-        tag: i,
+        tag: i, // Animation for card pop up effect
         createRectTween: (begin, end) {
           return CustomRectTween(begin: begin, end: end);
         },
@@ -153,15 +156,15 @@ class TaskViewPageState extends State<TaskViewPage> {
                 title: Text(_taskData[i].name), // Name of task
                 subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
                     '${DateFormat('h:mm a').format(_taskData[i].due.toLocal())}'), // Due date
-                trailing: ReactionButton<Status>(
+                trailing: ReactionButton<Status>( // Right side reaction button
                   boxPosition: Position.BOTTOM,
                   boxElevation: 10,
                   onReactionChanged: (Status? value) {
                     _taskData[i].status = value ?? Status.inProgress;
                     if (value == Status.complete) {
-                      _archiveTask(i);
+                      _archiveTask(i); // Immediately archive task if set to complete
                     } else {
-                      ds.updateTaskData(_taskData);
+                      ds.updateTaskData(_taskData); // Otherwise just update the task data
                     }
                   },
                   initialReaction: Reaction<Status>(
@@ -181,20 +184,22 @@ class TaskViewPageState extends State<TaskViewPage> {
         ),
       ),
       onTap: () {
+        // Pop up the task editing menu
         Navigator.of(context).push(HeroDialogRoute(builder: (context) {
           return EditTaskData(
             selectedTask: i,
             taskData: TaskData.fromTaskData(_taskData.elementAt(i)),
             padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/6, left: 30, right: 30, bottom: MediaQuery.of(context).size.height/6),
-            onExit: (TaskData? data) {
+            onExit: (TaskData? data) async {
               if (data != null) {
+                // Non-null means task data was saved.
+                _taskData[i] = TaskData.fromTaskData(data);
+                await ds.updateTaskData(_taskData);
                 if (data.status == Status.complete) {
-                  _archiveTask(i);
-                } else {
-                  _taskData[i] = TaskData.fromTaskData(data);
-                  ds.updateTaskData(_taskData);
+                  _archiveTask(i); // Archive if completed
                 }
               } else {
+                // Null means task was deleted
                 _taskData.removeAt(i);
                 ds.updateTaskData(_taskData);
               }
@@ -214,6 +219,7 @@ class TaskViewPageState extends State<TaskViewPage> {
         padding: padding,
         archivedTasks: _archivedTaskData,
         onUnarchive: (int i) {
+          // Add task back to regular task list and change archive date to 2101
           _taskData.add(_archivedTaskData.removeAt(i)..status = Status.inProgress..archived = DateTime(2101));
           ds.updateTaskData(_taskData);
           ds.updateArchiveData(_archivedTaskData);
@@ -223,6 +229,7 @@ class TaskViewPageState extends State<TaskViewPage> {
           ds.updateArchiveData(_archivedTaskData);
         },
         onClean: () {
+          // Delete tasks that are over an hour old
           DateTime hourAgo = DateTime.now().toUtc().subtract(const Duration(hours: 1));
           _archivedTaskData = _archivedTaskData.where((td) => td.archived.isAfter(hourAgo)).toList();
           ds.updateArchiveData(_archivedTaskData);
@@ -235,6 +242,7 @@ class TaskViewPageState extends State<TaskViewPage> {
   Widget build(BuildContext context) {
     if (setID) {
       return famID != null ? StreamBuilder<FamilyTaskData>(
+          // Build stream for Family Task Data
           stream: stream,
           builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
             if (snapshot.hasError) {
@@ -258,6 +266,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                         )
                     );
                   } else {
+                    // If we have task data, we just list it instead of loading
                     List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
                     return Container(
                       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
@@ -272,7 +281,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                   _archivedTaskData = snapshot.data == null ? [] : snapshot.data!.archive;
                   List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
                   return ReorderableColumn(
-                    header: _taskData.isEmpty ? Card(
+                    header: _taskData.isEmpty ? Card( // A small help widget to display if no tasks exist
                       elevation: 5,
                       child: Container(
                         padding: const EdgeInsets.all(10),

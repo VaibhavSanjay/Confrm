@@ -9,8 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_circular_text/circular_text.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await DatabaseService.initializeFirebase();
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure widget initialization
+  await DatabaseService.initializeFirebase(); // Initialize Firebase Database
   runApp(const FamilyTasks());
 }
 
@@ -21,11 +21,11 @@ class FamilyTasks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Family Tasks',
+      title: 'Confrm!',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Confrm!'),
     );
   }
 }
@@ -50,36 +50,45 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final PageController _pageController = PageController();
-  final GlobalKey<TaskViewPageState> _keyTaskView = GlobalKey(), _keyAccount = GlobalKey();
+  final GlobalKey<TaskViewPageState> _keyTaskView = GlobalKey(), _keyAccount = GlobalKey(); // Used to control state of pages
+  /* This app is made of two screens, the task view screen and the account screen
+  * The task view screen holds all of the tasks that the group adds while the account screen holds data such as the
+  * name of the group, tasks left, and options such as leaving.
+  */
   late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView),
                                       AccountPage(key: _keyAccount, onJoinOrCreate: _resetFamID, onLeave: _onLeave)];
-  late SharedPreferences prefs;
+  late SharedPreferences prefs; // Used to store family ID on the phone
   int _curPage = 0;
-  bool _haveSetFamID = false;
+  bool _haveSetFamID = false; // If the family ID exists
 
   @override
   void initState() {
     super.initState();
-    _initializePreference().whenComplete(_setFamID);
+    _initializePreference().whenComplete(_setFamID); // Initialize prefs and set the family ID
   }
 
+  // Function called when the family ID is submitted
   void _resetFamID(String famID) {
     prefs.setString('famID', famID);
     _setFamID();
     _pageController.animateToPage(0, curve: Curves.easeOut, duration: const Duration(milliseconds: 500));
   }
 
+  // When leaving the family
   void _onLeave() {
     prefs.remove('famID');
     _setFamID();
   }
 
+  // Set the family ID and reset the widgets
   void _setFamID() {
     String? ID = prefs.getString('famID');
     _haveSetFamID = ID != null;
+    // If no family ID, force user to set family ID
     if (!_haveSetFamID) {
       _pageController.animateToPage(1, duration: const Duration(milliseconds: 500), curve: Curves.easeOut);
     }
+    // Set family ID in each widget
     TaskViewPageState.setFamID(ID);
     AccountPageState.setFamID(ID);
     if (_keyAccount.currentState != null) {
@@ -110,18 +119,18 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: false, // Allows keyboard to go over widgets
       appBar: AppBar(
         title: Stack(
           alignment: Alignment.center,
           children: [
-            Image.asset(
+            Image.asset( // Icon at the top
               'assets/icon/icon_android.png',
               height: 40,
               fit: BoxFit.contain,
             ),
-            Container(
-              padding: EdgeInsets.only(top: 220),
+            Container(  // Curving text Confrm!
+              padding: const EdgeInsets.only(top: 220),
               child: CircularText(
                 children: [
                   TextItem(
@@ -144,13 +153,14 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         centerTitle: true,
       ),
-      body: AnimatedContainer(
+      body: AnimatedContainer( // The background is light blue on task view and purple on account
         duration: const Duration(milliseconds: 500),
         color: _curPage == 0 ? Colors.lightBlue : Colors.deepPurple,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 500),
+            // Change gradient based on the current page
             decoration: _curPage == 0 ? const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topRight,
@@ -180,6 +190,7 @@ class _MyHomePageState extends State<MyHomePage> {
               controller: _pageController,
               children: _screens,
               onPageChanged: _onPageChanged,
+              // Scroll between pages only if you set the family ID
               physics: _haveSetFamID ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
             ),
           ),
@@ -187,7 +198,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       floatingActionButton: _haveSetFamID ? SpeedDial(
         spaceBetweenChildren: 12,
-        heroTag: 'archive',
+        heroTag: 'archive', // Hero animation when archive is clicked
         child: const Icon(FontAwesomeIcons.bars),
         children: [
           SpeedDialChild(
@@ -195,10 +206,12 @@ class _MyHomePageState extends State<MyHomePage> {
             backgroundColor: Colors.green,
             label: 'New Task',
             onTap: () async {
+              // We animate to the task view page if necessary
               _pageController.animateToPage(0,
                   curve: Curves.easeOut,
                   duration: const Duration(milliseconds: 500)
               );
+              // Wait for animation to finish if necessary
               Future.delayed(Duration(milliseconds: _curPage == 0 ? 0 : 500)).whenComplete(() async {
                 if (_keyTaskView.currentState != null) {
                   if (! (await _keyTaskView.currentState!.addTask())) {
@@ -220,15 +233,17 @@ class _MyHomePageState extends State<MyHomePage> {
                     duration: const Duration(milliseconds: 500)
                 );
                 Future.delayed(Duration(milliseconds: _curPage == 0 ? 0 : 500)).whenComplete(() {
+                  // Push hero dialog route, creates animation
                   Navigator.of(context).push(HeroDialogRoute(builder: (context) {
                     if (_keyTaskView.currentState != null) {
+                      // Create the archive card list from the widget
                       return _keyTaskView.currentState!.createArchiveCardList(
                           EdgeInsets.only(top: MediaQuery.of(context).size.height / 6, left: 30, right: 30,
                               bottom: MediaQuery.of(context).size.height / 6
                           )
                       );
                     }
-                    return const SizedBox.shrink();
+                    return const SizedBox.shrink(); // Should never happen
                   }));
                 });
               }
@@ -238,6 +253,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: _curPage == 0 ? const Icon(Icons.people) : const Icon(FontAwesomeIcons.clipboard),
             label: _curPage == 0 ? 'Family' : 'Tasks',
             onTap: () {
+              // Switch between task view and account page
               _pageController.animateToPage(1 - _curPage,
                   curve: Curves.easeOut,
                   duration: const Duration(milliseconds: 500)
