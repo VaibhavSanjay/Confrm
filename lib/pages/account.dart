@@ -37,155 +37,122 @@ class AccountPageState extends State<AccountPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    Widget _getButton(IconData icon, String text, String desc, Function() onPressed) {
-      return InkWell(
-        onTap: onPressed,
-        child: Card(
-          elevation: 5,
-          child: Container(
-            margin: const EdgeInsets.only(top: 20, bottom: 20, left: 10, right: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                    children: [
-                      Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
-                          child: Icon(icon, size: MediaQuery.of(context).size.height/7, color: Colors.blueAccent)
-                      ),
-                      Container(padding: const EdgeInsets.only(left: 20), child: Text(text, style: const TextStyle(fontSize: 50, color: Colors.blueAccent)))
-                    ]
-                ),
-                Container(
-                  width: MediaQuery.of(context).size.width/3,
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Text(desc, style: const TextStyle(fontSize: 16)),
-                )
-              ],
-            ),
+  Widget _getButton(IconData icon, String text, String desc, Function() onPressed) {
+    return InkWell(
+      onTap: onPressed,
+      child: Card(
+        elevation: 5,
+        child: Container(
+          margin: const EdgeInsets.only(top: 20, bottom: 20, left: 10, right: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                  children: [
+                    Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 0),
+                        child: Icon(icon, size: MediaQuery.of(context).size.height/8, color: Colors.blueAccent)
+                    ),
+                    Container(padding: const EdgeInsets.only(left: 20), child: Text(text, style: const TextStyle(fontSize: 50, color: Colors.blueAccent)))
+                  ]
+              ),
+              Container(
+                width: MediaQuery.of(context).size.width/3,
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(desc, style: const TextStyle(fontSize: 16)),
+              )
+            ],
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
+  @override
+  Widget build(BuildContext context) {
     if (setID) {
-      return famID == null ? Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Card(
-              elevation: 5,
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                child: const AutoSizeText(
-                    'Welcome!',
-                    style: TextStyle(
-                      fontSize: 50,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 6.0,
-                          color: Colors.blue
-                        ),
-                      ]
-                    ),
-                    maxLines: 1)
-              )
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+      return famID == null ? Padding(
+        padding: const EdgeInsets.only(bottom: 5),
+        child: SingleChildScrollView(
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  child: Column(
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Stack(
+                    alignment: Alignment.topCenter,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: _getButton(
-                          FontAwesomeIcons.userPlus,
-                          'Create',
-                          'Create a New Task Listing. Send the group ID to those you want to add.',
-                          () {
-                            _input = '';
-                            showDialog(
-                              context: context,
-                              builder: (context) {
-                                return Form(
-                                  key: _formKey,
-                                  child: AlertDialog(
-                                    title: const Text('Create New Family', style: TextStyle(fontWeight: FontWeight.bold)),
-                                    contentPadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
-                                    content: TextFormField(
-                                      maxLength: 20,
-                                      decoration: const InputDecoration(
-                                          hintText: 'Family Name',
-                                          border: OutlineInputBorder(),
-                                          counterText: ''
-                                      ),
-                                      onChanged: (String? value) {
-                                        _input = value ?? '';
-                                      },
-                                      validator: (String? value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter a family name';
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                          child: const Text('Cancel'),
-                                          onPressed: (){
-                                            Navigator.pop(context);
-                                          }
-                                      ),
-                                      TextButton(
-                                        child: const Text('Create'),
-                                        onPressed: () async {
-                                          if (_formKey.currentState!.validate()) {
-                                            Navigator.pop(context);
-                                            famID = await ds.addNewFamily(_input);
-                                            widget.onJoinOrCreate(famID!);
-                                          }
-                                        }
-                                      ),
-                                    ]
-                                  ),
-                                );
-                              }
-                            );
-                          },
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Material(
+                          elevation: 10,
+                          color: Colors.transparent,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  stops: [0.1, 0.5, 0.7],
+                                  colors: [Colors.lightBlueAccent, Colors.lightBlue, Colors.blueAccent],
+                                ),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(27),
+                                  topRight: Radius.circular(27),
+                                )
+                            ),
+                            width: double.infinity,
+                            height: 60,
+                          ),
                         ),
                       ),
-                      const Divider(
-                        height: 20,
-                        thickness: 5,
-                        indent: 20,
-                        endIndent: 20,
-                        color: Colors.black,
+                      const Padding(
+                        padding: EdgeInsets.only(top: 15),
+                        child: Card(
+                          elevation: 10,
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: AutoSizeText(
+                                'Welcome!',
+                                style: TextStyle(
+                                    fontSize: 45,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue
+                                ),
+                                maxLines: 1),
+                          ),
+                        ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.only(top: 20),
-                        child: _getButton(
-                          FontAwesomeIcons.peopleRoof,
-                          'Join',
-                          'If someone already created a group, join it with their ID.',
-                           () {
-                              _input = '';
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return Form(
-                                    key: _formKey,
-                                    child: AlertDialog(
-                                        title: const Text('Join Family', style: TextStyle(fontWeight: FontWeight.bold)),
-                                        contentPadding: const EdgeInsets.only(top: 20, right: 24, left: 24),
+                    ],
+                  ),
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: _getButton(
+                              FontAwesomeIcons.userPlus,
+                              'Create',
+                              'Create a New Task Listing. Send the group ID to those you want to add.',
+                              () {
+                                _input = '';
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return Form(
+                                      key: _formKey,
+                                      child: AlertDialog(
+                                        title: const Text('Create New Group', style: TextStyle(fontWeight: FontWeight.bold)),
+                                        contentPadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
                                         content: TextFormField(
-                                          maxLength: 30,
+                                          maxLength: 20,
                                           decoration: const InputDecoration(
-                                              hintText: 'Family ID',
+                                              hintText: 'Group Name',
                                               border: OutlineInputBorder(),
                                               counterText: ''
                                           ),
@@ -193,7 +160,10 @@ class AccountPageState extends State<AccountPage> {
                                             _input = value ?? '';
                                           },
                                           validator: (String? value) {
-                                            return _foundFamily ? null : 'Invalid ID';
+                                            if (value == null || value.isEmpty) {
+                                              return 'Please enter a name';
+                                            }
+                                            return null;
                                           },
                                         ),
                                         actions: [
@@ -204,30 +174,93 @@ class AccountPageState extends State<AccountPage> {
                                               }
                                           ),
                                           TextButton(
-                                              child: const Text('Join'),
-                                              onPressed: () async {
-                                                _foundFamily = await ds.famExists(_input.isEmpty ? '0' : _input);
-                                                if (_formKey.currentState!.validate()) {
-                                                  Navigator.pop(context);
-                                                  famID = _input;
-                                                  widget.onJoinOrCreate(famID!);
-                                                }
+                                            child: const Text('Create'),
+                                            onPressed: () async {
+                                              if (_formKey.currentState!.validate()) {
+                                                Navigator.pop(context);
+                                                famID = await ds.addNewFamily(_input);
+                                                widget.onJoinOrCreate(famID!);
                                               }
+                                            }
                                           ),
                                         ]
-                                    ),
+                                      ),
+                                    );
+                                  }
+                                );
+                              },
+                            ),
+                          ),
+                          const Divider(
+                            thickness: 8,
+                            indent: 20,
+                            endIndent: 20,
+                            color: Colors.black,
+                          ),
+                          Container(
+                            padding: const EdgeInsets.only(top: 20),
+                            child: _getButton(
+                              FontAwesomeIcons.peopleRoof,
+                              'Join',
+                              'If someone already created a group, join it with their ID.',
+                               () {
+                                  _input = '';
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return Form(
+                                        key: _formKey,
+                                        child: AlertDialog(
+                                            title: const Text('Join Group', style: TextStyle(fontWeight: FontWeight.bold)),
+                                            contentPadding: const EdgeInsets.only(top: 20, right: 24, left: 24),
+                                            content: TextFormField(
+                                              maxLength: 30,
+                                              decoration: const InputDecoration(
+                                                  hintText: 'Group ID',
+                                                  border: OutlineInputBorder(),
+                                                  counterText: ''
+                                              ),
+                                              onChanged: (String? value) {
+                                                _input = value ?? '';
+                                              },
+                                              validator: (String? value) {
+                                                return _foundFamily ? null : 'Invalid ID';
+                                              },
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                  child: const Text('Cancel'),
+                                                  onPressed: (){
+                                                    Navigator.pop(context);
+                                                  }
+                                              ),
+                                              TextButton(
+                                                  child: const Text('Join'),
+                                                  onPressed: () async {
+                                                    _foundFamily = await ds.famExists(_input.isEmpty ? '0' : _input);
+                                                    if (_formKey.currentState!.validate()) {
+                                                      Navigator.pop(context);
+                                                      famID = _input;
+                                                      widget.onJoinOrCreate(famID!);
+                                                    }
+                                                  }
+                                              ),
+                                            ]
+                                        ),
+                                      );
+                                    }
                                   );
-                                }
-                              );
-                           }
-                        )
-                      )
-                    ],
-                  ),
-                ),
-              ],
-            )
-          ]
+                               }
+                            )
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              ]
+          ),
+        ),
       ) : StreamBuilder<FamilyTaskData>(
         stream: stream,
         builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
@@ -271,13 +304,13 @@ class AccountPageState extends State<AccountPage> {
                                   return Form(
                                     key: _formKey,
                                     child: AlertDialog(
-                                        title: const Text('Edit Family Name', style: TextStyle(fontWeight: FontWeight.bold)),
+                                        title: const Text('Edit Name', style: TextStyle(fontWeight: FontWeight.bold)),
                                         contentPadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
                                         content: TextFormField(
                                           initialValue: name,
                                           maxLength: 20,
                                           decoration: const InputDecoration(
-                                              hintText: 'Family Name',
+                                              hintText: 'Group Name',
                                               border: OutlineInputBorder(),
                                               counterText: ''
                                           ),
@@ -286,7 +319,7 @@ class AccountPageState extends State<AccountPage> {
                                           },
                                           validator: (String? value) {
                                             if (value == null || value.isEmpty) {
-                                              return 'Please enter a family name';
+                                              return 'Please enter a name';
                                             }
                                             return null;
                                           },
@@ -318,9 +351,17 @@ class AccountPageState extends State<AccountPage> {
                               alignment: Alignment.center,
                               child: Card(
                                   elevation: 5,
-                                  child: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      child: AutoSizeText(name, style: const TextStyle(fontSize: 40), maxLines: 2)
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(
+                                        child: Container(
+                                            padding: const EdgeInsets.all(10),
+                                            child: AutoSizeText(name, style: const TextStyle(fontSize: 40), maxLines: 2)
+                                        ),
+                                      ),
+                                      Container(padding: const EdgeInsets.only(right: 10), child: const Icon(Icons.edit, size: 40))
+                                    ],
                                   )
                               )
                           ),
@@ -419,7 +460,7 @@ class AccountPageState extends State<AccountPage> {
                                   ),
                                   Padding(
                                     padding: EdgeInsets.all(8.0),
-                                    child: Text('Family ID'),
+                                    child: Text('Group ID'),
                                   ),
                                 ],
                               ),
