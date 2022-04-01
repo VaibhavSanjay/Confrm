@@ -351,25 +351,30 @@ class AccountPageState extends State<AccountPage> {
                             );
                           },
                           child: Container(
-                              padding: const EdgeInsets.only(left: 20, bottom: 20),
+                              padding: const EdgeInsets.only(left: 10),
                               alignment: Alignment.center,
                               child: Material(
                                   elevation: 5,
                                   color: Colors.transparent,
                                   child: Container(
                                     decoration: const BoxDecoration(
-                                      color: Colors.white,
+                                        gradient: const LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          stops: [0.2, 0.9],
+                                          colors: [Colors.greenAccent, Colors.green],
+                                        ),
                                         borderRadius: BorderRadius.only(
                                           topRight: Radius.circular(27),
                                         )
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
                                         Flexible(
                                           child: Container(
                                               padding: const EdgeInsets.all(10),
-                                              child: AutoSizeText(name, textAlign: TextAlign.right, style: const TextStyle(fontSize: 40), maxLines: 2)
+                                              child: AutoSizeText(name, textAlign: TextAlign.right, style: const TextStyle(fontSize: 40), maxLines: 1)
                                           ),
                                         ),
                                         Container(padding: const EdgeInsets.only(right: 10), child: const Icon(Icons.edit, size: 40))
@@ -380,136 +385,133 @@ class AccountPageState extends State<AccountPage> {
                           ),
                         ),
                         Container(
-                          transform: Matrix4.translationValues(0, -20, 0),
-                          margin: const EdgeInsets.only(left: 20),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.deepPurpleAccent,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.5),
-                                blurRadius: 7,
-                                offset: const Offset(0, -1), // changes position of shadow
+                          margin: const EdgeInsets.only(left: 10),
+                          child: Material(
+                            color: Colors.green,
+                            child: Container(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Card(
+                                        elevation: 5,
+                                        child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Container(
+                                                      padding: const EdgeInsets.only(top: 10, bottom: 10),
+                                                      child: const Icon(FontAwesomeIcons.clipboard, size: 110)
+                                                  ),
+                                                  Text('$taskCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900))
+                                                ],
+                                              ),
+                                              Container(
+                                                  padding: const EdgeInsets.only(left: 25, right: 25, bottom: 20),
+                                                  child: const Text('To Do', style: TextStyle(fontSize: 30))
+                                              ),
+                                            ]
+                                        )
+                                    ),
+                                    Card(
+                                        elevation: 5,
+                                        child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Container(
+                                                      padding: const EdgeInsets.only(top: 20),
+                                                      child: const Icon(Icons.inbox, size: 110)
+                                                  ),
+                                                  Text('$archiveCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900))
+                                                ],
+                                              ),
+                                              Container(
+                                                  padding: const EdgeInsets.only(left: 10, right: 10, bottom: 20),
+                                                  child: const Text('Archived', style: TextStyle(fontSize: 30))
+                                              ),
+                                            ]
+                                        )
+                                    )
+                                  ]
                               ),
-                            ],
-                          ),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Card(
-                                    elevation: 5,
-                                    child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              Container(
-                                                  padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                                  child: const Icon(FontAwesomeIcons.clipboard, size: 110)
-                                              ),
-                                              Text('$taskCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900))
-                                            ],
-                                          ),
-                                          Container(
-                                              padding: const EdgeInsets.only(left: 25, right: 25, bottom: 20),
-                                              child: const Text('To Do', style: TextStyle(fontSize: 30))
-                                          ),
-                                        ]
-                                    )
-                                ),
-                                Card(
-                                    elevation: 5,
-                                    child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
-                                          Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              Container(
-                                                  padding: const EdgeInsets.only(top: 20),
-                                                  child: const Icon(Icons.inbox, size: 110)
-                                              ),
-                                              Text('$archiveCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900))
-                                            ],
-                                          ),
-                                          Container(
-                                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 20),
-                                              child: const Text('Archived', style: TextStyle(fontSize: 30))
-                                          ),
-                                        ]
-                                    )
-                                )
-                              ]
+                            ),
                           ),
                         ),
-                        lastArchived != null ? Stack(
-                          alignment: Alignment.topCenter,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
-                              child: Card(
-                                  color: lastTask!.color,
-                                  elevation: 5,
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(top: 20),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        AnalogClock(
-                                          width: 150,
-                                          height: 150,
-                                          isLive: false,
-                                          showNumbers: true,
-                                          datetime: lastArchived,
-                                          showSecondHand: false,
-                                          showDigitalClock: false,
-                                          textScaleFactor: 2,
-                                        ),
-                                        Flexible(
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
-                                            child: AutoSizeText(lastTask.name, maxLines: 3, style: const TextStyle(fontSize: 20), textAlign: TextAlign.right),
+                        Container(
+                          padding: EdgeInsets.only(top: 10),
+                          child: lastArchived != null ? Stack(
+                            alignment: Alignment.topCenter,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
+                                child: Card(
+                                    color: lastTask!.color,
+                                    elevation: 5,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 20),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          AnalogClock(
+                                            width: 150,
+                                            height: 150,
+                                            isLive: false,
+                                            showNumbers: true,
+                                            datetime: lastArchived,
+                                            showSecondHand: false,
+                                            showDigitalClock: false,
+                                            textScaleFactor: 2,
                                           ),
-                                        )
-                                      ],
-                                    ),
-                                  )
+                                          Flexible(
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
+                                              child: AutoSizeText(lastTask.name, maxLines: 3, style: const TextStyle(fontSize: 20), textAlign: TextAlign.right),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                    )
+                                ),
                               ),
-                            ),
-                            Material(
-                              elevation: 10,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                    'Completed ${sinceLastArchived!.inHours > 0 ? sinceLastArchived.inHours : sinceLastArchived.inMinutes} ${sinceLastArchived.inHours > 0 ? 'hours' : 'minutes'} ago',
-                                    style: const TextStyle(fontSize: 20)
-                                ),
-                              )
-                            )
-                          ],
-                        ) : Card(
-                          elevation: 5,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                const Opacity(
-                                  opacity: 0.5,
-                                  child: Icon(FontAwesomeIcons.boxOpen, size: 150)
-                                ),
-                                Column(
-                                  children: const [
-                                    Text('Archive Empty', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-                                    Text('Complete some Tasks!', style: TextStyle(fontSize: 20))
-                                  ],
+                              Material(
+                                elevation: 10,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                      'Completed ${sinceLastArchived!.inHours > 0 ? sinceLastArchived.inHours : sinceLastArchived.inMinutes} ${sinceLastArchived.inHours > 0 ? 'hours' : 'minutes'} ago',
+                                      style: const TextStyle(fontSize: 20)
+                                  ),
                                 )
-                              ],
-                            ),
-                          )
+                              )
+                            ],
+                          ) : Card(
+                            elevation: 5,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  const Opacity(
+                                    opacity: 0.5,
+                                    child: Icon(FontAwesomeIcons.boxOpen, size: 150)
+                                  ),
+                                  Column(
+                                    children: const [
+                                      Text('Archive Empty', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                                      Text('Complete some Tasks!', style: TextStyle(fontSize: 20))
+                                    ],
+                                  )
+                                ],
+                              ),
+                            )
+                          ),
                         ),
 
                       ]
