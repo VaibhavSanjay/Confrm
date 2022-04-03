@@ -1,3 +1,4 @@
+import 'package:family_tasks/pages/Helpers/account_option_widgets.dart';
 import 'package:family_tasks/pages/Helpers/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -658,83 +659,12 @@ class AccountPageState extends State<AccountPage> {
                         children: [
                           Container(
                             padding: const EdgeInsets.only(bottom: 10),
-                            child: TextButton(
-                              style: TextButton.styleFrom(
-                                  elevation: 5,
-                                  backgroundColor: Colors.white,
-                                  textStyle: const TextStyle(fontSize: 20)
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Padding(
-                                    padding: EdgeInsets.only(left: 8.0),
-                                    child: Icon(Icons.perm_identity),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Text('Group ID'),
-                                  ),
-                                ],
-                              ),
-                              onPressed: () {
-                                showDialog<void>(
-                                    context: context,
-                                    builder: (cont) {
-                                      return FamilyIDWidget(famID: famID!);
-                                    }
-                                );
-                              },
-                            ),
+                            child: GroupIDWidget(famID: famID!)
                           ),
-                          TextButton(
-                            style: TextButton.styleFrom(
-                                primary: Colors.white,
-                                elevation: 5,
-                                backgroundColor: Colors.red,
-                                textStyle: const TextStyle(fontSize: 20, color: Colors.white)
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Padding(
-                                  padding: EdgeInsets.only(left: 8.0),
-                                  child: Icon(Icons.exit_to_app, color: Colors.white),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Text('Leave'),
-                                ),
-                              ],
-                            ),
-                            onPressed: () {
-                              showDialog(
-                                  context: context,
-                                  builder: (cont) {
-                                    return AlertDialog(
-                                        title: const Text('Leave Group'),
-                                        content: const Text('Are you sure you want to leave?'),
-                                        actions: [
-                                          TextButton(
-                                            child: const Text('Cancel'),
-                                            onPressed: () {
-                                              Navigator.pop(cont);
-                                            },
-                                          ),
-                                          TextButton(
-                                              child: const Text('Confirm'),
-                                              onPressed: () {
-                                                Navigator.pop(cont);
-                                                widget.onLeave();
-                                                setState(() {});
-                                              }
-                                          )
-                                        ]
-                                    );
-                                  }
-                              );
-                            },
-                          ),
+                          LeaveWidget(onLeave: () {
+                            widget.onLeave();
+                            setState((){});
+                          })
                         ],
                       ),
                     )
@@ -758,48 +688,5 @@ class AccountPageState extends State<AccountPage> {
       );
     }
 
-  }
-}
-
-class FamilyIDWidget extends StatefulWidget {
-  final String famID;
-
-  const FamilyIDWidget({Key? key, required this.famID}) : super(key: key);
-
-  @override
-  State<FamilyIDWidget> createState() => _FamilyIDWidgetState();
-}
-
-class _FamilyIDWidgetState extends State<FamilyIDWidget> {
-  IconData _curIcon = Icons.copy;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Center(child: Text('Copy and send to others!', style: TextStyle(fontWeight: FontWeight.bold))),
-      contentPadding: const EdgeInsets.only(top: 20, left: 12, bottom: 24, right: 0),
-      content: Row(
-        children: [
-          Flexible(
-            flex: 1,
-            child: Container(
-                decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey)
-                ),
-                child: Text(widget.famID, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30))
-            ),
-          ),
-          IconButton(
-              icon: Icon(_curIcon, size: 30),
-              onPressed: (){
-                setState(() {
-                  _curIcon = FontAwesomeIcons.clipboardCheck;
-                  Clipboard.setData(ClipboardData(text: widget.famID));
-                });
-              }
-          )
-        ],
-      ),
-    );
   }
 }
