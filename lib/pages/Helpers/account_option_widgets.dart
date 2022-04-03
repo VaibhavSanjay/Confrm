@@ -119,7 +119,7 @@ class _FamilyIDPopUpState extends State<FamilyIDPopUp> {
           .width / 2 - 150, vertical: MediaQuery
           .of(context)
           .size
-          .height / 2 - 75),
+          .height / 2 - 70),
       child: Hero(
         tag: "groupID",
         createRectTween: (begin, end) {
@@ -128,39 +128,43 @@ class _FamilyIDPopUpState extends State<FamilyIDPopUp> {
         child: Card(
             child: Padding(
               padding: const EdgeInsets.only(left: 16),
-              child: ListView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 10),
-                      child: Text('Copy and send to others!', style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 20)),
-                    ),
-                    Row(
-                      children: [
-                        Flexible(
-                          flex: 1,
-                          child: Container(
-                              decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey)
-                              ),
-                              child: Text(widget.famID, style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 30))
+              child: MediaQuery.removePadding(
+                removeTop: true,
+                context: context,
+                child: ListView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 10, top: 10),
+                        child: Text('Copy and send to others!', style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 20)),
+                      ),
+                      Row(
+                        children: [
+                          Flexible(
+                            flex: 1,
+                            child: Container(
+                                decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey)
+                                ),
+                                child: Text(widget.famID, style: const TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 30))
+                            ),
                           ),
-                        ),
-                        IconButton(
-                            icon: Icon(_curIcon, size: 30),
-                            onPressed: () {
-                              setState(() {
-                                _curIcon = FontAwesomeIcons.clipboardCheck;
-                                Clipboard.setData(
-                                    ClipboardData(text: widget.famID));
-                              });
-                            }
-                        )
-                      ],
-                    )
-                  ]
+                          IconButton(
+                              icon: Icon(_curIcon, size: 30),
+                              onPressed: () {
+                                setState(() {
+                                  _curIcon = FontAwesomeIcons.clipboardCheck;
+                                  Clipboard.setData(
+                                      ClipboardData(text: widget.famID));
+                                });
+                              }
+                          )
+                        ],
+                      )
+                    ]
+                ),
               ),
             )
         ),

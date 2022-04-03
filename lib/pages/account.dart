@@ -331,325 +331,319 @@ class AccountPageState extends State<AccountPage> {
                 TaskData? dueEarliest = taskData.isNotEmpty ? taskData.reduce((cur, next) => cur.due.isBefore(next.due) ? cur : next) : null;
                 Duration? taskGap = taskData.isNotEmpty ? DateTime.now().difference(dueEarliest!.due) : null;
 
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                return ListView(
                   children: [
-                    Column(
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            showDialog(
-                                context: context,
-                                builder: (cont) {
-                                  return Form(
-                                    key: _formKey,
-                                    child: AlertDialog(
-                                        title: const Text('Edit Name', style: TextStyle(fontWeight: FontWeight.bold)),
-                                        contentPadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
-                                        content: TextFormField(
-                                          initialValue: name,
-                                          maxLength: 20,
-                                          decoration: const InputDecoration(
-                                              hintText: 'Group Name',
-                                              border: OutlineInputBorder(),
-                                              counterText: ''
-                                          ),
-                                          onChanged: (String? value) {
-                                            _input = value ?? '';
-                                          },
-                                          validator: (String? value) {
-                                            if (value == null || value.isEmpty) {
-                                              return 'Please enter a name';
+                    InkWell(
+                      onTap: () {
+                        showDialog(
+                            context: context,
+                            builder: (cont) {
+                              return Form(
+                                key: _formKey,
+                                child: AlertDialog(
+                                    title: const Text('Edit Name', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    contentPadding: const EdgeInsets.only(top: 20, left: 24, right: 24),
+                                    content: TextFormField(
+                                      initialValue: name,
+                                      maxLength: 20,
+                                      decoration: const InputDecoration(
+                                          hintText: 'Group Name',
+                                          border: OutlineInputBorder(),
+                                          counterText: ''
+                                      ),
+                                      onChanged: (String? value) {
+                                        _input = value ?? '';
+                                      },
+                                      validator: (String? value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Please enter a name';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                          child: const Text('Cancel'),
+                                          onPressed: (){
+                                            Navigator.pop(context);
+                                          }
+                                      ),
+                                      TextButton(
+                                          child: const Text('Update'),
+                                          onPressed: () async {
+                                            if (_formKey.currentState!.validate()) {
+                                              Navigator.pop(context);
+                                              await ds.updateFamilyName(_input);
                                             }
-                                            return null;
-                                          },
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                              child: const Text('Cancel'),
-                                              onPressed: (){
-                                                Navigator.pop(context);
-                                              }
+                                          }
+                                      ),
+                                    ]
+                                ),
+                              );
+                            }
+                        );
+                      },
+                      child: Container(
+                          padding: const EdgeInsets.only(left: 10),
+                          alignment: Alignment.center,
+                          child: Material(
+                              elevation: 5,
+                              color: Colors.transparent,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      stops: const [0.15, 0.9],
+                                      colors: [bgColor.withOpacity(0.6), bgColor],
+                                    ),
+                                    borderRadius: const BorderRadius.only(
+                                      topRight: Radius.circular(27),
+                                    )
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Flexible(
+                                      child: Container(
+                                          padding: const EdgeInsets.all(10),
+                                          child: AutoSizeText(name, textAlign: TextAlign.right, style: const TextStyle(fontSize: 40), maxLines: 1)
+                                      ),
+                                    ),
+                                    Container(padding: const EdgeInsets.only(right: 10), child: const Icon(Icons.edit, size: 40))
+                                  ],
+                                ),
+                              )
+                          )
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 10),
+                      child: Material(
+                        color: bgColor,
+                        child: Container(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Card(
+                                    elevation: 5,
+                                    child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              Container(
+                                                  padding: const EdgeInsets.only(top: 10, bottom: 10),
+                                                  child: const Icon(FontAwesomeIcons.clipboard, size: 110)
+                                              ),
+                                              Card(
+                                                margin: const EdgeInsets.only(top: 10),
+                                                color: taskCount > 0 ? Colors.red : Colors.green,
+                                                elevation: 5,
+                                                shape: const CircleBorder(),
+                                                child: taskCount > 0 ? Padding(
+                                                  padding: const EdgeInsets.all(16.0),
+                                                  child: Text('$taskCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Colors.white)),
+                                                ) :
+                                                const Icon(Icons.check, color: Colors.white, size: 45),
+                                              )
+                                            ],
                                           ),
-                                          TextButton(
-                                              child: const Text('Update'),
-                                              onPressed: () async {
-                                                if (_formKey.currentState!.validate()) {
-                                                  Navigator.pop(context);
-                                                  await ds.updateFamilyName(_input);
-                                                }
-                                              }
+                                          Container(
+                                              padding: const EdgeInsets.only(left: 25, right: 25, bottom: 20),
+                                              child: const Text('To Do', style: TextStyle(fontSize: 30, color: Colors.lightBlue))
                                           ),
                                         ]
-                                    ),
-                                  );
-                                }
-                            );
-                          },
-                          child: Container(
-                              padding: const EdgeInsets.only(left: 10),
-                              alignment: Alignment.center,
-                              child: Material(
-                                  elevation: 5,
-                                  color: Colors.transparent,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          stops: const [0.15, 0.9],
-                                          colors: [bgColor.withOpacity(0.6), bgColor],
-                                        ),
-                                        borderRadius: const BorderRadius.only(
-                                          topRight: Radius.circular(27),
-                                        )
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Flexible(
-                                          child: Container(
-                                              padding: const EdgeInsets.all(10),
-                                              child: AutoSizeText(name, textAlign: TextAlign.right, style: const TextStyle(fontSize: 40), maxLines: 1)
+                                    )
+                                ),
+                                Card(
+                                    elevation: 5,
+                                    child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: [
+                                          Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              Container(
+                                                  padding: const EdgeInsets.only(top: 14, bottom: 4),
+                                                  child: const Icon(FontAwesomeIcons.boxArchive, size: 110)
+                                              ),
+                                              Card(
+                                                margin: const EdgeInsets.only(top: 3),
+                                                shape: const CircleBorder(),
+                                                color: Colors.green,
+                                                elevation: 5,
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(16.0),
+                                                  child: Text('$archiveCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Colors.white)),
+                                                )
+                                              )
+                                            ],
                                           ),
-                                        ),
-                                        Container(padding: const EdgeInsets.only(right: 10), child: const Icon(Icons.edit, size: 40))
-                                      ],
-                                    ),
-                                  )
-                              )
-                          ),
-                        ),
-                        Container(
-                          margin: const EdgeInsets.only(left: 10),
-                          child: Material(
-                            color: bgColor,
-                            child: Container(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    Card(
-                                        elevation: 5,
-                                        child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                            children: [
-                                              Stack(
-                                                alignment: Alignment.center,
-                                                children: [
-                                                  Container(
-                                                      padding: const EdgeInsets.only(top: 10, bottom: 10),
-                                                      child: const Icon(FontAwesomeIcons.clipboard, size: 110)
-                                                  ),
-                                                  Card(
-                                                    margin: const EdgeInsets.only(top: 10),
-                                                    color: taskCount > 0 ? Colors.red : Colors.green,
-                                                    elevation: 5,
-                                                    shape: const CircleBorder(),
-                                                    child: taskCount > 0 ? Padding(
-                                                      padding: const EdgeInsets.all(16.0),
-                                                      child: Text('$taskCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Colors.white)),
-                                                    ) :
-                                                    const Icon(Icons.check, color: Colors.white, size: 45),
-                                                  )
-                                                ],
-                                              ),
-                                              Container(
-                                                  padding: const EdgeInsets.only(left: 25, right: 25, bottom: 20),
-                                                  child: const Text('To Do', style: TextStyle(fontSize: 30, color: Colors.lightBlue))
-                                              ),
-                                            ]
-                                        )
-                                    ),
-                                    Card(
-                                        elevation: 5,
-                                        child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                            children: [
-                                              Stack(
-                                                alignment: Alignment.center,
-                                                children: [
-                                                  Container(
-                                                      padding: const EdgeInsets.only(top: 14, bottom: 4),
-                                                      child: const Icon(FontAwesomeIcons.boxArchive, size: 110)
-                                                  ),
-                                                  Card(
-                                                    margin: const EdgeInsets.only(top: 3),
-                                                    shape: const CircleBorder(),
-                                                    color: Colors.green,
-                                                    elevation: 5,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.all(16.0),
-                                                      child: Text('$archiveCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Colors.white)),
-                                                    )
-                                                  )
-                                                ],
-                                              ),
-                                              Container(
-                                                  padding: const EdgeInsets.only(left: 10, right: 10, bottom: 20),
-                                                  child: const Text('Archived', style: TextStyle(fontSize: 30, color: Colors.lightBlue))
-                                              ),
-                                            ]
-                                        )
+                                          Container(
+                                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 20),
+                                              child: const Text('Archived', style: TextStyle(fontSize: 30, color: Colors.lightBlue))
+                                          ),
+                                        ]
                                     )
-                                  ]
-                              ),
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: dueEarliest != null ? Container(
-                            padding: const EdgeInsets.only(left: 10, right: 10),
-                            child: Card(
-                              color: dueEarliest.color,
-                              elevation: 5,
-                              child: Container(
-                                width: double.infinity,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.only(left: 16.0, right: 16, top: 15),
-                                      child: AutoSizeText(dueEarliest.name, maxLines: 1, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-                                    ),
-                                    const Divider(
-                                      color: Colors.black,
-                                      thickness: 3,
-                                      indent: 16,
-                                      endIndent: 200,
-                                    ),
-                                    Container(
-                                        padding: const EdgeInsets.only(left: 16.0, right: 16, bottom: 10),
-                                        child : AutoSizeText.rich(
-                                            TextSpan(
-                                                style: const TextStyle(color: Colors.black, fontSize: 20),
-                                                children: [
-                                                  TextSpan(text: taskGap!.isNegative ? 'Due in ' : 'Was due ', style: TextStyle(fontWeight: FontWeight.bold, color: taskGap.isNegative ? Colors.lightGreenAccent : Colors.amber)),
-                                                  TextSpan(text: _getTimeText(taskGap), style: const TextStyle(fontWeight: FontWeight.bold)),
-                                                  TextSpan(text: taskGap.isNegative ? '.' : ' ago.'),
-                                                ]
-                                            ),
-                                            maxLines: 1,
-                                        )
-                                    )
-                                  ],
                                 )
-                              )
-                            ),
-                          ) : Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                              ]
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: dueEarliest != null ? Container(
+                        padding: const EdgeInsets.only(left: 10, right: 10),
+                        child: Card(
+                          color: dueEarliest.color,
+                          elevation: 5,
+                          child: Container(
+                            width: double.infinity,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.only(left: 16.0, right: 16, top: 15),
+                                  child: AutoSizeText(dueEarliest.name, maxLines: 1, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+                                ),
+                                const Divider(
+                                  color: Colors.black,
+                                  thickness: 3,
+                                  indent: 16,
+                                  endIndent: 200,
+                                ),
+                                Container(
+                                    padding: const EdgeInsets.only(left: 16.0, right: 16, bottom: 10),
+                                    child : AutoSizeText.rich(
+                                        TextSpan(
+                                            style: const TextStyle(color: Colors.black, fontSize: 20),
+                                            children: [
+                                              TextSpan(text: taskGap!.isNegative ? 'Due in ' : 'Was due ', style: TextStyle(fontWeight: FontWeight.bold, color: taskGap.isNegative ? Colors.lightGreenAccent : Colors.amber)),
+                                              TextSpan(text: _getTimeText(taskGap), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                              TextSpan(text: taskGap.isNegative ? '.' : ' ago.'),
+                                            ]
+                                        ),
+                                        maxLines: 1,
+                                    )
+                                )
+                              ],
+                            )
+                          )
+                        ),
+                      ) : Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Card(
+                            elevation: 5,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(8),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  const Opacity(
+                                      opacity: 0.5,
+                                      child: Icon(FontAwesomeIcons.clipboardCheck, size: 90)
+                                  ),
+                                  Column(
+                                    children: const [
+                                      Text('Task List Empty', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                                      Text('You\'re free!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))
+                                    ],
+                                  )
+                                ],
+                              ),
+                            )
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: lastArchived != null ? Stack(
+                        alignment: Alignment.topCenter,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
                             child: Card(
+                                color: lastTask!.color,
                                 elevation: 5,
                                 child: Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.all(8),
-                                  child: Stack(
-                                    alignment: Alignment.center,
+                                  padding: const EdgeInsets.only(top: 20),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Opacity(
-                                          opacity: 0.5,
-                                          child: Icon(FontAwesomeIcons.clipboardCheck, size: 90)
+                                      Container(
+                                        padding: const EdgeInsets.only(left: 16.0, right: 16, top: 15),
+                                        child: AutoSizeText(lastTask.name, maxLines: 1, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
                                       ),
-                                      Column(
-                                        children: const [
-                                          Text('Task List Empty', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-                                          Text('You\'re free!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))
-                                        ],
+                                      const Divider(
+                                        color: Colors.black,
+                                        thickness: 3,
+                                        indent: 16,
+                                        endIndent: 200,
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.only(left: 16.0, right: 16, bottom: 10),
+                                        child : AutoSizeText.rich(
+                                          TextSpan(
+                                            text: 'Completed ',
+                                            style: const TextStyle(color: Colors.black),
+                                            children: [
+                                              TextSpan(text: _getTimeText(archiveGap!), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                              TextSpan(text: archiveGap.isNegative ? ' before ' : ' after ', style: TextStyle(color: archiveGap.isNegative ? Colors. lightGreenAccent : Colors.amber, fontWeight: FontWeight.bold)),
+                                              const TextSpan(text: 'the deadline.')
+                                            ]
+                                          ),
+                                          maxLines: 1,
+                                        )
                                       )
                                     ],
                                   ),
                                 )
                             ),
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: lastArchived != null ? Stack(
-                            alignment: Alignment.topCenter,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
-                                child: Card(
-                                    color: lastTask!.color,
-                                    elevation: 5,
-                                    child: Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.only(top: 20),
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.start,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.only(left: 16.0, right: 16, top: 15),
-                                            child: AutoSizeText(lastTask.name, maxLines: 1, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-                                          ),
-                                          const Divider(
-                                            color: Colors.black,
-                                            thickness: 3,
-                                            indent: 16,
-                                            endIndent: 200,
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.only(left: 16.0, right: 16, bottom: 10),
-                                            child : AutoSizeText.rich(
-                                              TextSpan(
-                                                text: 'Completed ',
-                                                style: const TextStyle(color: Colors.black, fontSize: 20),
-                                                children: [
-                                                  TextSpan(text: _getTimeText(archiveGap!), style: const TextStyle(fontWeight: FontWeight.bold)),
-                                                  TextSpan(text: archiveGap.isNegative ? ' before ' : ' after ', style: TextStyle(color: archiveGap.isNegative ? Colors. lightGreenAccent : Colors.amber, fontWeight: FontWeight.bold)),
-                                                  const TextSpan(text: 'the deadline.')
-                                                ]
-                                              ),
-                                              maxLines: 1,
-                                            )
-                                          )
-                                        ],
-                                      ),
-                                    )
-                                ),
+                          Material(
+                            elevation: 10,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                  'Completed ${_getTimeText(sinceLastArchived!)} ago',
+                                  style: const TextStyle(fontSize: 20)
                               ),
-                              Material(
-                                elevation: 10,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                      'Completed ${_getTimeText(sinceLastArchived!)} ago',
-                                      style: const TextStyle(fontSize: 20)
-                                  ),
-                                )
-                              )
-                            ],
-                          ) : Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Card(
-                              elevation: 5,
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(8),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    const Opacity(
-                                      opacity: 0.5,
-                                      child: Icon(FontAwesomeIcons.boxOpen, size: 90)
-                                    ),
-                                    Column(
-                                      children: const [
-                                        Text('Archive Empty', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-                                        Text('Complete some Tasks!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))
-                                      ],
-                                    )
-                                  ],
+                            )
+                          )
+                        ],
+                      ) : Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Card(
+                          elevation: 5,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(8),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                const Opacity(
+                                  opacity: 0.5,
+                                  child: Icon(FontAwesomeIcons.boxOpen, size: 90)
                                 ),
-                              )
+                                Column(
+                                  children: const [
+                                    Text('Archive Empty', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                                    Text('Complete some Tasks!', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))
+                                  ],
+                                )
+                              ],
                             ),
-                          ),
+                          )
                         ),
-
-                      ]
+                      ),
                     ),
                     Container(
                       alignment: Alignment.centerLeft,
