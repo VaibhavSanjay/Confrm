@@ -80,7 +80,7 @@ class TaskViewPageState extends State<TaskViewPage> {
   // When user adds a new task
   Future<bool> addTask() async {
     // Maximum of MAX_TASKS
-    if (_taskData.length >= MAX_TASKS) {
+    if (_taskData.length >= maxTasks) {
       return false;
     }
     _taskData.add(TaskData());
@@ -130,7 +130,7 @@ class TaskViewPageState extends State<TaskViewPage> {
     if (index >= 0) {
       _archivedTaskData.add(_taskData.removeAt(index)..archived = DateTime.now().toUtc());
       // Remove the earliest completed task if more than MAX_TASKS archived
-      if (_archivedTaskData.length > MAX_TASKS) {
+      if (_archivedTaskData.length > maxTasks) {
         _archivedTaskData.removeAt(0);
       }
       ds.updateTaskData(_taskData);

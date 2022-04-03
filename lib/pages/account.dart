@@ -2,7 +2,6 @@ import 'package:family_tasks/pages/Helpers/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:analog_clock/analog_clock.dart';
 
@@ -68,6 +67,21 @@ class AccountPageState extends State<AccountPage> {
         ),
       ),
     );
+  }
+
+  Color _getBgColor(int taskCount) {
+    ColorTween good = ColorTween(begin: Colors.lightBlueAccent, end: Colors.green);
+    ColorTween mid = ColorTween(begin: Colors.yellow, end: Colors.orange);
+    ColorTween bad = ColorTween(begin: Colors.orange, end: Colors.red);
+    if (taskCount <= maxTasks/4) {
+      return good.lerp(taskCount/(maxTasks/4)) ?? Colors.green;
+    } else if (taskCount <= 3*maxTasks/5) {
+      taskCount -= maxTasks ~/ 4;
+      return mid.lerp(taskCount/(maxTasks/2)) ?? Colors.orange;
+    } else {
+      taskCount -= maxTasks ~/ 2;
+      return bad.lerp(taskCount/(maxTasks/4)) ?? Colors.red;
+    }
   }
 
   @override
@@ -294,6 +308,7 @@ class AccountPageState extends State<AccountPage> {
                 DateTime? lastArchived = archiveCount > 0 ? archive[archiveCount - 1].archived.toLocal() : null;
                 Duration? sinceLastArchived = archiveCount > 0 ? DateTime.now().difference(lastArchived!) : null;
                 TaskData? lastTask = archiveCount > 0 ? archive[archiveCount - 1] : null;
+                Color bgColor = _getBgColor(taskCount);
 
                 return Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -357,14 +372,14 @@ class AccountPageState extends State<AccountPage> {
                                   elevation: 5,
                                   color: Colors.transparent,
                                   child: Container(
-                                    decoration: const BoxDecoration(
-                                        gradient: const LinearGradient(
+                                    decoration: BoxDecoration(
+                                        gradient: LinearGradient(
                                           begin: Alignment.topCenter,
                                           end: Alignment.bottomCenter,
-                                          stops: [0.2, 0.9],
-                                          colors: [Colors.greenAccent, Colors.green],
+                                          stops: const [0.0000001, 0.9],
+                                          colors: [bgColor.withOpacity(0.4), bgColor],
                                         ),
-                                        borderRadius: BorderRadius.only(
+                                        borderRadius: const BorderRadius.only(
                                           topRight: Radius.circular(27),
                                         )
                                     ),
@@ -387,7 +402,7 @@ class AccountPageState extends State<AccountPage> {
                         Container(
                           margin: const EdgeInsets.only(left: 10),
                           child: Material(
-                            color: Colors.green,
+                            color: bgColor,
                             child: Container(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: Row(
@@ -406,12 +421,22 @@ class AccountPageState extends State<AccountPage> {
                                                       padding: const EdgeInsets.only(top: 10, bottom: 10),
                                                       child: const Icon(FontAwesomeIcons.clipboard, size: 110)
                                                   ),
-                                                  Text('$taskCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900))
+                                                  Card(
+                                                    margin: const EdgeInsets.only(top: 10),
+                                                    color: taskCount > 0 ? Colors.red : Colors.green,
+                                                    elevation: 5,
+                                                    shape: const CircleBorder(),
+                                                    child: taskCount > 0 ? Padding(
+                                                      padding: const EdgeInsets.all(16.0),
+                                                      child: Text('$taskCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Colors.white)),
+                                                    ) :
+                                                    const Icon(Icons.check, color: Colors.white, size: 45),
+                                                  )
                                                 ],
                                               ),
                                               Container(
                                                   padding: const EdgeInsets.only(left: 25, right: 25, bottom: 20),
-                                                  child: const Text('To Do', style: TextStyle(fontSize: 30))
+                                                  child: const Text('To Do', style: TextStyle(fontSize: 30, color: Colors.lightBlue))
                                               ),
                                             ]
                                         )
@@ -425,15 +450,24 @@ class AccountPageState extends State<AccountPage> {
                                                 alignment: Alignment.center,
                                                 children: [
                                                   Container(
-                                                      padding: const EdgeInsets.only(top: 20),
-                                                      child: const Icon(Icons.inbox, size: 110)
+                                                      padding: const EdgeInsets.only(top: 14, bottom: 4),
+                                                      child: const Icon(FontAwesomeIcons.boxArchive, size: 110)
                                                   ),
-                                                  Text('$archiveCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900))
+                                                  Card(
+                                                    margin: const EdgeInsets.only(top: 3),
+                                                    shape: const CircleBorder(),
+                                                    color: Colors.green,
+                                                    elevation: 5,
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.all(16.0),
+                                                      child: Text('$archiveCount', style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Colors.white)),
+                                                    )
+                                                  )
                                                 ],
                                               ),
                                               Container(
                                                   padding: const EdgeInsets.only(left: 10, right: 10, bottom: 20),
-                                                  child: const Text('Archived', style: TextStyle(fontSize: 30))
+                                                  child: const Text('Archived', style: TextStyle(fontSize: 30, color: Colors.lightBlue))
                                               ),
                                             ]
                                         )
@@ -444,7 +478,7 @@ class AccountPageState extends State<AccountPage> {
                           ),
                         ),
                         Container(
-                          padding: EdgeInsets.only(top: 10),
+                          padding: const EdgeInsets.only(top: 10),
                           child: lastArchived != null ? Stack(
                             alignment: Alignment.topCenter,
                             children: [
