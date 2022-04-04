@@ -1,6 +1,7 @@
 import 'dart:isolate';
 import 'dart:ui';
 
+import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:background_locator/background_locator.dart';
 import 'package:background_locator/location_dto.dart';
 import 'package:background_locator/settings/android_settings.dart';
@@ -13,7 +14,6 @@ import 'package:family_tasks/pages/account.dart';
 import 'package:family_tasks/pages/task_view.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_circular_text/circular_text.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -21,9 +21,35 @@ import 'package:permission_handler/permission_handler.dart';
 import 'Services/location_callback.dart';
 import 'Services/location_service.dart';
 
+late SharedPreferences prefs; // Used to store family ID on the phone
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure widget initialization
   await DatabaseService.initializeFirebase(); // Initialize Firebase Database
+  AwesomeNotifications().initialize(
+    // set the icon to null if you want to use the default app icon
+      null,
+      [
+        NotificationChannel(
+            channelGroupKey: 'basic_channel_group',
+            channelKey: 'basic_channel',
+            channelName: 'Basic notifications',
+            channelDescription: 'Notification channel for basic tests',
+            defaultColor: Colors.blue,
+            ledColor: Colors.white)
+      ],
+      // Channel groups are only visual and are not required
+      channelGroups: [
+        NotificationChannelGroup(
+            channelGroupkey: 'basic_channel_group',
+            channelGroupName: 'Basic group')
+      ],
+      debug: true
+  );
+  AwesomeNotifications().actionStream.listen((ReceivedNotification receivedNotification){
+        print('Notification!');
+      }
+  );
   runApp(const FamilyTasks());
 }
 
@@ -70,10 +96,8 @@ class _MyHomePageState extends State<MyHomePage> {
   */
   late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView),
                                       AccountPage(key: _keyAccount, onJoinOrCreate: _resetFamID, onLeave: _onLeave)];
-  late SharedPreferences prefs; // Used to store family ID on the phone
   int _curPage = 0;
   bool _haveSetFamID = false; // If the family ID exists
-  final Distance distance = const Distance();
 
   ReceivePort port = ReceivePort();
 
@@ -307,6 +331,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _onStart() async {
+    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      if (!isAllowed) {
+        // This is just a basic example. For real apps, you must show some
+        // friendly dialog box before call the request method.
+        // This is very important to not harm the user experience
+        AwesomeNotifications().requestPermissionToSendNotifications();
+      }
+    });
     if (await _checkLocationPermission()) {
       await _startLocator();
     } else {
@@ -320,12 +352,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _newData(LocationDto? data) async {
     if (data != null) {
-      print(data.latitude);
-      final double meter = distance(
-          LatLng(data.latitude, data.longitude),
-          LatLng(37.4219592, -122.1822779)
-      );
-      print(meter);
+      print('Got data in app!');
     }
     return;
   }
@@ -337,20 +364,20 @@ class _MyHomePageState extends State<MyHomePage> {
         initDataCallback: data,
         disposeCallback: LocationCallbackHandler.disposeCallback,
         iosSettings: const IOSSettings(
-            accuracy: LocationAccuracy.NAVIGATION, distanceFilter: 0),
+            accuracy: LocationAccuracy.NAVIGATION, distanceFilter: 20),
         autoStop: false,
         androidSettings: const AndroidSettings(
             accuracy: LocationAccuracy.NAVIGATION,
-            interval: 5,
-            distanceFilter: 0,
+            interval: 60,
+            distanceFilter: 20,
             client: LocationClient.google,
             androidNotificationSettings: AndroidNotificationSettings(
                 notificationChannelName: 'Location tracking',
                 notificationTitle: 'Start Location Tracking',
-                notificationMsg: 'Track location in background',
+                notificationMsg: 'You will be notified when you are close to a task location',
                 notificationBigMsg:
-                'Background location is on to keep the app up-tp-date with your location. This is required for main features to work properly when the app is not running.',
-                notificationIconColor: Colors.grey,
+                'You have activated the location settings option. When you are close to a location of a task, the app will notify you. You can turn this feature off at any time in the Confrm! app or in your settings.',
+                notificationIconColor: Colors.blue,
                 notificationTapCallback:
                 LocationCallbackHandler.notificationCallback)));
   }
