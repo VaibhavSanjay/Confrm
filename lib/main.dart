@@ -1,3 +1,11 @@
+import 'dart:isolate';
+import 'dart:ui';
+
+import 'package:background_locator/background_locator.dart';
+import 'package:background_locator/location_dto.dart';
+import 'package:background_locator/settings/android_settings.dart';
+import 'package:background_locator/settings/ios_settings.dart';
+import 'package:background_locator/settings/locator_settings.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
 import 'package:flutter/material.dart';
@@ -5,8 +13,13 @@ import 'package:family_tasks/pages/account.dart';
 import 'package:family_tasks/pages/task_view.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_circular_text/circular_text.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+import 'Services/location_callback.dart';
+import 'Services/location_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure widget initialization
@@ -60,11 +73,29 @@ class _MyHomePageState extends State<MyHomePage> {
   late SharedPreferences prefs; // Used to store family ID on the phone
   int _curPage = 0;
   bool _haveSetFamID = false; // If the family ID exists
+  final Distance distance = const Distance();
+
+  ReceivePort port = ReceivePort();
 
   @override
   void initState() {
     super.initState();
     _initializePreference().whenComplete(_setFamID); // Initialize prefs and set the family ID
+    if (IsolateNameServer.lookupPortByName(
+        LocationServiceRepository.isolateName) !=
+        null) {
+      IsolateNameServer.removePortNameMapping(
+          LocationServiceRepository.isolateName);
+    }
+
+    IsolateNameServer.registerPortWithName(
+        port.sendPort, LocationServiceRepository.isolateName);
+
+    port.listen( (dynamic data) async {
+        await _newData(data);
+      },
+    );
+    initPlatformState();
   }
 
   // Function called when the family ID is submitted
@@ -110,6 +141,13 @@ class _MyHomePageState extends State<MyHomePage> {
     prefs = await SharedPreferences.getInstance();
   }
 
+  Future<void> initPlatformState() async {
+    print('Initializing...');
+    await BackgroundLocator.initialize();
+    print('Initialization done');
+    print('Running');
+  }
+
   void _onPageChanged(int index) {
     setState(() {
       _curPage = index;
@@ -148,6 +186,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   )
                 ],
               ),
+            ),
+            TextButton(
+              onPressed: _onStart, child: Text('start'),
             )
           ],
         ),
@@ -263,5 +304,54 @@ class _MyHomePageState extends State<MyHomePage> {
         ]
       ) : null,
     );
+  }
+
+  void _onStart() async {
+    if (await _checkLocationPermission()) {
+      await _startLocator();
+    } else {
+      // show error
+    }
+  }
+
+  Future<bool> _checkLocationPermission() async {
+    return await Permission.locationAlways.request().isGranted;
+  }
+
+  Future<void> _newData(LocationDto? data) async {
+    if (data != null) {
+      print(data.latitude);
+      final double meter = distance(
+          LatLng(data.latitude, data.longitude),
+          LatLng(37.4219592, -122.1822779)
+      );
+      print(meter);
+    }
+    return;
+  }
+
+  Future<void> _startLocator() async{
+    Map<String, dynamic> data = {'countInit': 1};
+    return await BackgroundLocator.registerLocationUpdate(LocationCallbackHandler.callback,
+        initCallback: LocationCallbackHandler.initCallback,
+        initDataCallback: data,
+        disposeCallback: LocationCallbackHandler.disposeCallback,
+        iosSettings: const IOSSettings(
+            accuracy: LocationAccuracy.NAVIGATION, distanceFilter: 0),
+        autoStop: false,
+        androidSettings: const AndroidSettings(
+            accuracy: LocationAccuracy.NAVIGATION,
+            interval: 5,
+            distanceFilter: 0,
+            client: LocationClient.google,
+            androidNotificationSettings: AndroidNotificationSettings(
+                notificationChannelName: 'Location tracking',
+                notificationTitle: 'Start Location Tracking',
+                notificationMsg: 'Track location in background',
+                notificationBigMsg:
+                'Background location is on to keep the app up-tp-date with your location. This is required for main features to work properly when the app is not running.',
+                notificationIconColor: Colors.grey,
+                notificationTapCallback:
+                LocationCallbackHandler.notificationCallback)));
   }
 }
