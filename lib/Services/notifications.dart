@@ -36,4 +36,14 @@ class Notifications {
         )
     );
   }
+
+  static Future<bool> requestNotifications() async {
+    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      if (!isAllowed) {
+        AwesomeNotifications().requestPermissionToSendNotifications();
+      }
+    });
+    return AwesomeNotifications().isNotificationAllowed();
+  }
+
 }

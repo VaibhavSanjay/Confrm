@@ -1,3 +1,4 @@
+import 'package:family_tasks/Services/location_callback.dart';
 import 'package:family_tasks/pages/Helpers/account_option_widgets.dart';
 import 'package:family_tasks/pages/Helpers/constants.dart';
 import 'package:flutter/material.dart';
@@ -7,12 +8,14 @@ import 'package:auto_size_text/auto_size_text.dart';
 import '../Services/database.dart';
 import '../models/family_task_data.dart';
 import 'Helpers/account_card.dart';
+import 'Helpers/hero_dialogue_route.dart';
 
 class AccountPage extends StatefulWidget {
-  const AccountPage({Key? key, required this.onJoinOrCreate, required this.onLeave}) : super(key: key);
+  const AccountPage({Key? key, required this.onJoinOrCreate, required this.onLeave, required this.onLocationSetting}) : super(key: key);
 
   final Function(String famID) onJoinOrCreate;
   final Function() onLeave;
+  final Function(bool) onLocationSetting;
 
 
   @override
@@ -22,14 +25,16 @@ class AccountPage extends StatefulWidget {
 class AccountPageState extends State<AccountPage> {
   static late String? famID;
   static bool setID = false;
+  static bool _locationEnabled = false;
   static late DatabaseService ds;
   static late Stream<FamilyTaskData> stream;
   String _input = '';
   final _formKey = GlobalKey<FormState>();
   bool _foundFamily = false;
 
-  static void setFamID(String? ID) {
+  static void setUp(String? ID, bool? locationEnabled) {
     famID = ID;
+    _locationEnabled = locationEnabled ?? false;
     setID = true;
     ds = DatabaseService(famID);
     if (famID != null) {
@@ -81,6 +86,58 @@ class AccountPageState extends State<AccountPage> {
               )
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _getLocationActivationWidget(double verticalPadding) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: verticalPadding),
+      child: Hero(
+        tag: 'location',
+        child: _locationEnabled ? Container(
+
+        ) : Card(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const Icon(FontAwesomeIcons.earthAmericas, size: 100, color: Colors.blue),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: AutoSizeText('Get reminders when you arrive!', style: TextStyle(fontSize: 30), maxLines: 1,),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: Text('You can provide locations of a task to get a reminder when you arrive there. After pressing activate, make sure to accept the requested permissions!',
+                        style: TextStyle(fontSize: 18, color: Colors.grey))
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                          child: const Text('Cancel'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          }
+                      ),
+                      TextButton(
+                          child: const Text('Activate'),
+                          onPressed: () async {
+                            await LocationCallbackHandler.onStart();
+                            Navigator.pop(context);
+                            widget.onLocationSetting(true);
+                            setState((){});
+                          }
+                      )
+                    ],
+                  )
+                ]
+              ),
+            ),
+          )
         ),
       ),
     );
@@ -495,94 +552,41 @@ class AccountPageState extends State<AccountPage> {
                         ),
                       ),
                     ),
-                    dueEarliest != null ? Container(
-                      padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
-                      child: Card(
-                        color: dueEarliest.color,
-                        elevation: 5,
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.only(left: 16.0, right: 16, top: 15),
-                                child: AutoSizeText(dueEarliest.name, maxLines: 1, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-                              ),
-                              const Divider(
-                                color: Colors.black,
-                                thickness: 3,
-                                indent: 16,
-                                endIndent: 200,
-                              ),
-                              Container(
-                                  padding: const EdgeInsets.only(left: 16.0, right: 16, bottom: 10),
-                                  child : AutoSizeText.rich(
-                                      TextSpan(
-                                          style: const TextStyle(color: Colors.black, fontSize: 20),
-                                          children: [
-                                            TextSpan(text: taskGap!.isNegative ? 'Due in ' : 'Was due ', style: TextStyle(fontWeight: FontWeight.bold, color: taskGap.isNegative ? Colors.lightGreenAccent : Colors.amber)),
-                                            TextSpan(text: _getTimeText(taskGap), style: const TextStyle(fontWeight: FontWeight.bold)),
-                                            TextSpan(text: taskGap.isNegative ? '.' : ' ago.'),
-                                          ]
-                                      ),
-                                      maxLines: 1,
-                                  )
-                              )
-                            ],
-                          )
-                        )
+                    dueEarliest != null ? DataCard(
+                      taskColor: dueEarliest.color,
+                      taskName: dueEarliest.name,
+                      textSpan: TextSpan(
+                          style: const TextStyle(color: Colors.black, fontSize: 20),
+                          children: [
+                            TextSpan(text: taskGap!.isNegative ? 'Due in ' : 'Was due ', style: TextStyle(fontWeight: FontWeight.bold, color: taskGap.isNegative ? Colors.lightGreenAccent : Colors.amber)),
+                            TextSpan(text: _getTimeText(taskGap), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(text: taskGap.isNegative ? '.' : ' ago.'),
+                          ]
                       ),
-                    ) : const AccountCard(
+                    ): const AccountCard(
                       icon: FontAwesomeIcons.listCheck,
-                      opacity: 0.5,
+                      opacity: 0.7,
                       title: 'Task List Empty',
                       subtitle: 'You\'re free!',
                       iconSize: 200,
                       bottomPadding: 10,
+                      bgColor: Colors.amber,
+                      iconColor: Colors.deepOrange,
                     ),
                     lastArchived != null ? Stack(
                       alignment: Alignment.topRight,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.only(left: 10, right: 10, top: 10),
-                          child: Card(
-                              color: lastTask!.color,
-                              elevation: 5,
-                              child: Container(
-                                width: double.infinity,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.only(left: 16.0, right: 16, top: 15),
-                                      child: AutoSizeText(lastTask.name, maxLines: 1, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-                                    ),
-                                    const Divider(
-                                      color: Colors.black,
-                                      thickness: 3,
-                                      indent: 16,
-                                      endIndent: 200,
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.only(left: 16.0, right: 16, bottom: 10),
-                                      child : AutoSizeText.rich(
-                                        TextSpan(
-                                          text: 'Completed ',
-                                          style: const TextStyle(color: Colors.black),
-                                          children: [
-                                            TextSpan(text: _getTimeText(archiveGap!), style: const TextStyle(fontWeight: FontWeight.bold)),
-                                            TextSpan(text: archiveGap.isNegative ? ' before ' : ' after ', style: TextStyle(color: archiveGap.isNegative ? Colors. lightGreenAccent : Colors.amber, fontWeight: FontWeight.bold)),
-                                            const TextSpan(text: 'the deadline.')
-                                          ]
-                                        ),
-                                        maxLines: 1,
-                                      )
-                                    )
-                                  ],
-                                ),
-                              )
+                        DataCard(
+                          taskName: lastTask!.name,
+                          taskColor: lastTask.color,
+                          textSpan: TextSpan(
+                              text: 'Completed ',
+                              style: const TextStyle(color: Colors.black),
+                              children: [
+                                TextSpan(text: _getTimeText(archiveGap!), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                TextSpan(text: archiveGap.isNegative ? ' before ' : ' after ', style: TextStyle(color: archiveGap.isNegative ? Colors. lightGreenAccent : Colors.amber, fontWeight: FontWeight.bold)),
+                                const TextSpan(text: 'the deadline.')
+                              ]
                           ),
                         ),
                         Material(
@@ -602,21 +606,33 @@ class AccountPageState extends State<AccountPage> {
                         )
                       ],
                     ) : const AccountCard(
-                      opacity: 0.5,
+                      opacity: 0.7,
                       icon: FontAwesomeIcons.boxOpen,
                       title: 'Archive Empty',
                       subtitle: 'Complete some tasks!',
                       iconSize: 175,
                       bottomPadding: 40,
+                      bgColor: Colors.red,
+                      iconColor: Colors.deepPurpleAccent,
                     ),
-                    const AccountCard(
-                      bgColor: Colors.green,
-                      iconColor: Colors.lightGreen,
-                      icon: Icons.check,
-                      title: 'Location',
-                      subtitle: 'Activated',
-                      iconSize: 300,
-                      bottomPadding: 85,
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                          return _getLocationActivationWidget(MediaQuery.of(context).size.height/2 - 150);
+                        }));
+                      },
+                      child: Hero(
+                        tag: 'location',
+                        child: AccountCard(
+                          bgColor: _locationEnabled ? Colors.green : Colors.blue,
+                          iconColor: _locationEnabled ? Colors.lightGreen : Colors.lightBlueAccent,
+                          icon: _locationEnabled ? Icons.check : FontAwesomeIcons.mapLocationDot,
+                          title: 'Location',
+                          subtitle: _locationEnabled ? 'Activated' : 'Click for Information',
+                          iconSize: _locationEnabled ? 300 : 250,
+                          bottomPadding: _locationEnabled ? 85 : 45,
+                        ),
+                      ),
                     ),
                     Container(
                       alignment: Alignment.centerLeft,

@@ -2,12 +2,8 @@ import 'dart:isolate';
 import 'dart:ui';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:background_locator/background_locator.dart';
-import 'package:background_locator/location_dto.dart';
-import 'package:background_locator/settings/android_settings.dart';
-import 'package:background_locator/settings/ios_settings.dart';
-import 'package:background_locator/settings/locator_settings.dart';
 import 'package:family_tasks/Services/database.dart';
+import 'package:family_tasks/Services/location_callback.dart';
 import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
 import 'package:flutter/material.dart';
 import 'package:family_tasks/pages/account.dart';
@@ -16,9 +12,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_circular_text/circular_text.dart';
-import 'package:permission_handler/permission_handler.dart';
 
-import 'Services/location_callback.dart';
 import 'Services/location_service.dart';
 
 late SharedPreferences prefs; // Used to store family ID on the phone
@@ -95,7 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
   * name of the group, tasks left, and options such as leaving.
   */
   late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView),
-                                      AccountPage(key: _keyAccount, onJoinOrCreate: _resetFamID, onLeave: _onLeave)];
+                                      AccountPage(key: _keyAccount, onJoinOrCreate: _resetFamID, onLeave: _onLeave, onLocationSetting: _onLocationSetting)];
   int _curPage = 0;
   bool _haveSetFamID = false; // If the family ID exists
 
@@ -104,7 +98,11 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _initializePreference().whenComplete(_setFamID); // Initialize prefs and set the family ID
+    _initializePreference().whenComplete(() {
+      prefs.remove('location');
+      _setUp();
+      LocationCallbackHandler.initPlatformState(prefs.getBool('location') ?? false);
+    }); // Initialize prefs and set the family ID
     if (IsolateNameServer.lookupPortByName(
         LocationServiceRepository.isolateName) !=
         null) {
@@ -116,28 +114,33 @@ class _MyHomePageState extends State<MyHomePage> {
         port.sendPort, LocationServiceRepository.isolateName);
 
     port.listen( (dynamic data) async {
-        await _newData(data);
+        print('Got data in app!');
       },
     );
-    initPlatformState();
   }
 
   // Function called when the family ID is submitted
   void _resetFamID(String famID) {
     prefs.setString('famID', famID);
-    _setFamID();
+    _setUp();
     _pageController.animateToPage(0, curve: Curves.easeOut, duration: const Duration(milliseconds: 500));
   }
 
   // When leaving the family
   void _onLeave() {
     prefs.remove('famID');
-    _setFamID();
+    _setUp();
+  }
+
+  void _onLocationSetting(bool set) {
+    prefs.setBool('location', set);
+    _setUp();
   }
 
   // Set the family ID and reset the widgets
-  void _setFamID() {
+  void _setUp() {
     String? ID = prefs.getString('famID');
+    bool? locationEnabled = prefs.getBool('location');
     _haveSetFamID = ID != null;
     // If no family ID, force user to set family ID
     if (!_haveSetFamID) {
@@ -145,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     // Set family ID in each widget
     TaskViewPageState.setFamID(ID);
-    AccountPageState.setFamID(ID);
+    AccountPageState.setUp(ID, locationEnabled);
     if (_keyAccount.currentState != null) {
       _keyAccount.currentState!.setState((){});
     }
@@ -163,13 +166,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _initializePreference() async{
     prefs = await SharedPreferences.getInstance();
-  }
-
-  Future<void> initPlatformState() async {
-    print('Initializing...');
-    await BackgroundLocator.initialize();
-    print('Initialization done');
-    print('Running');
   }
 
   void _onPageChanged(int index) {
@@ -211,9 +207,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 ],
               ),
             ),
-            TextButton(
-              onPressed: _onStart, child: Text('start'),
-            )
           ],
         ),
         centerTitle: true,
@@ -330,55 +323,4 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _onStart() async {
-    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
-      if (!isAllowed) {
-        // This is just a basic example. For real apps, you must show some
-        // friendly dialog box before call the request method.
-        // This is very important to not harm the user experience
-        AwesomeNotifications().requestPermissionToSendNotifications();
-      }
-    });
-    if (await _checkLocationPermission()) {
-      await _startLocator();
-    } else {
-      // show error
-    }
-  }
-
-  Future<bool> _checkLocationPermission() async {
-    return await Permission.locationAlways.request().isGranted;
-  }
-
-  Future<void> _newData(LocationDto? data) async {
-    if (data != null) {
-      print('Got data in app!');
-    }
-    return;
-  }
-
-  Future<void> _startLocator() async{
-    Map<String, dynamic> data = {'countInit': 1};
-    return await BackgroundLocator.registerLocationUpdate(LocationCallbackHandler.callback,
-        initCallback: LocationCallbackHandler.initCallback,
-        initDataCallback: data,
-        disposeCallback: LocationCallbackHandler.disposeCallback,
-        iosSettings: const IOSSettings(
-            accuracy: LocationAccuracy.NAVIGATION, distanceFilter: 20),
-        autoStop: false,
-        androidSettings: const AndroidSettings(
-            accuracy: LocationAccuracy.NAVIGATION,
-            interval: 60,
-            distanceFilter: 20,
-            client: LocationClient.google,
-            androidNotificationSettings: AndroidNotificationSettings(
-                notificationChannelName: 'Location tracking',
-                notificationTitle: 'Start Location Tracking',
-                notificationMsg: 'You will be notified when you are close to a task location',
-                notificationBigMsg:
-                'You have activated the location settings option. When you are close to a location of a task, the app will notify you. You can turn this feature off at any time in the Confrm! app or in your settings.',
-                notificationIconColor: Colors.blue,
-                notificationTapCallback:
-                LocationCallbackHandler.notificationCallback)));
-  }
 }
