@@ -1,7 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 
-import '../../models/family_task_data.dart';
 
 class AccountCard extends StatefulWidget {
   const AccountCard({Key? key, this.bgColor = Colors.white, this.iconColor = Colors.black, this.opacity = 1,
@@ -106,4 +105,75 @@ class DataCard extends StatelessWidget {
     );
   }
 }
+
+class LocationInfo extends StatelessWidget {
+  const LocationInfo({Key? key, required this.bgColor, required this.icon, required this.title,
+    required this.subtitle, required this.confirmText, required this.onCancel, required this.onConfirm,
+    required this.iconBgColor}) : super(key: key);
+
+  final Color bgColor;
+  final Color iconBgColor;
+  final Icon icon;
+  final String title;
+  final String subtitle;
+  final String confirmText;
+  final Function() onCancel;
+  final Function() onConfirm;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              Stack(
+                alignment: Alignment.topCenter,
+                children: [
+                  Container(
+                      color: bgColor,
+                      height: 80
+                  ),
+                  Container(
+                      transform: Matrix4.translationValues(0, 30, 0),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 5,
+                        ),
+                        color: iconBgColor,
+                      ),
+                      child: icon
+                  ),
+                ],
+              ),
+              Container(
+                  padding: const EdgeInsets.only(top: 32),
+                  child: Text(title, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold))
+              ),
+              Container(
+                  padding: const EdgeInsets.only(left: 8, right: 8, top: 8),
+                  child: Text(subtitle, style: const TextStyle(fontSize: 18), textAlign: TextAlign.justify)
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                      child: const Text('Cancel'),
+                      onPressed: onCancel
+                  ),
+                  TextButton(
+                      child: Text(confirmText),
+                      onPressed: onConfirm
+                  )
+                ],
+              )
+            ],
+          ),
+        )
+    );
+  }
+}
+
 

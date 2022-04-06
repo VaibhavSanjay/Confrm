@@ -21,6 +21,8 @@ class LocationCallbackHandler {
     await BackgroundLocator.initialize();
     print('Initialization done');
     print('Running');
+    print(await BackgroundLocator.isRegisterLocationUpdate());
+    print(await BackgroundLocator.isServiceRunning());
     if (location && !await BackgroundLocator.isRegisterLocationUpdate()) {
       print('Reregister background locator');
       startLocator();
@@ -65,16 +67,13 @@ class LocationCallbackHandler {
     print('***notificationCallback');
   }
 
-  static Future<void> onStart() async {
-    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
-      if (!isAllowed) {
-        AwesomeNotifications().requestPermissionToSendNotifications();
-      }
-    });
+  static Future<bool> onStart() async {
     if (await Notifications.requestNotifications() && await checkLocationPermission()) {
       await startLocator();
+      return true;
     } else {
       // show error
+      return false;
     }
   }
 
@@ -107,5 +106,9 @@ class LocationCallbackHandler {
                 notificationCallback)
         )
     );
+  }
+
+  static Future<void> onStop() async {
+    BackgroundLocator.unRegisterLocationUpdate();
   }
 }
