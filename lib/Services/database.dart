@@ -61,7 +61,7 @@ class DatabaseService {
         'due': Timestamp.fromDate(td.due),
         'color': availableColors.indexOf(td.color),
         'location': td.location,
-        'coords': td.coords
+        'coords': td.coords.cast<dynamic>()
       }).toList()
     });
   }
@@ -77,7 +77,7 @@ class DatabaseService {
         'due': Timestamp.fromDate(td.due),
         'color': availableColors.indexOf(td.color),
         'location': td.location,
-        'coords': td.coords,
+        'coords': td.coords.cast<dynamic>(),
         'archived': Timestamp.fromDate(td.archived)
       }).toList()
     });

@@ -26,6 +26,9 @@ class _AccountCardState extends State<AccountCard> {
       padding: const EdgeInsets.only(left: 10, right: 10, top: 5),
       child: Card(
           color: widget.bgColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -74,6 +77,9 @@ class DataCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.only(left: 10, right: 10, top: 5),
       child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
           color: taskColor,
           elevation: 5,
           child: SizedBox(

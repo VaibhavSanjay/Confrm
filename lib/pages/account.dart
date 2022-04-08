@@ -699,8 +699,8 @@ class AccountPageState extends State<AccountPage> {
                           subtitle: 'You\'re free!',
                           iconSize: 200,
                           bottomPadding: 10,
-                          bgColor: Colors.amber,
-                          iconColor: Colors.deepOrange,
+                          bgColor: Colors.lightGreen,
+                          iconColor: Colors.green,
                         ),
                         lastArchived != null ? Stack(
                           alignment: Alignment.topRight,
