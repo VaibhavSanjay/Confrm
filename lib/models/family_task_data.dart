@@ -24,10 +24,10 @@ class TaskData {
   late DateTime due;
   late DateTime archived;
   late String location;
-  late List<int> coords;
+  late List<double> coords;
 
   TaskData({this.name = 'New Task', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
-    this.status = Status.start, this.location = '', List<int>? coords, DateTime? due, DateTime? archived}) {
+    this.status = Status.start, this.location = '', List<double>? coords, DateTime? due, DateTime? archived}) {
       this.due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
       this.archived = archived ?? DateTime(2101);
       this.coords = coords ?? [];

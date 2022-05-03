@@ -30,7 +30,7 @@ class DatabaseService {
             due: (data['data'][index]['due'] as Timestamp).toDate(),
             color: availableColors[data['data'][index]['color']],
             location: data['data'][index]['location'],
-            coords: data['data'][index]['coords'].cast<int>()
+            coords: data['data'][index]['coords'].cast<double>()
           )
         ),
         archive: List<TaskData>.generate(
@@ -42,8 +42,8 @@ class DatabaseService {
               status: Status.values[data['archive'][index]['status']],
               due: (data['archive'][index]['due'] as Timestamp).toDate(),
               color: availableColors[data['archive'][index]['color']],
-              location: data['data'][index]['location'],
-              coords: data['data'][index]['coords'].cast<int>(),
+              location: data['archive'][index]['location'],
+              coords: data['archive'][index]['coords'].cast<double>(),
               archived: (data['archive'][index]['archived'] as Timestamp).toDate()
             )
         ),
