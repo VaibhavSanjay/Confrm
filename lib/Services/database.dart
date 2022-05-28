@@ -17,6 +17,10 @@ class DatabaseService {
     return taskDataCollection.doc(famID).snapshots().map(_taskDataFromSnapshot);
   }
 
+  Future<DocumentSnapshot> getSingleSnapshot() {
+    return taskDataCollection.doc(famID).get();
+  }
+
   FamilyTaskData _taskDataFromSnapshot(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return FamilyTaskData(

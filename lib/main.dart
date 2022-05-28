@@ -101,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _initializePreference().whenComplete(() {
       prefs.remove('location');
       _setUp();
-      LocationCallbackHandler.initPlatformState(prefs.getBool('location') ?? false);
+      LocationCallbackHandler.initPlatformState(prefs.getBool('location') ?? false, prefs.getString('famID'));
     }); // Initialize prefs and set the family ID
     if (IsolateNameServer.lookupPortByName(
         LocationServiceRepository.isolateName) !=

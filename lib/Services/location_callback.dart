@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:background_locator/background_locator.dart';
@@ -6,17 +7,24 @@ import 'package:background_locator/location_dto.dart';
 import 'package:background_locator/settings/android_settings.dart';
 import 'package:background_locator/settings/ios_settings.dart';
 import 'package:background_locator/settings/locator_settings.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:family_tasks/Services/database.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_android/shared_preferences_android.dart';
+import 'package:shared_preferences_ios/shared_preferences_ios.dart';
 
 import 'location_service.dart';
 import 'notifications.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+
 class LocationCallbackHandler {
   static const Distance distance = Distance();
 
-  static Future<void> initPlatformState(bool location) async {
+  static Future<void> initPlatformState(bool location, String? famID) async {
     print('Initializing...');
     await BackgroundLocator.initialize();
     print('Initialization done');
@@ -42,24 +50,35 @@ class LocationCallbackHandler {
   }
 
   static Future<void> callback(LocationDto data) async {
-    print(data.latitude);
-    final double meter = distance(
-        LatLng(data.latitude, data.longitude),
-        LatLng(37.428864, -122.120046)
-    );
-    print(meter);
-    if (meter < 20) {
-      AwesomeNotifications().createNotification(
-          content: NotificationContent(
-              id: 10,
-              channelKey: 'basic_channel',
-              title: 'Simple Notification',
-              body: 'Simple body'
-          )
+    WidgetsFlutterBinding.ensureInitialized();
+    if (Platform.isAndroid) SharedPreferencesAndroid.registerWith();
+    if (Platform.isIOS) SharedPreferencesIOS.registerWith();
+    await Firebase.initializeApp();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    DatabaseService ds = DatabaseService(prefs.getString('famID'));
+    DocumentSnapshot doc = await ds.getSingleSnapshot();
+    Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
+
+    for (int i = 0; i < docData['data'].length; i++) {
+      double meter = distance(
+          LatLng(data.latitude, data.longitude),
+          LatLng(docData['data'][i]['coords'][0].toDouble(), docData['data'][i]['coords'][1].toDouble())
       );
-      LocationServiceRepository myLocationCallbackRepository =
-      LocationServiceRepository();
-      await myLocationCallbackRepository.callback(data);
+
+      if (meter < 20) {
+        AwesomeNotifications().createNotification(
+            content: NotificationContent(
+                id: 10,
+                channelKey: 'basic_channel',
+                title: 'Task: ${docData['data'][i]['name']}',
+                body: 'You have arrived at ${docData['data'][i]['location']}, so remember to finish your task!'
+            )
+        );
+        LocationServiceRepository myLocationCallbackRepository =
+        LocationServiceRepository();
+        await myLocationCallbackRepository.callback(data);
+      }
     }
   }
 
