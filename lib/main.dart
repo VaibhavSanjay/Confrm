@@ -8,6 +8,7 @@ import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
 import 'package:flutter/material.dart';
 import 'package:family_tasks/pages/account.dart';
 import 'package:family_tasks/pages/task_view.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,6 +21,7 @@ late SharedPreferences prefs; // Used to store family ID on the phone
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure widget initialization
   await DatabaseService.initializeFirebase(); // Initialize Firebase Database
+  await dotenv.load(); // Load environment variables
   AwesomeNotifications().initialize(
     // set the icon to null if you want to use the default app icon
       null,

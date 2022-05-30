@@ -5,7 +5,9 @@ import 'package:flutter_material_color_picker/flutter_material_color_picker.dart
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../Services/place_service.dart';
 import '../../models/family_task_data.dart';
 import 'constants.dart';
 
@@ -65,11 +67,13 @@ class _EditTaskDataState extends State<EditTaskData> {
   late TaskData _newTask;
   late final List<Reaction<Status>> _statusReactions;
   late final List<Reaction<TaskType>> _taskTypeReactions;
+  final TextEditingController _controller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _newTask = TaskData.fromTaskData(widget.taskData);
+    _controller.text = _newTask.location;
 
     _statusReactions = List<Reaction<Status>>.generate(
         Status.values.length,
@@ -298,15 +302,27 @@ class _EditTaskDataState extends State<EditTaskData> {
                                           child: Container(
                                             margin: const EdgeInsets.only(bottom: 10),
                                             child: TextFormField(
+                                              controller: _controller,
+                                              readOnly: true,
                                               decoration: const InputDecoration(
                                                   hintText: 'Location',
                                                   border: OutlineInputBorder(),
                                                   counterText: ''
                                               ),
-                                              initialValue: _newTask.location,
-                                              maxLength: 30,
-                                              onChanged: (String? value) {
-                                                _newTask.location = value ?? '';
+                                              onTap: () async {
+                                                String sessionToken = const Uuid().v4();
+                                                Suggestion? result = await showSearch(
+                                                  context: context,
+                                                  delegate: AddressSearch(sessionToken),
+                                                  query: _newTask.location
+                                                );
+                                                if (result != null) {
+                                                  List<double> loc = await PlaceApiProvider(sessionToken)
+                                                      .getPlaceDetailFromId(result.placeId);
+                                                  _newTask.location = result.description;
+                                                  _controller.text = result.description;
+                                                  _newTask.coords = loc;
+                                                }
                                               },
                                             ),
                                           ),
@@ -546,6 +562,75 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
             )
         ),
       )
+    );
+  }
+}
+
+class AddressSearch extends SearchDelegate<Suggestion> {
+  AddressSearch(this.sessionToken) {
+    apiClient = PlaceApiProvider(sessionToken);
+  }
+
+  final String sessionToken;
+  late PlaceApiProvider apiClient;
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        tooltip: 'Clear',
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      )
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      tooltip: 'Back',
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        Navigator.of(context).pop();
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return buildSuggestions(context);
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return FutureBuilder<List<Suggestion>>(
+      // We will put the api call here
+      future: query == ""
+          ? null
+          : apiClient.fetchSuggestions(
+          query, Localizations.localeOf(context).languageCode),
+      builder: (context, snapshot) => query == ''
+          ? Container(
+        padding: const EdgeInsets.all(16.0),
+        child: const Text('Enter a Location.', style: TextStyle(color: Colors.grey, fontSize: 20),),
+      )
+          : snapshot.hasData
+          ? ListView.builder(
+        itemBuilder: (context, index) => Card(
+          child: ListTile(
+            // we will display the data returned from our future here
+            title:
+            Text(snapshot.data![index].description),
+            onTap: () {
+              close(context, snapshot.data![index]);
+            },
+          ),
+        ),
+        itemCount: snapshot.data!.length,
+      )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }

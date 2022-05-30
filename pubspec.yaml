@@ -50,6 +50,9 @@ dependencies:
   permission_handler: ^9.2.0
   latlong2: ^0.8.1
   awesome_notifications: ^0.6.21
+  http: ^0.13.4
+  uuid: ^3.0.6
+  flutter_dotenv: ^5.0.2
 
 flutter_icons:
   image_path_android: "assets/icon/icon_android.png"
@@ -86,6 +89,7 @@ flutter:
 
   assets:
     - assets/icon/icon_android.png
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
