@@ -7,8 +7,8 @@ import 'package:background_locator/location_dto.dart';
 import 'package:background_locator/settings/android_settings.dart';
 import 'package:background_locator/settings/ios_settings.dart';
 import 'package:background_locator/settings/locator_settings.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_tasks/Services/database.dart';
+import 'package:family_tasks/models/family_task_data.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -24,7 +24,7 @@ import 'package:firebase_core/firebase_core.dart';
 class LocationCallbackHandler {
   static const Distance distance = Distance();
 
-  static Future<void> initPlatformState(bool location, String? famID) async {
+  static Future<void> initPlatformState(bool location) async {
     print('Initializing...');
     await BackgroundLocator.initialize();
     print('Initialization done');
@@ -57,27 +57,31 @@ class LocationCallbackHandler {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     DatabaseService ds = DatabaseService(prefs.getString('famID'));
-    DocumentSnapshot doc = await ds.getSingleSnapshot();
-    Map<String, dynamic> docData = doc.data() as Map<String, dynamic>;
+    FamilyTaskData ftd = await ds.getSingleSnapshot();
+    List<TaskData> taskData = ftd.tasks;
 
-    for (int i = 0; i < docData['data'].length; i++) {
-      double meter = distance(
-          LatLng(data.latitude, data.longitude),
-          LatLng(docData['data'][i]['coords'][0].toDouble(), docData['data'][i]['coords'][1].toDouble())
-      );
-
-      if (meter < 20) {
-        AwesomeNotifications().createNotification(
-            content: NotificationContent(
-                id: 10,
-                channelKey: 'basic_channel',
-                title: 'Task: ${docData['data'][i]['name']}',
-                body: 'You have arrived at ${docData['data'][i]['location']}, so remember to finish your task!'
-            )
+    for (int i = 0; i < taskData.length; i++) {
+      if (taskData[i].coords.isNotEmpty) {
+        double meter = distance(
+            LatLng(data.latitude, data.longitude),
+            LatLng(taskData[i].coords[0], taskData[i].coords[1])
         );
-        LocationServiceRepository myLocationCallbackRepository =
-        LocationServiceRepository();
-        await myLocationCallbackRepository.callback(data);
+
+        if (meter < 1000 && (taskData[i].lastRem.add(const Duration(hours: 1)).isBefore(DateTime.now()))) {
+          taskData[i].lastRem = DateTime.now();
+          ds.updateTaskData(taskData);
+          AwesomeNotifications().createNotification(
+              content: NotificationContent(
+                  id: 10,
+                  channelKey: 'basic_channel',
+                  title: 'Task: ${taskData[i].name}',
+                  body: 'You have arrived at ${taskData[i].location}, so remember to finish your task!'
+              )
+          );
+          LocationServiceRepository myLocationCallbackRepository =
+          LocationServiceRepository();
+          await myLocationCallbackRepository.callback(data);
+      }
       }
     }
   }
@@ -111,7 +115,7 @@ class LocationCallbackHandler {
         autoStop: false,
         androidSettings: const AndroidSettings(
             accuracy: LocationAccuracy.NAVIGATION,
-            interval: 60,
+            interval: 15,
             distanceFilter: 20,
             client: LocationClient.google,
             androidNotificationSettings: AndroidNotificationSettings(

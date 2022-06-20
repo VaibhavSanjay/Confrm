@@ -119,6 +119,12 @@ class _EditTaskDataState extends State<EditTaskData> {
   }
 
   @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
         padding: widget.padding,

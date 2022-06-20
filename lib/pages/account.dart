@@ -2,6 +2,7 @@ import 'package:family_tasks/Services/location_callback.dart';
 import 'package:family_tasks/pages/Helpers/account_option_widgets.dart';
 import 'package:family_tasks/pages/Helpers/constants.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
@@ -31,6 +32,7 @@ class AccountPageState extends State<AccountPage> {
   String _input = '';
   final _formKey = GlobalKey<FormState>();
   bool _foundFamily = false;
+  bool _showID = false;
 
   static void setUp(String? ID, bool? locationEnabled) {
     famID = ID;
@@ -201,7 +203,7 @@ class AccountPageState extends State<AccountPage> {
                                 )
                             ),
                             width: double.infinity,
-                            height: 60,
+                            height: 100,
                           ),
                         ),
                       ),
@@ -364,8 +366,9 @@ class AccountPageState extends State<AccountPage> {
                                                         if (_formKey
                                                             .currentState!
                                                             .validate()) {
-                                                          Navigator.pop(
-                                                              context);
+                                                          WidgetsBinding.instance!.addPostFrameCallback((_) {
+                                                            Navigator.pop(context);
+                                                          });
                                                           famID = _input;
                                                           widget.onJoinOrCreate(
                                                               famID!);
@@ -443,109 +446,156 @@ class AccountPageState extends State<AccountPage> {
 
                   return ListView(
                       children: [
-                        InkWell(
-                          onTap: () {
-                            showDialog(
-                                context: context,
-                                builder: (cont) {
-                                  return Form(
-                                    key: _formKey,
-                                    child: AlertDialog(
-                                        title: const Text('Edit Name',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                        contentPadding: const EdgeInsets.only(
-                                            top: 20, left: 24, right: 24),
-                                        content: TextFormField(
-                                          initialValue: name,
-                                          maxLength: 20,
-                                          decoration: const InputDecoration(
-                                              hintText: 'Group Name',
-                                              border: OutlineInputBorder(),
-                                              counterText: ''
-                                          ),
-                                          onChanged: (String? value) {
-                                            _input = value ?? '';
-                                          },
-                                          validator: (String? value) {
-                                            if (value == null ||
-                                                value.isEmpty) {
-                                              return 'Please enter a name';
-                                            }
-                                            return null;
-                                          },
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                              child: const Text('Cancel'),
-                                              onPressed: () {
-                                                Navigator.pop(context);
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, right: 10, left: 10),
+                          child: InkWell(
+                            onTap: () {
+                              showDialog(
+                                  context: context,
+                                  builder: (cont) {
+                                    return Form(
+                                      key: _formKey,
+                                      child: AlertDialog(
+                                          title: const Text('Edit Name',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          contentPadding: const EdgeInsets.only(
+                                              top: 20, left: 24, right: 24),
+                                          content: TextFormField(
+                                            initialValue: name,
+                                            maxLength: 20,
+                                            decoration: const InputDecoration(
+                                                hintText: 'Group Name',
+                                                border: OutlineInputBorder(),
+                                                counterText: ''
+                                            ),
+                                            onChanged: (String? value) {
+                                              _input = value ?? '';
+                                            },
+                                            validator: (String? value) {
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Please enter a name';
                                               }
+                                              return null;
+                                            },
                                           ),
-                                          TextButton(
-                                              child: const Text('Update'),
-                                              onPressed: () async {
-                                                if (_formKey.currentState!
-                                                    .validate()) {
+                                          actions: [
+                                            TextButton(
+                                                child: const Text('Cancel'),
+                                                onPressed: () {
                                                   Navigator.pop(context);
-                                                  await ds.updateFamilyName(
-                                                      _input);
                                                 }
-                                              }
+                                            ),
+                                            TextButton(
+                                                child: const Text('Update'),
+                                                onPressed: () async {
+                                                  if (_formKey.currentState!
+                                                      .validate()) {
+                                                    Navigator.pop(context);
+                                                    await ds.updateFamilyName(
+                                                        _input);
+                                                  }
+                                                }
+                                            ),
+                                          ]
+                                      ),
+                                    );
+                                  }
+                              );
+                            },
+                            child: Container(
+                                alignment: Alignment.center,
+                                child: Material(
+                                    elevation: 5,
+                                    color: Colors.transparent,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            stops: const [0.15, 0.9],
+                                            colors: [
+                                              bgColor.withOpacity(0.6),
+                                              bgColor
+                                            ],
                                           ),
-                                        ]
-                                    ),
-                                  );
-                                }
-                            );
-                          },
-                          child: Container(
-                              padding: const EdgeInsets.only(left: 10),
-                              alignment: Alignment.center,
-                              child: Material(
-                                  elevation: 5,
-                                  color: Colors.transparent,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          stops: const [0.15, 0.9],
-                                          colors: [
-                                            bgColor.withOpacity(0.6),
-                                            bgColor
-                                          ],
-                                        ),
-                                        borderRadius: const BorderRadius.only(
-                                          topRight: Radius.circular(27),
-                                        )
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Flexible(
-                                          child: Container(
-                                              padding: const EdgeInsets.all(10),
-                                              child: AutoSizeText(name,
-                                                  textAlign: TextAlign.right,
-                                                  style: const TextStyle(
-                                                      fontSize: 40),
-                                                  maxLines: 1)
+                                          borderRadius: const BorderRadius.only(
+                                            topRight: Radius.circular(27),
+                                            topLeft: Radius.circular(27),
+                                          )
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Flexible(
+                                            child: Container(
+                                                padding: const EdgeInsets.only(top: 10, right: 10),
+                                                child: AutoSizeText(name,
+                                                    textAlign: TextAlign.right,
+                                                    style: const TextStyle(
+                                                        fontSize: 40, fontWeight: FontWeight.bold),
+                                                    maxLines: 1)
+                                            ),
                                           ),
-                                        ),
-                                        Container(
-                                            padding: const EdgeInsets.only(
-                                                right: 10),
-                                            child: const Icon(
-                                                Icons.edit, size: 40))
-                                      ],
-                                    ),
-                                  )
-                              )
+                                          Container(
+                                              padding: const EdgeInsets.only(
+                                                  bottom: 5),
+                                              child: const Icon(
+                                                  Icons.edit, size: 30))
+                                        ],
+                                      ),
+                                    )
+                                )
+                            ),
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.only(left: 10),
+                          margin: const EdgeInsets.only(left: 10, right: 10),
+                          child: Material(
+                            color: bgColor,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 8.0),
+                              child: _showID ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  AutoSizeText(famID!, style: const TextStyle(fontSize: 20), maxLines: 1),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: IconButton(
+                                      icon: const Icon(Icons.copy),
+                                      onPressed: () {
+                                        Clipboard.setData(
+                                            ClipboardData(text: famID));
+                                      },
+                                    )
+                                  )
+                                ],
+                              ) : Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      _showID = true;
+                                    });
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Padding(
+                                        padding: EdgeInsets.only(right: 5),
+                                        child: Icon(Icons.perm_identity_sharp),
+                                      ),
+                                      Text('Show ID', style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold)),
+                                    ]
+                                  ),
+                                ),
+                              )
+                            ),
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(left: 10, right: 10),
                           child: Material(
                             color: bgColor,
                             child: Container(
@@ -758,7 +808,7 @@ class AccountPageState extends State<AccountPage> {
                           iconSize: 175,
                           bottomPadding: 40,
                           bgColor: Colors.red,
-                          iconColor: Colors.deepPurpleAccent,
+                          iconColor: Colors.orangeAccent,
                         ),
                         InkWell(
                           onTap: () {
@@ -791,13 +841,11 @@ class AccountPageState extends State<AccountPage> {
                           ),
                         ),
                         Container(
-                          alignment: Alignment.centerLeft,
                           padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
                               Container(
-                                  padding: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.only(right: 10),
                                   child: GroupIDWidget(famID: famID!)
                               ),
                               LeaveWidget(onLeave: () {

@@ -5,6 +5,8 @@ import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:family_tasks/Services/location_callback.dart';
 import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
+import 'package:family_tasks/pages/auth_view.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:family_tasks/pages/account.dart';
 import 'package:family_tasks/pages/task_view.dart';
@@ -14,6 +16,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_circular_text/circular_text.dart';
 
+import 'Services/authentication.dart';
 import 'Services/location_service.dart';
 
 late SharedPreferences prefs; // Used to store family ID on the phone
@@ -97,13 +100,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   ReceivePort port = ReceivePort();
 
+  AuthenticationService auth = AuthenticationService();
+
   @override
   void initState() {
     super.initState();
     _initializePreference().whenComplete(() {
       prefs.remove('location');
+      prefs.remove('famID');
       _setUp();
-      LocationCallbackHandler.initPlatformState(prefs.getBool('location') ?? false, prefs.getString('famID'));
+      LocationCallbackHandler.initPlatformState(prefs.getBool('location') ?? false);
     }); // Initialize prefs and set the family ID
     if (IsolateNameServer.lookupPortByName(
         LocationServiceRepository.isolateName) !=
@@ -145,7 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
     bool? locationEnabled = prefs.getBool('location');
     _haveSetFamID = ID != null;
     // If no family ID, force user to set family ID
-    if (!_haveSetFamID) {
+    if (_pageController.hasClients && !_haveSetFamID) {
       _pageController.animateToPage(1, duration: const Duration(milliseconds: 500), curve: Curves.easeOut);
     }
     // Set family ID in each widget
@@ -180,7 +186,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false, // Allows keyboard to go over widgets
-      appBar: AppBar(
+      appBar: _haveSetFamID ? AppBar(
         title: Stack(
           alignment: Alignment.center,
           children: [
@@ -212,49 +218,107 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         centerTitle: true,
-      ),
-      body: AnimatedContainer( // The background is light blue on task view and purple on account
-        duration: const Duration(milliseconds: 500),
-        color: _curPage == 0 ? Colors.lightBlue : Colors.deepPurple,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 500),
-            // Change gradient based on the current page
-            decoration: _curPage == 0 ? const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                  stops: [0.1, 0.3, 0.5, 0.7, 0.95, 0.99],
-                  colors: [Colors.indigoAccent, Colors.blueAccent, Colors.blue, Colors.lightBlue, Colors.yellow, Colors.orangeAccent],
-                ),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(27),
-                  bottomLeft: Radius.circular(27),
-                )
-            ) : BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
-                  stops: [0.2, 0.5, 0.7, 0.97, 0.99],
-                  colors: [Colors.indigo, Colors.indigoAccent, Colors.blueAccent, Colors.white, Colors.white70],
-                ),
-                borderRadius: BorderRadius.only(
-                  topRight: const Radius.circular(27),
-                  bottomRight: const Radius.circular(27),
-                  topLeft: _haveSetFamID ? Radius.zero : const Radius.circular(27),
-                  bottomLeft: _haveSetFamID ? Radius.zero : const Radius.circular(27),
-                )
+      ) : null,
+      drawer: _haveSetFamID ? Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Stack(
+                alignment: Alignment.topLeft,
+                children: [
+                  Opacity(
+                    opacity: 0.5,
+                    child: Image.asset( // Icon at the top
+                      'assets/icon/icon_android.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const Text('Account', style: TextStyle(fontSize: 60, color: Colors.white, fontWeight: FontWeight.bold))
+                ]
+              )
             ),
-            child: PageView(
+            const Padding(
+              padding: EdgeInsets.all(10.0),
+              child: Text('User Information', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                color: Colors.grey[300],
+                child: Column(
+                  children: [
+                    ListTile(
+                        leading: const Icon(Icons.person),
+                        title: Text('Name: ${auth.name ?? 'No Name'}', style: const TextStyle(fontSize: 18))
+                    ),
+                    const Divider(thickness: 1),
+                    ListTile(
+                        leading: const Icon(Icons.email),
+                        title: Text('Email: ${auth.email ?? 'No email'}', style: const TextStyle(fontSize: 18))
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(10.0),
+              child: Text('Actions', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                color: Colors.red[500],
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(FontAwesomeIcons.personWalkingArrowRight),
+                      title: const Text('Leave Group', style: TextStyle(fontSize: 18)),
+                      onTap: _onLeave
+                    ),
+                    const Divider(thickness: 1),
+                    ListTile(
+                      leading: const Icon(FontAwesomeIcons.rightFromBracket),
+                      title: const Text('Sign Out', style: TextStyle(fontSize: 18)),
+                      onTap: () {
+                        setState(() {
+                          Navigator.pop(context);
+                          _onLeave();
+                          auth.signOut();
+                        });
+                      }
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ]
+        )
+      ) : null,
+      body: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return AuthPage(onLogin: _setUp);
+          } else {
+            return PageView(
               controller: _pageController,
               children: _screens,
               onPageChanged: _onPageChanged,
               // Scroll between pages only if you set the family ID
               physics: _haveSetFamID ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
-            ),
-          ),
-        ),
+            );
+          }
+        }
       ),
       floatingActionButton: _haveSetFamID ? SpeedDial(
         spaceBetweenChildren: 12,

@@ -246,6 +246,7 @@ class TaskViewPageState extends State<TaskViewPage> {
           stream: stream,
           builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
             if (snapshot.hasError) {
+              print(snapshot.error);
               return Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: const [
@@ -292,7 +293,23 @@ class TaskViewPageState extends State<TaskViewPage> {
                           ],
                         ),
                       )
-                    ) : null,
+                    ) : Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Your Tasks', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                        Ink(
+                          decoration: const ShapeDecoration(
+                            color: Colors.lightBlue,
+                            shape: CircleBorder(),
+                          ),
+                          child: IconButton(
+                            color: Colors.white,
+                            onPressed: () {  },
+                            icon: const Icon(Icons.question_mark),
+                          ),
+                        )
+                      ],
+                    ),
                     crossAxisAlignment: CrossAxisAlignment.center,
                     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                     children: tasks,

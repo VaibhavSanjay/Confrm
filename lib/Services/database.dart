@@ -17,13 +17,14 @@ class DatabaseService {
     return taskDataCollection.doc(famID).snapshots().map(_taskDataFromSnapshot);
   }
 
-  Future<DocumentSnapshot> getSingleSnapshot() {
-    return taskDataCollection.doc(famID).get();
+  Future<FamilyTaskData> getSingleSnapshot() async {
+    return _taskDataFromSnapshot(await taskDataCollection.doc(famID).get());
   }
 
   FamilyTaskData _taskDataFromSnapshot(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    return FamilyTaskData(
+
+    FamilyTaskData ret = FamilyTaskData(
         tasks: List<TaskData>.generate(
           data['data'].length,
           (int index) => TaskData(
@@ -34,12 +35,13 @@ class DatabaseService {
             due: (data['data'][index]['due'] as Timestamp).toDate(),
             color: availableColors[data['data'][index]['color']],
             location: data['data'][index]['location'],
-            coords: data['data'][index]['coords'].cast<double>()
+            coords: data['data'][index]['coords'].cast<double>(),
+            lastRem: (data['data'][index]['lastRem'] as Timestamp).toDate()
           )
         ),
         archive: List<TaskData>.generate(
             data['archive'].length,
-                (int index) => TaskData(
+            (int index) => TaskData(
               name: data['archive'][index]['name'],
               desc: data['archive'][index]['desc'],
               taskType: TaskType.values[data['archive'][index]['taskType']],
@@ -48,11 +50,13 @@ class DatabaseService {
               color: availableColors[data['archive'][index]['color']],
               location: data['archive'][index]['location'],
               coords: data['archive'][index]['coords'].cast<double>(),
+              lastRem: (data['archive'][index]['lastRem'] as Timestamp).toDate(),
               archived: (data['archive'][index]['archived'] as Timestamp).toDate()
             )
         ),
         name: data['name']
     );
+    return ret;
   }
 
   Future<void> updateTaskData(List<TaskData> taskData) async {
@@ -65,7 +69,8 @@ class DatabaseService {
         'due': Timestamp.fromDate(td.due),
         'color': availableColors.indexOf(td.color),
         'location': td.location,
-        'coords': td.coords.cast<dynamic>()
+        'coords': td.coords.cast<dynamic>(),
+        'lastRem': Timestamp.fromDate(td.lastRem)
       }).toList()
     });
   }
@@ -82,6 +87,7 @@ class DatabaseService {
         'color': availableColors.indexOf(td.color),
         'location': td.location,
         'coords': td.coords.cast<dynamic>(),
+        'lastRem': Timestamp.fromDate(td.lastRem),
         'archived': Timestamp.fromDate(td.archived)
       }).toList()
     });
