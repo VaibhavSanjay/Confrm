@@ -64,4 +64,8 @@ class AuthenticationService {
   String? get name {
     return FirebaseAuth.instance.currentUser?.providerData[0].displayName;
   }
+
+  String? get id {
+    return FirebaseAuth.instance.currentUser?.uid;
+  }
 }

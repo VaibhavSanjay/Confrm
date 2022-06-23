@@ -56,7 +56,7 @@ class LocationCallbackHandler {
     await Firebase.initializeApp();
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    DatabaseService ds = DatabaseService(prefs.getString('famID'));
+    DatabaseService ds = DatabaseService('uLHFxQfRyTKVSrgkqGet');
     FamilyTaskData ftd = await ds.getSingleSnapshot();
     List<TaskData> taskData = ftd.tasks;
 

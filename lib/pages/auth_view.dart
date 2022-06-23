@@ -4,9 +4,7 @@ import 'AuthPages/login.dart';
 import 'AuthPages/sign_up.dart';
 
 class AuthPage extends StatefulWidget {
-  const AuthPage({Key? key, required this.onLogin}) : super(key: key);
-
-  final Function() onLogin;
+  const AuthPage({Key? key}) : super(key: key);
 
   @override
   State<AuthPage> createState() => _AuthPageState();
@@ -17,7 +15,10 @@ class _AuthPageState extends State<AuthPage> {
 
   @override
   Widget build(BuildContext context) {
-    return _isLogin? LoginWidget(swap: swap, onLogin: widget.onLogin) : SignUpWidget(swap: swap, onLogin: widget.onLogin);
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: _isLogin? LoginWidget(swap: swap) : SignUpWidget(swap: swap)
+    );
   }
 
   void swap() => setState(() => _isLogin = !_isLogin);

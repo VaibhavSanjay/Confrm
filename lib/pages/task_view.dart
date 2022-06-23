@@ -13,7 +13,7 @@ import 'Helpers/hero_dialogue_route.dart';
 import 'Helpers/task_view_cards.dart';
 
 class TaskViewPage extends StatefulWidget {
-  const TaskViewPage({Key? key}) : super(key: key);
+  const TaskViewPage({Key? key, required this.famID}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -23,7 +23,7 @@ class TaskViewPage extends StatefulWidget {
   // case the title) provided by the parent (in this case the App widget) and
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
-
+  final String famID;
 
   @override
   State<TaskViewPage> createState() => TaskViewPageState();
@@ -34,10 +34,8 @@ class TaskViewPageState extends State<TaskViewPage> {
   List<TaskData> _archivedTaskData = []; // Hold all the archive data
   final double _statusIconSize = 30; // Icon size for the status on right side of card
   late final List<Reaction<Status>> _statusCardReactions; // Reaction objects for statuses
-  static late DatabaseService ds; // Get data from Database
-  static late Stream<FamilyTaskData> stream; // Put data in the stream
-  static late String? famID; // The family ID
-  static bool setID = false; // If ID has been attempted to be set
+  late DatabaseService ds = DatabaseService(widget.famID); // Get data from Database
+  late Stream<FamilyTaskData> stream = ds.taskDataForFamily; // Put data in the stream
 
   @override
   void initState() {
@@ -65,16 +63,6 @@ class TaskViewPageState extends State<TaskViewPage> {
           );
         }
     );
-  }
-
-  // Called from main to set ID
-  static void setFamID(String? ID) {
-    famID = ID;
-    setID = true;
-    if (famID != null) {
-      ds = DatabaseService(famID!);
-      stream = ds.taskDataForFamily;
-    }
   }
 
   // When user adds a new task
@@ -240,49 +228,48 @@ class TaskViewPageState extends State<TaskViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (setID) {
-      return famID != null ? StreamBuilder<FamilyTaskData>(
-          // Build stream for Family Task Data
-          stream: stream,
-          builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
-            if (snapshot.hasError) {
-              print(snapshot.error);
-              return Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.error_outline, size: 100),
-                    Text('Error!', style: TextStyle(fontSize: 30))
-                  ]
-              );
-            } else {
-              switch (snapshot.connectionState) {
-                case ConnectionState.none:
-                case ConnectionState.waiting:
-                  if (_taskData.isEmpty) {
-                    return const Center(
-                        child: SizedBox(
-                          width: 60,
-                          height: 60,
-                          child: CircularProgressIndicator(),
-                        )
-                    );
-                  } else {
-                    // If we have task data, we just list it instead of loading
-                    List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
-                    return Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: tasks,
-                      ),
-                    );
-                  }
-                case ConnectionState.active:
-                  _taskData = snapshot.data == null ? [] : snapshot.data!.tasks;
-                  _archivedTaskData = snapshot.data == null ? [] : snapshot.data!.archive;
+    return StreamBuilder<FamilyTaskData>(
+      // Build stream for Family Task Data
+        stream: stream,
+        builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
+          if (snapshot.hasError) {
+            print(snapshot.error);
+            return Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: const [
+                  Icon(Icons.error_outline, size: 100),
+                  Text('Error!', style: TextStyle(fontSize: 30))
+                ]
+            );
+          } else {
+            switch (snapshot.connectionState) {
+              case ConnectionState.none:
+              case ConnectionState.waiting:
+                if (_taskData.isEmpty) {
+                  return const Center(
+                      child: SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: CircularProgressIndicator(),
+                      )
+                  );
+                } else {
+                  // If we have task data, we just list it instead of loading
                   List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
-                  return ReorderableColumn(
-                    header: _taskData.isEmpty ? Card( // A small help widget to display if no tasks exist
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: tasks,
+                    ),
+                  );
+                }
+              case ConnectionState.active:
+                _taskData = snapshot.data == null ? [] : snapshot.data!.tasks;
+                _archivedTaskData = snapshot.data == null ? [] : snapshot.data!.archive;
+                List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
+                return ReorderableColumn(
+                  header: _taskData.isEmpty ? Card( // A small help widget to display if no tasks exist
                       elevation: 5,
                       child: Container(
                         padding: const EdgeInsets.all(10),
@@ -293,52 +280,43 @@ class TaskViewPageState extends State<TaskViewPage> {
                           ],
                         ),
                       )
-                    ) : Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Your Tasks', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-                        Ink(
-                          decoration: const ShapeDecoration(
-                            color: Colors.lightBlue,
-                            shape: CircleBorder(),
-                          ),
-                          child: IconButton(
-                            color: Colors.white,
-                            onPressed: () {  },
-                            icon: const Icon(Icons.question_mark),
-                          ),
-                        )
-                      ],
-                    ),
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                    children: tasks,
-                    onReorder: (int oldIndex, int newIndex) {
-                      setState(() {
-                        // Remove task and add it back in appropriate position
-                        TaskData task = _taskData.removeAt(oldIndex);
-                        _taskData.insert(newIndex, task);
-                        ds.updateTaskData(_taskData);
-                      });
-                    },
-                    needsLongPressDraggable: true,
-                  );
-                case ConnectionState.done:
-                  return const Center(
-                      child: Text('Connection Closed', style: TextStyle(fontSize: 30))
-                  );
-              }
+                  ) : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Your Tasks', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                      Ink(
+                        decoration: const ShapeDecoration(
+                          color: Colors.lightBlue,
+                          shape: CircleBorder(),
+                        ),
+                        child: IconButton(
+                          color: Colors.white,
+                          onPressed: () {  },
+                          icon: const Icon(Icons.question_mark),
+                        ),
+                      )
+                    ],
+                  ),
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                  children: tasks,
+                  onReorder: (int oldIndex, int newIndex) {
+                    setState(() {
+                      // Remove task and add it back in appropriate position
+                      TaskData task = _taskData.removeAt(oldIndex);
+                      _taskData.insert(newIndex, task);
+                      ds.updateTaskData(_taskData);
+                    });
+                  },
+                  needsLongPressDraggable: true,
+                );
+              case ConnectionState.done:
+                return const Center(
+                    child: Text('Connection Closed', style: TextStyle(fontSize: 30))
+                );
             }
           }
-      ) : const SizedBox.shrink();
-    } else {
-      return const Center(
-          child: SizedBox(
-            width: 60,
-            height: 60,
-            child: CircularProgressIndicator(),
-          )
-      );
-    }
+        }
+    );
   }
 }

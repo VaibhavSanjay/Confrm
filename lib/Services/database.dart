@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/models/family_task_data.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../pages/Helpers/constants.dart';
 
 class DatabaseService {
-  final String? famID;
+  final String famID;
   DatabaseService(this.famID);
 
-  final CollectionReference taskDataCollection = FirebaseFirestore.instance.collection('family_tasks');
+  static final CollectionReference taskDataCollection = FirebaseFirestore.instance.collection('family_tasks');
+  static final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
+  static final AuthenticationService auth = AuthenticationService();
 
   static Future<void> initializeFirebase() async {
     await Firebase.initializeApp();
@@ -107,8 +110,23 @@ class DatabaseService {
     })).id;
   }
 
-  Future<bool> famExists(String name) async {
-    return (await taskDataCollection.doc(name).get()).exists;
+  static Future<String> get famIDFromAuth async {
+    return (await userCollection.doc(auth.id).get()).get('group');
   }
 
+  Future<bool> famExists({String? name}) async {
+    String s = name ?? famID;
+    if (name != null) {
+      await userCollection.doc(auth.id).set({'group': name});
+    }
+    return (await taskDataCollection.doc(s).get()).exists;
+  }
+
+  static Future setUserFamily(String famID) async {
+    await userCollection.doc(auth.id!).update({'group': famID});
+  }
+
+  static Future leaveUserFamily() async {
+    await userCollection.doc(auth.id!).update({'group': '0'});
+  }
 }

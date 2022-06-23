@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:family_tasks/Services/location_callback.dart';
+import 'package:family_tasks/join_create.dart';
 import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
 import 'package:family_tasks/pages/auth_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -63,13 +64,71 @@ class FamilyTasks extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Confrm!'),
+      home: const TopPage(),
+    );
+  }
+}
+
+class TopPage extends StatefulWidget {
+  const TopPage({Key? key}) : super(key: key);
+
+  @override
+  State<TopPage> createState() => _TopPageState();
+}
+
+class _TopPageState extends State<TopPage> {
+  bool _famExists = false;
+  String? _famID;
+
+  Future _checkExists() async {
+    _famID = await DatabaseService.famIDFromAuth;
+    _famExists = await DatabaseService(_famID ?? '0').famExists();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const AuthPage();
+          } else {
+            Future f = _checkExists();
+            return FutureBuilder(
+              future: f,
+              builder: (context, snapshot) {
+                switch (snapshot.connectionState) {
+                  case ConnectionState.none:
+                    return const Text('none');
+                  case ConnectionState.waiting:
+                    return const Scaffold(
+                      body: Center(
+                        child: SizedBox(
+                          width: 60,
+                          height: 60,
+                          child: CircularProgressIndicator(),
+                        )
+                      )
+                    );
+                  case ConnectionState.active:
+                    return const Text('');
+                  case ConnectionState.done:
+                    if (_famExists) {
+                      return MyHomePage(famID: _famID!, onLeave: () => setState((){}));
+                    } else {
+                      return JoinCreateGroupPage(onJoinOrCreate: () => setState((){}));
+                    }
+                }
+              }
+            );
+          }
+        }
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({Key? key, required this.famID, required this.onLeave}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -79,8 +138,8 @@ class MyHomePage extends StatefulWidget {
   // case the title) provided by the parent (in this case the App widget) and
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
-
-  final String title;
+  final String famID;
+  final Function() onLeave;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -93,10 +152,10 @@ class _MyHomePageState extends State<MyHomePage> {
   * The task view screen holds all of the tasks that the group adds while the account screen holds data such as the
   * name of the group, tasks left, and options such as leaving.
   */
-  late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView),
-                                      AccountPage(key: _keyAccount, onJoinOrCreate: _resetFamID, onLeave: _onLeave, onLocationSetting: _onLocationSetting)];
+  late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView, famID: widget.famID),
+                                      AccountPage(famID: widget.famID, key: _keyAccount, onLeave: widget.onLeave, onLocationSetting: _onLocationSetting)];
   int _curPage = 0;
-  bool _haveSetFamID = false; // If the family ID exists
+  //bool _haveSetFamID = false; // If the family ID exists
 
   ReceivePort port = ReceivePort();
 
@@ -106,9 +165,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _initializePreference().whenComplete(() {
-      prefs.remove('location');
+      prefs.setBool('location', true);
       prefs.remove('famID');
-      _setUp();
       LocationCallbackHandler.initPlatformState(prefs.getBool('location') ?? false);
     }); // Initialize prefs and set the family ID
     if (IsolateNameServer.lookupPortByName(
@@ -127,25 +185,15 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // Function called when the family ID is submitted
-  void _resetFamID(String famID) {
-    prefs.setString('famID', famID);
-    _setUp();
-    _pageController.animateToPage(0, curve: Curves.easeOut, duration: const Duration(milliseconds: 500));
-  }
-
-  // When leaving the family
-  void _onLeave() {
-    prefs.remove('famID');
-    _setUp();
-  }
-
   void _onLocationSetting(bool set) {
     prefs.setBool('location', set);
-    _setUp();
+    setState(() {
+
+    });
   }
 
   // Set the family ID and reset the widgets
+  /*
   void _setUp() {
     String? ID = prefs.getString('famID');
     bool? locationEnabled = prefs.getBool('location');
@@ -165,6 +213,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     setState(() {});
   }
+  */
 
   @override
   void dispose() {
@@ -186,7 +235,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false, // Allows keyboard to go over widgets
-      appBar: _haveSetFamID ? AppBar(
+      appBar: AppBar(
         title: Stack(
           alignment: Alignment.center,
           children: [
@@ -218,8 +267,8 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         centerTitle: true,
-      ) : null,
-      drawer: _haveSetFamID ? Drawer(
+      ),
+      drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
@@ -283,7 +332,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     ListTile(
                       leading: const Icon(FontAwesomeIcons.personWalkingArrowRight),
                       title: const Text('Leave Group', style: TextStyle(fontSize: 18)),
-                      onTap: _onLeave
+                      onTap: () async {
+                        Navigator.pop(context);
+                        await DatabaseService.leaveUserFamily();
+                        widget.onLeave();
+                      }
                     ),
                     const Divider(thickness: 1),
                     ListTile(
@@ -292,7 +345,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       onTap: () {
                         setState(() {
                           Navigator.pop(context);
-                          _onLeave();
                           auth.signOut();
                         });
                       }
@@ -303,24 +355,13 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ]
         )
-      ) : null,
-      body: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return AuthPage(onLogin: _setUp);
-          } else {
-            return PageView(
-              controller: _pageController,
-              children: _screens,
-              onPageChanged: _onPageChanged,
-              // Scroll between pages only if you set the family ID
-              physics: _haveSetFamID ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
-            );
-          }
-        }
       ),
-      floatingActionButton: _haveSetFamID ? SpeedDial(
+      body: PageView(
+        controller: _pageController,
+        children: _screens,
+        onPageChanged: _onPageChanged,
+      ),
+      floatingActionButton: SpeedDial(
         spaceBetweenChildren: 12,
         heroTag: 'archive', // Hero animation when archive is clicked
         child: const Icon(FontAwesomeIcons.bars),
@@ -385,7 +426,7 @@ class _MyHomePageState extends State<MyHomePage> {
             }
           )
         ]
-      ) : null,
+      ),
     );
   }
 
