@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:family_tasks/Services/database.dart';
-import 'package:family_tasks/Services/location_callback.dart';
 import 'package:family_tasks/join_create.dart';
 import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
 import 'package:family_tasks/pages/auth_view.dart';
@@ -18,7 +17,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_circular_text/circular_text.dart';
 
 import 'Services/authentication.dart';
+import 'Services/location_callback.dart';
 import 'Services/location_service.dart';
+import 'models/user_data.dart';
 
 late SharedPreferences prefs; // Used to store family ID on the phone
 
@@ -78,11 +79,13 @@ class TopPage extends StatefulWidget {
 
 class _TopPageState extends State<TopPage> {
   bool _famExists = false;
-  String? _famID;
+  late UserData user;
+  DatabaseService ds = DatabaseService('');
+  AuthenticationService as = AuthenticationService();
 
   Future _checkExists() async {
-    _famID = await DatabaseService.famIDFromAuth;
-    _famExists = await DatabaseService(_famID ?? '0').famExists();
+    user = await ds.getUser(as.id!);
+    _famExists = await ds.famExists(as.id!, user.famID);
   }
 
   @override
@@ -93,9 +96,8 @@ class _TopPageState extends State<TopPage> {
           if (!snapshot.hasData) {
             return const AuthPage();
           } else {
-            Future f = _checkExists();
             return FutureBuilder(
-              future: f,
+              future: _checkExists(),
               builder: (context, snapshot) {
                 switch (snapshot.connectionState) {
                   case ConnectionState.none:
@@ -114,7 +116,7 @@ class _TopPageState extends State<TopPage> {
                     return const Text('');
                   case ConnectionState.done:
                     if (_famExists) {
-                      return MyHomePage(famID: _famID!, onLeave: () => setState((){}));
+                      return MyHomePage(user: user, onLeave: () => setState((){}));
                     } else {
                       return JoinCreateGroupPage(onJoinOrCreate: () => setState((){}));
                     }
@@ -128,7 +130,7 @@ class _TopPageState extends State<TopPage> {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.famID, required this.onLeave}) : super(key: key);
+  const MyHomePage({Key? key, required this.user, required this.onLeave}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -138,7 +140,7 @@ class MyHomePage extends StatefulWidget {
   // case the title) provided by the parent (in this case the App widget) and
   // used by the build method of the State. Fields in a Widget subclass are
   // always marked "final".
-  final String famID;
+  final UserData user;
   final Function() onLeave;
 
   @override
@@ -147,15 +149,14 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final PageController _pageController = PageController();
-  final GlobalKey<TaskViewPageState> _keyTaskView = GlobalKey(), _keyAccount = GlobalKey(); // Used to control state of pages
+  final GlobalKey<TaskViewPageState> _keyTaskView = GlobalKey(); // Used to control state of pages
   /* This app is made of two screens, the task view screen and the account screen
   * The task view screen holds all of the tasks that the group adds while the account screen holds data such as the
   * name of the group, tasks left, and options such as leaving.
   */
-  late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView, famID: widget.famID),
-                                      AccountPage(famID: widget.famID, key: _keyAccount, onLeave: widget.onLeave, onLocationSetting: _onLocationSetting)];
+  late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView, famID: widget.user.famID),
+                                      AccountPage(famID: widget.user.famID, onLeave: widget.onLeave, location: widget.user.location)];
   int _curPage = 0;
-  //bool _haveSetFamID = false; // If the family ID exists
 
   ReceivePort port = ReceivePort();
 
@@ -164,11 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _initializePreference().whenComplete(() {
-      prefs.setBool('location', true);
-      prefs.remove('famID');
-      LocationCallbackHandler.initPlatformState(prefs.getBool('location') ?? false);
-    }); // Initialize prefs and set the family ID
+    LocationCallbackHandler.initPlatformState(widget.user.location);
     if (IsolateNameServer.lookupPortByName(
         LocationServiceRepository.isolateName) !=
         null) {
@@ -185,44 +182,10 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _onLocationSetting(bool set) {
-    prefs.setBool('location', set);
-    setState(() {
-
-    });
-  }
-
-  // Set the family ID and reset the widgets
-  /*
-  void _setUp() {
-    String? ID = prefs.getString('famID');
-    bool? locationEnabled = prefs.getBool('location');
-    _haveSetFamID = ID != null;
-    // If no family ID, force user to set family ID
-    if (_pageController.hasClients && !_haveSetFamID) {
-      _pageController.animateToPage(1, duration: const Duration(milliseconds: 500), curve: Curves.easeOut);
-    }
-    // Set family ID in each widget
-    TaskViewPageState.setFamID(ID);
-    AccountPageState.setUp(ID, locationEnabled);
-    if (_keyAccount.currentState != null) {
-      _keyAccount.currentState!.setState((){});
-    }
-    if (_keyTaskView.currentState != null) {
-      _keyTaskView.currentState!.setState((){});
-    }
-    setState(() {});
-  }
-  */
-
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _initializePreference() async{
-    prefs = await SharedPreferences.getInstance();
   }
 
   void _onPageChanged(int index) {
@@ -305,12 +268,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     ListTile(
                         leading: const Icon(Icons.person),
-                        title: Text('Name: ${auth.name ?? 'No Name'}', style: const TextStyle(fontSize: 18))
+                        title: Text('Name: ${widget.user.name}', style: const TextStyle(fontSize: 18))
                     ),
                     const Divider(thickness: 1),
                     ListTile(
                         leading: const Icon(Icons.email),
-                        title: Text('Email: ${auth.email ?? 'No email'}', style: const TextStyle(fontSize: 18))
+                        title: Text('Email: ${widget.user.email}', style: const TextStyle(fontSize: 18))
                     ),
                   ],
                 ),
@@ -334,7 +297,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       title: const Text('Leave Group', style: TextStyle(fontSize: 18)),
                       onTap: () async {
                         Navigator.pop(context);
-                        await DatabaseService.leaveUserFamily();
+                        await DatabaseService('').leaveUserFamily(auth.id!);
                         widget.onLeave();
                       }
                     ),

@@ -1,3 +1,4 @@
+import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/Services/location_callback.dart';
 import 'package:family_tasks/pages/Helpers/account_option_widgets.dart';
 import 'package:family_tasks/pages/Helpers/constants.dart';
@@ -6,25 +7,28 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
+import '../Services/authentication.dart';
 import '../Services/database.dart';
 import '../models/family_task_data.dart';
+import '../models/user_data.dart';
 import 'Helpers/account_card.dart';
 import 'Helpers/hero_dialogue_route.dart';
 
 class AccountPage extends StatefulWidget {
-  const AccountPage({Key? key, required this.famID, required this.onLeave, required this.onLocationSetting}) : super(key: key);
+  const AccountPage({Key? key, required this.famID, required this.onLeave, required this.location}) : super(key: key);
 
   final String famID;
+  final bool location;
   final Function() onLeave;
-  final Function(bool) onLocationSetting;
 
   @override
   State<AccountPage> createState() => AccountPageState();
 }
 
 class AccountPageState extends State<AccountPage> {
-  static bool _locationEnabled = false;
+  late bool _locationEnabled = widget.location;
   late DatabaseService ds = DatabaseService(widget.famID);
+  AuthenticationService auth = AuthenticationService();
   String _input = '';
   final _formKey = GlobalKey<FormState>();
   bool _showID = false;
@@ -65,10 +69,12 @@ class AccountPageState extends State<AccountPage> {
               Navigator.of(context).pop();
             },
             onConfirm: () async {
-              LocationCallbackHandler.onStop();
-              widget.onLocationSetting(false);
               Navigator.pop(context);
-              setState(() {});
+              await LocationCallbackHandler.onStop();
+              await ds.updateUserLocation(auth.id!, true);
+              setState(() {
+                _locationEnabled = false;
+              });
             }
         ) : LocationInfo(
           bgColor: Colors.blue,
@@ -81,11 +87,15 @@ class AccountPageState extends State<AccountPage> {
             Navigator.of(context).pop();
           },
           onConfirm: () async {
-            if (await LocationCallbackHandler.onStart()) {
-              widget.onLocationSetting(true);
-            }
             Navigator.pop(context);
-            setState(() {});
+            if (await LocationCallbackHandler.onStart()) {
+              await ds.updateUserLocation(auth.id!, true);
+              setState(() {
+                _locationEnabled = true;
+              });
+            } else {
+              print('Error starting locator (notifications problem?)');
+            }
           },
         )
       ),
@@ -143,6 +153,8 @@ class AccountPageState extends State<AccountPage> {
                 List<TaskData> taskData = snapshot.data == null
                     ? []
                     : snapshot.data!.tasks;
+                Map<String, UserData> users = (snapshot.data == null ? [] :
+                    snapshot.data!.users) as Map<String, UserData>;
                 int archiveCount = archive.length;
 
                 TaskData? lastTask = archiveCount > 0 ? archive[archiveCount -

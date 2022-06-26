@@ -188,7 +188,7 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
                                                       String famID =
                                                       await ds.addNewFamily(
                                                           _input);
-                                                      await DatabaseService.setUserFamily(famID);
+                                                      await ds.setUserFamily(auth.id!, famID);
                                                       widget.onJoinOrCreate();
                                                     }
                                                   }
@@ -257,7 +257,7 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
                                                       child: const Text('Join'),
                                                       onPressed: () async {
                                                         _foundFamily =
-                                                        await ds.famExists(name:
+                                                        await ds.famExists(auth.id!,
                                                         _input.isEmpty
                                                             ? '0'
                                                             : _input);
@@ -267,7 +267,7 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
                                                           WidgetsBinding.instance!.addPostFrameCallback((_) {
                                                             Navigator.pop(context);
                                                           });
-                                                          await DatabaseService.setUserFamily(_input);
+                                                          await ds.setUserFamily(auth.id!, _input);
                                                           widget.onJoinOrCreate();
                                                         }
                                                       }

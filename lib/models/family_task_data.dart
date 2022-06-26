@@ -1,3 +1,4 @@
+import 'package:family_tasks/models/user_data.dart';
 import 'package:flutter/material.dart';
 
 enum TaskType {
@@ -53,7 +54,8 @@ class TaskData {
 class FamilyTaskData {
   final List<TaskData> tasks;
   final List<TaskData> archive;
+  final Map<String, UserData> users;
   final String name;
 
-  FamilyTaskData({this.tasks = const [], this.name = 'New Family', this.archive = const []});
+  FamilyTaskData({this.tasks = const [], this.name = 'New Family', this.archive = const [], this.users = const {}});
 }

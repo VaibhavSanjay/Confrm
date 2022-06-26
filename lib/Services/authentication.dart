@@ -1,3 +1,4 @@
+import 'package:family_tasks/Services/database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 enum SignResults {
@@ -54,6 +55,7 @@ class AuthenticationService {
       }
     }
     await userCredential.user?.updateDisplayName(name);
+    await DatabaseService('').newUser(userCredential.user!.uid);
     return SignResults.success;
   }
 

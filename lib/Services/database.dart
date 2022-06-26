@@ -1,16 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/models/family_task_data.dart';
 import 'package:firebase_core/firebase_core.dart';
+import '../models/user_data.dart';
 import '../pages/Helpers/constants.dart';
 
 class DatabaseService {
-  final String famID;
+  String famID;
   DatabaseService(this.famID);
 
-  static final CollectionReference taskDataCollection = FirebaseFirestore.instance.collection('family_tasks');
-  static final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
-  static final AuthenticationService auth = AuthenticationService();
+  final CollectionReference taskDataCollection = FirebaseFirestore.instance.collection('family_tasks');
+  final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
 
   static Future<void> initializeFirebase() async {
     await Firebase.initializeApp();
@@ -56,6 +55,14 @@ class DatabaseService {
               lastRem: (data['archive'][index]['lastRem'] as Timestamp).toDate(),
               archived: (data['archive'][index]['archived'] as Timestamp).toDate()
             )
+        ),
+        users: (Map<String, dynamic>.from(data['users'])).map(
+          (key, value) => MapEntry(
+            key,
+            UserData(
+              name: value['name'] as String
+            )
+          )
         ),
         name: data['name']
     );
@@ -110,23 +117,33 @@ class DatabaseService {
     })).id;
   }
 
-  static Future<String> get famIDFromAuth async {
-    return (await userCollection.doc(auth.id).get()).get('group');
+  Future newUser(String authID) async {
+    await userCollection.doc(authID).set({
+      'group': '0',
+      'location': false
+    });
   }
 
-  Future<bool> famExists({String? name}) async {
-    String s = name ?? famID;
-    if (name != null) {
-      await userCollection.doc(auth.id).set({'group': name});
-    }
-    return (await taskDataCollection.doc(s).get()).exists;
+  Future<UserData> getUser(String id) async {
+    return UserData(famID: (await userCollection.doc(id).get()).get('group'), location: (await userCollection.doc(id).get()).get('location'));
   }
 
-  static Future setUserFamily(String famID) async {
-    await userCollection.doc(auth.id!).update({'group': famID});
+  Future<bool> famExists(String authID, String famID) async {
+    await userCollection.doc(authID).update({'group': famID});
+    return (await taskDataCollection.doc(famID).get()).exists;
   }
 
-  static Future leaveUserFamily() async {
-    await userCollection.doc(auth.id!).update({'group': '0'});
+  Future setUserFamily(String authID, String famID) async {
+    this.famID = famID;
+    await userCollection.doc(authID).update({'group': famID});
+  }
+
+  Future updateUserLocation(String authID, bool location) async {
+    await userCollection.doc(authID).update({'location': location});
+  }
+
+  Future leaveUserFamily(String authID) async {
+    famID = '0';
+    await userCollection.doc(authID).update({'group': '0'});
   }
 }

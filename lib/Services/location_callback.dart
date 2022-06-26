@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:background_locator/background_locator.dart';
@@ -7,14 +6,12 @@ import 'package:background_locator/location_dto.dart';
 import 'package:background_locator/settings/android_settings.dart';
 import 'package:background_locator/settings/ios_settings.dart';
 import 'package:background_locator/settings/locator_settings.dart';
+import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:family_tasks/models/family_task_data.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shared_preferences_android/shared_preferences_android.dart';
-import 'package:shared_preferences_ios/shared_preferences_ios.dart';
 
 import 'location_service.dart';
 import 'notifications.dart';
@@ -51,12 +48,10 @@ class LocationCallbackHandler {
 
   static Future<void> callback(LocationDto data) async {
     WidgetsFlutterBinding.ensureInitialized();
-    if (Platform.isAndroid) SharedPreferencesAndroid.registerWith();
-    if (Platform.isIOS) SharedPreferencesIOS.registerWith();
     await Firebase.initializeApp();
-    SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    DatabaseService ds = DatabaseService('uLHFxQfRyTKVSrgkqGet');
+    print(AuthenticationService().id!);
+    DatabaseService ds = DatabaseService((await DatabaseService('').getUser(AuthenticationService().id!)).famID);
     FamilyTaskData ftd = await ds.getSingleSnapshot();
     List<TaskData> taskData = ftd.tasks;
 
@@ -95,7 +90,6 @@ class LocationCallbackHandler {
       await startLocator();
       return true;
     } else {
-      // show error
       return false;
     }
   }
