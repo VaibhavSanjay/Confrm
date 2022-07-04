@@ -84,8 +84,8 @@ class _TopPageState extends State<TopPage> {
   AuthenticationService as = AuthenticationService();
 
   Future _checkExists() async {
-    user = await ds.getUser(as.id!);
-    _famExists = await ds.famExists(as.id!, user.famID);
+    user = await ds.getUser();
+    _famExists = await ds.famExists(user.famID);
   }
 
   @override
@@ -255,7 +255,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const Padding(
               padding: EdgeInsets.all(10.0),
-              child: Text('User Information', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+              child: Text('User Information', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -268,12 +268,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     ListTile(
                         leading: const Icon(Icons.person),
-                        title: Text('Name: ${widget.user.name}', style: const TextStyle(fontSize: 18))
+                        title: Text('Name: ${widget.user.name}', style: const TextStyle(fontSize: 14))
                     ),
                     const Divider(thickness: 1),
                     ListTile(
                         leading: const Icon(Icons.email),
-                        title: Text('Email: ${widget.user.email}', style: const TextStyle(fontSize: 18))
+                        title: Text('Email: ${widget.user.email}', style: const TextStyle(fontSize: 14))
                     ),
                   ],
                 ),
@@ -281,7 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             const Padding(
               padding: EdgeInsets.all(10.0),
-              child: Text('Actions', style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
+              child: Text('Actions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -294,17 +294,17 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     ListTile(
                       leading: const Icon(FontAwesomeIcons.personWalkingArrowRight),
-                      title: const Text('Leave Group', style: TextStyle(fontSize: 18)),
+                      title: const Text('Leave Group', style: TextStyle(fontSize: 14)),
                       onTap: () async {
                         Navigator.pop(context);
-                        await DatabaseService('').leaveUserFamily(auth.id!);
+                        await DatabaseService(widget.user.famID).leaveUserFamily();
                         widget.onLeave();
                       }
                     ),
                     const Divider(thickness: 1),
                     ListTile(
                       leading: const Icon(FontAwesomeIcons.rightFromBracket),
-                      title: const Text('Sign Out', style: TextStyle(fontSize: 18)),
+                      title: const Text('Sign Out', style: TextStyle(fontSize: 14)),
                       onTap: () {
                         setState(() {
                           Navigator.pop(context);

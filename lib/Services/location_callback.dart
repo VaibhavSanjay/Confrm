@@ -51,7 +51,7 @@ class LocationCallbackHandler {
     await Firebase.initializeApp();
 
     print(AuthenticationService().id!);
-    DatabaseService ds = DatabaseService((await DatabaseService('').getUser(AuthenticationService().id!)).famID);
+    DatabaseService ds = DatabaseService((await DatabaseService('').getUser()).famID);
     FamilyTaskData ftd = await ds.getSingleSnapshot();
     List<TaskData> taskData = ftd.tasks;
 

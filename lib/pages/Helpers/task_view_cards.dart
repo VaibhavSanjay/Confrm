@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
@@ -6,9 +7,11 @@ import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:custom_pop_up_menu/custom_pop_up_menu.dart';
 
 import '../../Services/place_service.dart';
 import '../../models/family_task_data.dart';
+import '../../models/user_data.dart';
 import 'constants.dart';
 
 // A helper function to get the icon data based on a task type
@@ -53,10 +56,12 @@ class EditTaskData extends StatefulWidget {
   final int selectedTask;
   final EdgeInsets padding;
   final TaskData taskData;
+  final Map<String, UserData> users;
   final void Function(TaskData?) onExit;
 
   const EditTaskData({Key? key, required this.selectedTask, required this.taskData,
-                      this.padding = const EdgeInsets.all(0), required this.onExit}) : super(key: key);
+                      this.padding = const EdgeInsets.all(0), required this.onExit,
+                      required this.users}) : super(key: key);
 
   @override
   State<EditTaskData> createState() => _EditTaskDataState();
@@ -65,15 +70,18 @@ class EditTaskData extends StatefulWidget {
 class _EditTaskDataState extends State<EditTaskData> {
   final double _editIconSize = 50;
   late TaskData _newTask;
+  late Map<String, List> _users;
   late final List<Reaction<Status>> _statusReactions;
   late final List<Reaction<TaskType>> _taskTypeReactions;
-  final TextEditingController _controller = TextEditingController();
+  final TextEditingController _textController = TextEditingController();
+  final CustomPopupMenuController _controller = CustomPopupMenuController();
 
   @override
   void initState() {
     super.initState();
-    _newTask = TaskData.fromTaskData(widget.taskData);
-    _controller.text = _newTask.location;
+    _newTask = widget.taskData;
+    _users = widget.users.map((key, value) => MapEntry(key, [value, true]));
+    _textController.text = _newTask.location;
 
     _statusReactions = List<Reaction<Status>>.generate(
         Status.values.length,
@@ -121,7 +129,7 @@ class _EditTaskDataState extends State<EditTaskData> {
   @override
   void dispose() {
     super.dispose();
-    _controller.dispose();
+    _textController.dispose();
   }
 
   @override
@@ -148,6 +156,159 @@ class _EditTaskDataState extends State<EditTaskData> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Flexible(
+                                            fit: FlexFit.loose,
+                                            child: Container(
+                                              child: TextFormField(
+                                                style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                                                decoration: const InputDecoration(
+                                                  isDense: true,
+                                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                                  enabledBorder: OutlineInputBorder(
+                                                    // width: 0.0 produces a thin "hairline" border
+                                                    borderSide: BorderSide(color: Colors.transparent, width: 0.0),
+                                                  ),
+                                                  hintText: 'Name',
+                                                  //border: OutlineInputBorder(),
+                                                  counterText: '',
+                                                  border: OutlineInputBorder(),
+                                                ),
+                                                initialValue: _newTask.name,
+                                                maxLength: 30,
+                                                onChanged: (String? value) {
+                                                  _newTask.name = value ?? '';
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          Flexible(
+                                            fit: FlexFit.loose,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(bottom: 10),
+                                              child: TextFormField(
+                                                keyboardType: TextInputType.multiline,
+                                                minLines: 1,
+                                                maxLines: 2,
+                                                decoration: const InputDecoration(
+                                                    isDense: true,
+                                                    contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                                    enabledBorder: OutlineInputBorder(
+                                                      // width: 0.0 produces a thin "hairline" border
+                                                      borderSide: BorderSide(color: Colors.transparent, width: 0.0),
+                                                    ),
+                                                    hintText: 'Description',
+                                                    border: OutlineInputBorder(),
+                                                    counterText: ''
+                                                ),
+                                                initialValue: _newTask.desc,
+                                                maxLength: 60,
+                                                onChanged: (String? value) {
+                                                  _newTask.desc = value ?? '';
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ]
+                                    ),
+                                  ),
+                                  const VerticalDivider(width: 10),
+                                  SizedBox(
+                                    width: 110,
+                                    height: 100,
+                                    child: CustomPopupMenu(
+                                      controller: _controller,
+                                      pressType: PressType.singleClick,
+                                      barrierColor: Colors.transparent,
+                                      child: Builder(
+                                          builder: (context) {
+                                            // Get all UserData for those doing the task
+                                            List taskUsers = _users.values.where((item) => item[1]).map((item) => item[0]).toList();
+                                            int length = min(taskUsers.length, 3);
+                                            return taskUsers.isEmpty ? const Icon(Icons.add_circle_outline, size: 85) :
+                                            Stack(
+                                              alignment: Alignment.centerRight,
+                                              children: List.generate(
+                                                  length,
+                                                      (index) => Positioned(
+                                                    top: 5,
+                                                    left: index * 22 + (20 - 7*length.toDouble()),
+                                                    child: CircleAvatar(
+                                                        radius: 35,
+                                                        backgroundColor: Colors.grey,
+                                                        child: Text(
+                                                          taskUsers[index].initials,
+                                                          style: const TextStyle(fontSize: 35, color: Colors.white),
+                                                          overflow: TextOverflow.fade, softWrap: false,
+                                                        )
+                                                    ),
+                                                  )
+                                              ),
+                                            );
+                                          }
+                                      ),
+                                      menuBuilder: () {
+                                        return ClipRRect(
+                                          borderRadius: BorderRadius.circular(5),
+                                          child: Container(
+                                            color: const Color(0xFF4C4C4C),
+                                            child: GridView.count(
+                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                                                crossAxisCount: 5,
+                                                crossAxisSpacing: 0,
+                                                mainAxisSpacing: 10,
+                                                shrinkWrap: true,
+                                                physics: const NeverScrollableScrollPhysics(),
+                                                children: _users.map(
+                                                        (key, value) => MapEntry(
+                                                        key,
+                                                        SizedBox(
+                                                          width: 60,
+                                                          child: InkWell(
+                                                            onTap: () {
+                                                              _users[key] = [value[0], !value[1]];
+                                                              _controller.hideMenu();
+                                                              _controller.showMenu();
+                                                              setState(() {});
+                                                            },
+                                                            child: Column(
+                                                              children: [
+                                                                Stack(
+                                                                    alignment: Alignment.center,
+                                                                    children: [
+                                                                      CircleAvatar(
+                                                                          radius: 20,
+                                                                          backgroundColor: Colors.grey,
+                                                                          child: Text(value[0].initials, style: const TextStyle(fontSize: 20, color: Colors.white), overflow: TextOverflow.fade, softWrap: false,)
+                                                                      ),
+                                                                      value[1] ? const Icon(Icons.check_sharp, color: Colors.green, size: 25) : const SizedBox.shrink()
+                                                                    ]
+                                                                ),
+                                                                const Divider(
+                                                                    height: 5
+                                                                ),
+                                                                Text(value[0].name, style: const TextStyle(fontSize: 8, color: Colors.white), overflow: TextOverflow.ellipsis)
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        )
+                                                    )
+                                                ).values.toList()
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 child: Row(
@@ -273,9 +434,14 @@ class _EditTaskDataState extends State<EditTaskData> {
                                             margin: const EdgeInsets.only(bottom: 10),
                                             child: TextFormField(
                                               decoration: const InputDecoration(
+                                                  enabledBorder: OutlineInputBorder(
+                                                    // width: 0.0 produces a thin "hairline" border
+                                                    borderSide: BorderSide(color: Colors.transparent, width: 0.0),
+                                                  ),
                                                   hintText: 'Task Name',
+                                                  //border: OutlineInputBorder(),
+                                                  counterText: '',
                                                   border: OutlineInputBorder(),
-                                                  counterText: ''
                                               ),
                                               initialValue: _newTask.name,
                                               maxLength: 30,
@@ -308,7 +474,7 @@ class _EditTaskDataState extends State<EditTaskData> {
                                           child: Container(
                                             margin: const EdgeInsets.only(bottom: 10),
                                             child: TextFormField(
-                                              controller: _controller,
+                                              controller: _textController,
                                               readOnly: true,
                                               decoration: const InputDecoration(
                                                   hintText: 'Location',
@@ -326,7 +492,7 @@ class _EditTaskDataState extends State<EditTaskData> {
                                                   List<double> loc = await PlaceApiProvider(sessionToken)
                                                       .getPlaceDetailFromId(result.placeId);
                                                   _newTask.location = result.description;
-                                                  _controller.text = result.description;
+                                                  _textController.text = result.description;
                                                   _newTask.coords = loc;
                                                 }
                                               },
@@ -422,12 +588,13 @@ class ArchiveTaskData extends StatefulWidget {
   final void Function(int) onUnarchive;
   final void Function(int) onDelete;
   final List<TaskData> archivedTasks;
+  final Map<String, UserData> users;
   final Stream<FamilyTaskData> stream;
   final void Function() onClean;
 
   const ArchiveTaskData({Key? key, this.padding = const EdgeInsets.all(0),
     required this.archivedTasks, required this.onUnarchive, required this.onDelete,
-    required this.stream, required this.onClean}) : super(key: key);
+    required this.stream, required this.onClean, required this.users}) : super(key: key);
 
   @override
   State<ArchiveTaskData> createState() => _ArchiveTaskDataState();
@@ -442,71 +609,77 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
     _taskData = widget.archivedTasks;
   }
 
+  Widget _buildList() {
+    return MediaQuery.removePadding(
+      removeTop: true,
+      context: context,
+      child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        itemCount: _taskData.length,
+        itemBuilder: (BuildContext context, int i) {
+          return Card(
+            elevation: 5,
+            color: _taskData[i].color,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                ListTile(
+                  leading: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey,
+                    child: Text(widget.users[_taskData[i].completedBy]?.initials ?? '',
+                      style: const TextStyle(fontSize: 20, color: Colors.white),
+                      overflow: TextOverflow.fade, softWrap: false,)
+                  ), // Put the icon for the type of task
+                  title: Text(_taskData[i].name), // Name of task
+                  subtitle: Text('Completed: ${daysOfWeek[_taskData[i].archived.toLocal().weekday]}, '
+                      '${DateFormat('h:mm a').format(_taskData[i].archived.toLocal())}'), // Due date
+                  trailing: ReactionButton<String>(
+                    boxPosition: Position.BOTTOM,
+                    boxElevation: 10,
+                    onReactionChanged: (String? value) {
+                      if (value == 'unarchive') {
+                        widget.onUnarchive(i);
+                      } else if (value == 'delete') {
+                        widget.onDelete(i);
+                      }
+                    },
+                    initialReaction: Reaction<String>(
+                        icon: const Icon(Icons.more_vert),
+                        value: 'edit'
+                    ),
+                    reactions: [
+                      Reaction<String>(
+                          previewIcon: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                              child: const Icon(Icons.outbox, size: 30)
+                          ),
+                          icon: const SizedBox.shrink(),
+                          value: 'unarchive'
+                      ),
+                      Reaction<String>(
+                          previewIcon: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                              child: const Icon(Icons.delete_forever, size: 30)
+                          ),
+                          icon: const SizedBox.shrink(),
+                          value: 'delete'
+                      )
+                    ],
+                    boxDuration: const Duration(milliseconds: 100),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    Widget _buildList() {
-      return MediaQuery.removePadding(
-        removeTop: true,
-        context: context,
-        child: ListView.builder(
-          physics: const NeverScrollableScrollPhysics(),
-          shrinkWrap: true,
-          itemCount: _taskData.length,
-          itemBuilder: (BuildContext context, int i) {
-            return Card(
-              elevation: 5,
-              color: _taskData[i].color,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  ListTile(
-                      leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
-                      title: Text(_taskData[i].name), // Name of task
-                      subtitle: Text('Completed: ${daysOfWeek[_taskData[i].archived.toLocal().weekday]}, '
-                          '${DateFormat('h:mm a').format(_taskData[i].archived.toLocal())}'), // Due date
-                      trailing: ReactionButton<String>(
-                        boxPosition: Position.BOTTOM,
-                        boxElevation: 10,
-                        onReactionChanged: (String? value) {
-                          if (value == 'unarchive') {
-                            widget.onUnarchive(i);
-                          } else if (value == 'delete') {
-                            widget.onDelete(i);
-                          }
-                        },
-                        initialReaction: Reaction<String>(
-                            icon: const Icon(Icons.more_vert),
-                            value: 'edit'
-                        ),
-                        reactions: [
-                          Reaction<String>(
-                              previewIcon: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                  child: const Icon(Icons.outbox, size: 30)
-                              ),
-                              icon: const SizedBox.shrink(),
-                              value: 'unarchive'
-                          ),
-                          Reaction<String>(
-                              previewIcon: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                  child: const Icon(Icons.delete_forever, size: 30)
-                              ),
-                              icon: const SizedBox.shrink(),
-                              value: 'delete'
-                          )
-                        ],
-                        boxDuration: const Duration(milliseconds: 100),
-                      ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      );
-    }
-
     return Container(
       padding: widget.padding,
       child: Hero(
@@ -640,4 +813,54 @@ class AddressSearch extends SearchDelegate<Suggestion> {
     );
   }
 }
+
+class UserPicker extends StatefulWidget {
+  const UserPicker({Key? key, required this.userPicked}) : super(key: key);
+
+  final Map<String, List> userPicked;
+
+  @override
+  State<UserPicker> createState() => _UserPickerState();
+}
+
+class _UserPickerState extends State<UserPicker> {
+  late Map<String, List> _userPicked = widget.userPicked;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Wrap(
+          spacing: 10,
+          children: _userPicked.map(
+                  (key, value) => MapEntry(
+                  key,
+                  SizedBox(
+                    width: 60,
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _userPicked[key] = [value[0], !value[1]];
+                        });
+                      },
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircleAvatar(
+                              radius: 30,
+                              backgroundColor: Colors.grey,
+                              child: Text(value[0].initials, style: const TextStyle(fontSize: 30, color: Colors.white), overflow: TextOverflow.fade, softWrap: false,)
+                          ),
+                          value[1] ? const Icon(Icons.check, color: Colors.green, size: 25) : const SizedBox.shrink()
+                        ]
+                      ),
+                    ),
+                  )
+              )
+          ).values.toList()
+      ),
+    );
+  }
+}
+
 

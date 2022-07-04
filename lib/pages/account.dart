@@ -3,7 +3,6 @@ import 'package:family_tasks/Services/location_callback.dart';
 import 'package:family_tasks/pages/Helpers/account_option_widgets.dart';
 import 'package:family_tasks/pages/Helpers/constants.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 
@@ -31,7 +30,6 @@ class AccountPageState extends State<AccountPage> {
   AuthenticationService auth = AuthenticationService();
   String _input = '';
   final _formKey = GlobalKey<FormState>();
-  bool _showID = false;
 
   String _getTimeText(Duration dur) {
     Duration duration = dur.abs();
@@ -71,7 +69,7 @@ class AccountPageState extends State<AccountPage> {
             onConfirm: () async {
               Navigator.pop(context);
               await LocationCallbackHandler.onStop();
-              await ds.updateUserLocation(auth.id!, true);
+              await ds.updateUserLocation(false);
               setState(() {
                 _locationEnabled = false;
               });
@@ -89,7 +87,7 @@ class AccountPageState extends State<AccountPage> {
           onConfirm: () async {
             Navigator.pop(context);
             if (await LocationCallbackHandler.onStart()) {
-              await ds.updateUserLocation(auth.id!, true);
+              await ds.updateUserLocation(true);
               setState(() {
                 _locationEnabled = true;
               });
@@ -99,6 +97,13 @@ class AccountPageState extends State<AccountPage> {
           },
         )
       ),
+    );
+  }
+
+  Widget _getSectionText(String text) {
+    return Padding(
+        padding: const EdgeInsets.only(left: 10, right: 10, top: 15),
+        child: Text(text, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold))
     );
   }
 
@@ -285,50 +290,6 @@ class AccountPageState extends State<AccountPage> {
                         margin: const EdgeInsets.only(left: 10, right: 10),
                         child: Material(
                           color: bgColor,
-                          child: Padding(
-                              padding: const EdgeInsets.only(left: 10, right: 10, bottom: 8.0),
-                              child: _showID ? Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  AutoSizeText(widget.famID, style: const TextStyle(fontSize: 20), maxLines: 1),
-                                  Padding(
-                                      padding: const EdgeInsets.only(left: 8),
-                                      child: IconButton(
-                                        icon: const Icon(Icons.copy),
-                                        onPressed: () {
-                                          Clipboard.setData(
-                                              ClipboardData(text: widget.famID));
-                                        },
-                                      )
-                                  )
-                                ],
-                              ) : Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _showID = true;
-                                    });
-                                  },
-                                  child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: const [
-                                        Padding(
-                                          padding: EdgeInsets.only(right: 5),
-                                          child: Icon(Icons.perm_identity_sharp),
-                                        ),
-                                        Text('Show ID', style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold)),
-                                      ]
-                                  ),
-                                ),
-                              )
-                          ),
-                        ),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(left: 10, right: 10),
-                        child: Material(
-                          color: bgColor,
                           child: Container(
                             padding: const EdgeInsets.only(bottom: 8),
                             child: Row(
@@ -453,6 +414,44 @@ class AccountPageState extends State<AccountPage> {
                           ),
                         ),
                       ),
+                      _getSectionText('Members'),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3, left: 10, right: 10),
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15.0),
+                          ),
+                          color: Colors.blueGrey,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Wrap(
+                              spacing: 10,
+                              children: users.map(
+                                (key, value) => MapEntry(
+                                    key,
+                                    SizedBox(
+                                      width: 60,
+                                      child: Column(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 30,
+                                            backgroundColor: Colors.grey,
+                                            child: Text(value.initials, style: const TextStyle(fontSize: 30, color: Colors.white), overflow: TextOverflow.fade, softWrap: false,)
+                                          ),
+                                          const Divider(
+                                            height: 5
+                                          ),
+                                          Text(value.name, style: const TextStyle(fontSize: 10, color: Colors.white), overflow: TextOverflow.ellipsis)
+                                        ],
+                                      ),
+                                    )
+                                )
+                              ).values.toList()
+                            ),
+                          )
+                        ),
+                      ),
+                      _getSectionText('Tasks'),
                       dueEarliest != null ? DataCard(
                         taskColor: dueEarliest.color,
                         taskName: dueEarliest.name,
@@ -541,6 +540,7 @@ class AccountPageState extends State<AccountPage> {
                         bgColor: Colors.red,
                         iconColor: Colors.orangeAccent,
                       ),
+                      _getSectionText('Settings'),
                       InkWell(
                         onTap: () {
                           Navigator.of(context).push(
@@ -572,7 +572,7 @@ class AccountPageState extends State<AccountPage> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(20),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                         child: Row(
                           children: [
                             Container(

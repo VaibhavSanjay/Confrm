@@ -188,7 +188,7 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
                                                       String famID =
                                                       await ds.addNewFamily(
                                                           _input);
-                                                      await ds.setUserFamily(auth.id!, famID);
+                                                      await ds.setUserFamily(famID);
                                                       widget.onJoinOrCreate();
                                                     }
                                                   }
@@ -257,8 +257,7 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
                                                       child: const Text('Join'),
                                                       onPressed: () async {
                                                         _foundFamily =
-                                                        await ds.famExists(auth.id!,
-                                                        _input.isEmpty
+                                                        await ds.famExists(_input.isEmpty
                                                             ? '0'
                                                             : _input);
                                                         if (_formKey
@@ -267,7 +266,7 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
                                                           WidgetsBinding.instance!.addPostFrameCallback((_) {
                                                             Navigator.pop(context);
                                                           });
-                                                          await ds.setUserFamily(auth.id!, _input);
+                                                          await ds.setUserFamily(_input);
                                                           widget.onJoinOrCreate();
                                                         }
                                                       }

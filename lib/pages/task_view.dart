@@ -1,4 +1,5 @@
 import 'dart:core';
+import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:family_tasks/models/family_task_data.dart';
 
+import '../models/user_data.dart';
 import 'Helpers/constants.dart';
 import 'Helpers/hero_dialogue_route.dart';
 import 'Helpers/task_view_cards.dart';
@@ -32,10 +34,12 @@ class TaskViewPage extends StatefulWidget {
 class TaskViewPageState extends State<TaskViewPage> {
   List<TaskData> _taskData = []; // Hold all the task data
   List<TaskData> _archivedTaskData = []; // Hold all the archive data
+  Map<String, UserData> _users = {};
   final double _statusIconSize = 30; // Icon size for the status on right side of card
   late final List<Reaction<Status>> _statusCardReactions; // Reaction objects for statuses
   late DatabaseService ds = DatabaseService(widget.famID); // Get data from Database
   late Stream<FamilyTaskData> stream = ds.taskDataForFamily; // Put data in the stream
+  AuthenticationService auth = AuthenticationService();
 
   @override
   void initState() {
@@ -116,7 +120,10 @@ class TaskViewPageState extends State<TaskViewPage> {
 
   void _archiveTask(int index) {
     if (index >= 0) {
-      _archivedTaskData.add(_taskData.removeAt(index)..archived = DateTime.now().toUtc());
+      _archivedTaskData.add(_taskData.removeAt(index)
+        ..archived = DateTime.now().toUtc()
+        ..completedBy = auth.id!
+      );
       // Remove the earliest completed task if more than MAX_TASKS archived
       if (_archivedTaskData.length > maxTasks) {
         _archivedTaskData.removeAt(0);
@@ -177,6 +184,7 @@ class TaskViewPageState extends State<TaskViewPage> {
           return EditTaskData(
             selectedTask: i,
             taskData: TaskData.fromTaskData(_taskData.elementAt(i)),
+            users: _users,
             padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/6, left: 30, right: 30, bottom: MediaQuery.of(context).size.height/6),
             onExit: (TaskData? data) async {
               if (data != null) {
@@ -222,7 +230,8 @@ class TaskViewPageState extends State<TaskViewPage> {
           _archivedTaskData = _archivedTaskData.where((td) => td.archived.isAfter(hourAgo)).toList();
           ds.updateArchiveData(_archivedTaskData);
         },
-        stream: stream
+        stream: stream,
+        users: _users,
     );
   }
 
@@ -267,6 +276,7 @@ class TaskViewPageState extends State<TaskViewPage> {
               case ConnectionState.active:
                 _taskData = snapshot.data == null ? [] : snapshot.data!.tasks;
                 _archivedTaskData = snapshot.data == null ? [] : snapshot.data!.archive;
+                _users = snapshot.data == null ? {} : snapshot.data!.users;
                 List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
                 return ReorderableColumn(
                   header: _taskData.isEmpty ? Card( // A small help widget to display if no tasks exist

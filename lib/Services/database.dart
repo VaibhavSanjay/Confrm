@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/models/family_task_data.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../models/user_data.dart';
@@ -10,6 +11,7 @@ class DatabaseService {
 
   final CollectionReference taskDataCollection = FirebaseFirestore.instance.collection('family_tasks');
   final CollectionReference userCollection = FirebaseFirestore.instance.collection('users');
+  final AuthenticationService auth = AuthenticationService();
 
   static Future<void> initializeFirebase() async {
     await Firebase.initializeApp();
@@ -53,14 +55,16 @@ class DatabaseService {
               location: data['archive'][index]['location'],
               coords: data['archive'][index]['coords'].cast<double>(),
               lastRem: (data['archive'][index]['lastRem'] as Timestamp).toDate(),
-              archived: (data['archive'][index]['archived'] as Timestamp).toDate()
+              archived: (data['archive'][index]['archived'] as Timestamp).toDate(),
+              completedBy: data['archive'][index]['completedBy']
             )
         ),
         users: (Map<String, dynamic>.from(data['users'])).map(
           (key, value) => MapEntry(
             key,
             UserData(
-              name: value['name'] as String
+              name: value['name'] as String,
+              email: value['email'] as String
             )
           )
         ),
@@ -98,7 +102,8 @@ class DatabaseService {
         'location': td.location,
         'coords': td.coords.cast<dynamic>(),
         'lastRem': Timestamp.fromDate(td.lastRem),
-        'archived': Timestamp.fromDate(td.archived)
+        'archived': Timestamp.fromDate(td.archived),
+        'completedBy': td.completedBy
       }).toList()
     });
   }
@@ -124,26 +129,42 @@ class DatabaseService {
     });
   }
 
-  Future<UserData> getUser(String id) async {
-    return UserData(famID: (await userCollection.doc(id).get()).get('group'), location: (await userCollection.doc(id).get()).get('location'));
+  Future<UserData> getUser() async {
+    return UserData(
+      name: auth.name!,
+      email: auth.email!,
+      famID: (await userCollection.doc(auth.id!).get()).get('group'),
+      location: (await userCollection.doc(auth.id!).get()).get('location'));
   }
 
-  Future<bool> famExists(String authID, String famID) async {
-    await userCollection.doc(authID).update({'group': famID});
+  Future<bool> famExists(String famID) async {
+    await userCollection.doc(auth.id!).update({'group': famID});
     return (await taskDataCollection.doc(famID).get()).exists;
   }
 
-  Future setUserFamily(String authID, String famID) async {
+  Future setUserFamily(String famID) async {
     this.famID = famID;
-    await userCollection.doc(authID).update({'group': famID});
+    taskDataCollection.doc(famID).update({
+      'users': {
+        auth.id!: {
+          'name': auth.name!,
+          'email': auth.email!
+        }
+      }
+    });
+    await userCollection.doc(auth.id!).update({'group': famID});
   }
 
-  Future updateUserLocation(String authID, bool location) async {
-    await userCollection.doc(authID).update({'location': location});
+  Future updateUserLocation(bool location) async {
+    await userCollection.doc(auth.id!).update({'location': location});
   }
 
-  Future leaveUserFamily(String authID) async {
-    famID = '0';
-    await userCollection.doc(authID).update({'group': '0'});
+  Future leaveUserFamily() async {
+    Map userMap = await ((await taskDataCollection.doc(famID).get()).data() as Map)['users'];
+    userMap.remove(auth.id!);
+    await taskDataCollection.doc(famID).update({
+      'users': userMap
+    });
+    await userCollection.doc(auth.id!).update({'group': '0'});
   }
 }

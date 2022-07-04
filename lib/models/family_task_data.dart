@@ -27,9 +27,11 @@ class TaskData {
   late String location;
   late List<double> coords;
   late DateTime lastRem;
+  late String completedBy;
 
   TaskData({this.name = 'New Task', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
-    this.status = Status.start, this.location = '', List<double>? coords, DateTime? due, DateTime? archived, DateTime? lastRem}) {
+    this.status = Status.start, this.location = '', List<double>? coords, DateTime? due, DateTime? archived, DateTime? lastRem,
+    this.completedBy = ''}) {
       this.due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
       this.archived = archived ?? DateTime(2101);
       this.lastRem = lastRem ?? DateTime.now().toUtc().subtract(const Duration(minutes: 15));
@@ -47,6 +49,7 @@ class TaskData {
       location = td.location;
       coords = td.coords;
       lastRem = td.lastRem;
+      completedBy = td.completedBy;
     }
 
 }
