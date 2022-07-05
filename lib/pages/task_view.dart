@@ -1,7 +1,6 @@
 import 'dart:core';
 import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/Services/database.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:reorderables/reorderables.dart';
@@ -13,6 +12,7 @@ import '../models/user_data.dart';
 import 'Helpers/constants.dart';
 import 'Helpers/hero_dialogue_route.dart';
 import 'Helpers/task_view_cards.dart';
+import 'Helpers/user_data_helper.dart';
 
 class TaskViewPage extends StatefulWidget {
   const TaskViewPage({Key? key, required this.famID}) : super(key: key);
@@ -142,39 +142,59 @@ class TaskViewPageState extends State<TaskViewPage> {
         },
         child: Card(
           elevation: 5,
-          color: _taskData[i].color,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              ListTile(
-                leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
-                title: Text(_taskData[i].name), // Name of task
-                subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
-                    '${DateFormat('h:mm a').format(_taskData[i].due.toLocal())}'), // Due date
-                trailing: ReactionButton<Status>( // Right side reaction button
-                  boxPosition: Position.BOTTOM,
-                  boxElevation: 10,
-                  onReactionChanged: (Status? value) {
-                    _taskData[i].status = value ?? Status.inProgress;
-                    if (value == Status.complete) {
-                      _archiveTask(i); // Immediately archive task if set to complete
-                    } else {
-                      ds.updateTaskData(_taskData); // Otherwise just update the task data
-                    }
-                  },
-                  initialReaction: Reaction<Status>(
-                      icon: Icon(
-                          _getIconForStatus(_taskData[i].status),
-                          color: _getColorForStatus(_taskData[i].status),
-                          size: _statusIconSize
-                      ),
-                      value: _taskData[i].status
-                      ),
-                  reactions: _statusCardReactions,
-                  boxDuration: const Duration(milliseconds: 100),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 10, top: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  decoration: BoxDecoration(
+                    color: _taskData[i].color,
+                    borderRadius: const BorderRadius.all(Radius.elliptical(90,45)),
+                  ),
+                  width: 80,
+                  height: 10
                 ),
-              ),
-            ],
+                ListTile(
+                  leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
+                  title: Text(_taskData[i].name), // Name of task
+                  subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
+                      '${DateFormat('h:mm a').format(_taskData[i].due.toLocal())}'), // Due date
+                  /*trailing: ReactionButton<Status>( // Right side reaction button
+                    boxPosition: Position.BOTTOM,
+                    boxElevation: 10,
+                    onReactionChanged: (Status? value) {
+                      _taskData[i].status = value ?? Status.inProgress;
+                      if (value == Status.complete) {
+                        _archiveTask(i); // Immediately archive task if set to complete
+                      } else {
+                        ds.updateTaskData(_taskData); // Otherwise just update the task data
+                      }
+                    },
+                    initialReaction: Reaction<Status>(
+                        icon: Icon(
+                            _getIconForStatus(_taskData[i].status),
+                            color: _getColorForStatus(_taskData[i].status),
+                            size: _statusIconSize
+                        ),
+                        value: _taskData[i].status
+                        ),
+                    reactions: _statusCardReactions,
+                    boxDuration: const Duration(milliseconds: 100),
+                  ),*/
+                  trailing: SizedBox(
+                    width: 100,
+                    child: UserDataHelper.avatarStack(
+                      _taskData[i].assignedUsers.map((user) => UserData(name: _users[user]?.name ?? '?')).toList(),
+                      20,
+                      Colors.transparent,
+                      const SizedBox.shrink()
+                    )
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -279,6 +299,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                 _users = snapshot.data == null ? {} : snapshot.data!.users;
                 List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
                 return ReorderableColumn(
+                  scrollController: ScrollController(),
                   header: _taskData.isEmpty ? Card( // A small help widget to display if no tasks exist
                       elevation: 5,
                       child: Container(

@@ -40,7 +40,8 @@ class DatabaseService {
             color: availableColors[data['data'][index]['color']],
             location: data['data'][index]['location'],
             coords: data['data'][index]['coords'].cast<double>(),
-            lastRem: (data['data'][index]['lastRem'] as Timestamp).toDate()
+            lastRem: (data['data'][index]['lastRem'] as Timestamp).toDate(),
+            assignedUsers: data['data'][index]['assignedUsers'].cast<String>()
           )
         ),
         archive: List<TaskData>.generate(
@@ -55,6 +56,7 @@ class DatabaseService {
               location: data['archive'][index]['location'],
               coords: data['archive'][index]['coords'].cast<double>(),
               lastRem: (data['archive'][index]['lastRem'] as Timestamp).toDate(),
+              assignedUsers: data['archive'][index]['assignedUsers'].cast<String>(),
               archived: (data['archive'][index]['archived'] as Timestamp).toDate(),
               completedBy: data['archive'][index]['completedBy']
             )
@@ -84,7 +86,8 @@ class DatabaseService {
         'color': availableColors.indexOf(td.color),
         'location': td.location,
         'coords': td.coords.cast<dynamic>(),
-        'lastRem': Timestamp.fromDate(td.lastRem)
+        'lastRem': Timestamp.fromDate(td.lastRem),
+        'assignedUsers': td.assignedUsers.cast<dynamic>()
       }).toList()
     });
   }
@@ -102,6 +105,7 @@ class DatabaseService {
         'location': td.location,
         'coords': td.coords.cast<dynamic>(),
         'lastRem': Timestamp.fromDate(td.lastRem),
+        'assignedUsers': td.assignedUsers.cast<dynamic>(),
         'archived': Timestamp.fromDate(td.archived),
         'completedBy': td.completedBy
       }).toList()

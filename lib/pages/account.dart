@@ -2,6 +2,7 @@ import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/Services/location_callback.dart';
 import 'package:family_tasks/pages/Helpers/account_option_widgets.dart';
 import 'package:family_tasks/pages/Helpers/constants.dart';
+import 'package:family_tasks/pages/Helpers/user_data_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:auto_size_text/auto_size_text.dart';
@@ -431,19 +432,7 @@ class AccountPageState extends State<AccountPage> {
                                     key,
                                     SizedBox(
                                       width: 60,
-                                      child: Column(
-                                        children: [
-                                          CircleAvatar(
-                                            radius: 30,
-                                            backgroundColor: Colors.grey,
-                                            child: Text(value.initials, style: const TextStyle(fontSize: 30, color: Colors.white), overflow: TextOverflow.fade, softWrap: false,)
-                                          ),
-                                          const Divider(
-                                            height: 5
-                                          ),
-                                          Text(value.name, style: const TextStyle(fontSize: 10, color: Colors.white), overflow: TextOverflow.ellipsis)
-                                        ],
-                                      ),
+                                      child: UserDataHelper.avatarColumnFromUserData(value, 30)
                                     )
                                 )
                               ).values.toList()
