@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:family_tasks/pages/Helpers/user_data_helper.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +13,7 @@ import '../../Services/place_service.dart';
 import '../../models/family_task_data.dart';
 import '../../models/user_data.dart';
 import 'constants.dart';
+import 'hero_dialogue_route.dart';
 
 // A helper function to get the icon data based on a task type
 IconData _getIconForTaskType(TaskType tt) {
@@ -31,27 +31,125 @@ IconData _getIconForTaskType(TaskType tt) {
   }
 }
 
-IconData _getIconForStatus(Status s) {
-  switch (s) {
-    case Status.complete:
-      return Icons.check_circle;
-    case Status.start:
-      return FontAwesomeIcons.hourglassStart;
-    case Status.inProgress:
-      return Icons.timelapse;
+class TaskCard extends StatefulWidget {
+  const TaskCard({Key? key, required this.number, required this.taskData, required this.users,
+                  required this.onEditComplete, required this.onComplete, required this.onDelete}) : super(key: key);
+
+  final int number;
+  final TaskData taskData;
+  final Map<String, UserData> users;
+  final Function(TaskData?) onEditComplete;
+  final Function() onComplete;
+  final Function() onDelete;
+
+  @override
+  State<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends State<TaskCard> {
+  final CustomPopupMenuController _controller = CustomPopupMenuController();
+
+  Widget _getTaskCardOption(String text, IconData icon, Color color, Function() onTap) {
+    return SizedBox(
+        width: 40,
+        child: InkWell(
+          onTap: onTap,
+          child: Column(
+              children: [
+                Icon(icon, color: color, size: 15),
+                Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 8),)
+                )
+              ]
+          ),
+        )
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPopupMenu(
+      verticalMargin: 0,
+      horizontalMargin: 0,
+      controller: _controller,
+      menuBuilder: () {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(5),
+          child: Container(
+              color: const Color(0xFF4C4C4C),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _getTaskCardOption('Edit', FontAwesomeIcons.pen, Colors.white, () {
+                        _controller.hideMenu();
+                        // Pop up the task editing menu
+                        Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                          return EditTaskData(
+                            selectedTask: widget.number,
+                            taskData: TaskData.fromTaskData(widget.taskData),
+                            users: widget.users,
+                            padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/6, left: 30, right: 30, bottom: MediaQuery.of(context).size.height/6),
+                            onExit: widget.onEditComplete
+                          );
+                        }));
+                      }),
+                      _getTaskCardOption('Complete', FontAwesomeIcons.circleCheck, Colors.green, widget.onComplete),
+                      _getTaskCardOption('Delete', FontAwesomeIcons.circleXmark, Colors.red, widget.onDelete)
+                    ]
+                ),
+              )
+          ),
+        );
+      },
+      pressType: PressType.singleClick,
+      child: Hero(
+        tag: widget.number, // Animation for card pop up effect
+        createRectTween: (begin, end) {
+          return CustomRectTween(begin: begin, end: end);
+        },
+        child: Card(
+          elevation: 5,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 10, top: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                    decoration: BoxDecoration(
+                      color: widget.taskData.color,
+                      borderRadius: const BorderRadius.all(Radius.elliptical(90,45)),
+                    ),
+                    width: 80,
+                    height: 10
+                ),
+                ListTile(
+                  leading: Icon(_getIconForTaskType(widget.taskData.taskType)), // Put the icon for the type of task
+                  title: Text(widget.taskData.name), // Name of task
+                  subtitle: Text('${daysOfWeek[widget.taskData.due.toLocal().weekday]}, '
+                      '${DateFormat('h:mm a').format(widget.taskData.due.toLocal())}'), // Due date
+                  trailing: SizedBox(
+                      width: 100,
+                      child: UserDataHelper.avatarStack(
+                          widget.taskData.assignedUsers.map((user) => UserData(name: widget.users[user]?.name ?? '?')).toList(),
+                          20,
+                          Colors.transparent,
+                          const SizedBox.shrink()
+                      )
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
-Color _getColorForStatus(Status s) {
-  switch (s) {
-    case Status.complete:
-      return Colors.greenAccent;
-    case Status.start:
-      return Colors.black;
-    case Status.inProgress:
-      return Colors.amber;
-  }
-}
 
 class EditTaskData extends StatefulWidget {
   final int selectedTask;
@@ -72,7 +170,6 @@ class _EditTaskDataState extends State<EditTaskData> {
   final double _editIconSize = 25;
   late TaskData _newTask;
   late Map<String, List> _users;
-  late final List<Reaction<Status>> _statusReactions;
   late final List<Reaction<TaskType>> _taskTypeReactions;
   final TextEditingController _textController = TextEditingController();
   final CustomPopupMenuController _userController = CustomPopupMenuController();
@@ -85,31 +182,6 @@ class _EditTaskDataState extends State<EditTaskData> {
     _newTask = widget.taskData;
     _users = widget.users.map((key, value) => MapEntry(key, [value, _newTask.assignedUsers.contains(key)]));
     _textController.text = _newTask.location;
-
-    _statusReactions = List<Reaction<Status>>.generate(
-        Status.values.length,
-            (int index) {
-          return Reaction<Status>(
-              previewIcon: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                  child: Icon(
-                      _getIconForStatus(Status.values.elementAt(index)),
-                      color: _getColorForStatus(Status.values.elementAt(index)),
-                      size: _editIconSize/2
-                  )
-              ),
-              icon: Container(
-                padding: const EdgeInsets.all(10),
-                child: Icon(
-                    _getIconForStatus(Status.values.elementAt(index)),
-                    color: _getColorForStatus(Status.values.elementAt(index)),
-                    size: _editIconSize
-                ),
-              ),
-              value: Status.values.elementAt(index)
-          );
-        }
-    );
 
     _taskTypeReactions = List<Reaction<TaskType>>.generate(
         TaskType.values.length,
@@ -128,8 +200,11 @@ class _EditTaskDataState extends State<EditTaskData> {
 
   @override
   void dispose() {
-    super.dispose();
     _textController.dispose();
+    _locationController.dispose();
+    _userController.dispose();
+    _dueController.dispose();
+    super.dispose();
   }
 
   Widget _getOptionButton(Widget child, String text) {

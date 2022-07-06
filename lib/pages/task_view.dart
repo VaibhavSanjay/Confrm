@@ -2,17 +2,12 @@ import 'dart:core';
 import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:reorderables/reorderables.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:family_tasks/models/family_task_data.dart';
 
 import '../models/user_data.dart';
 import 'Helpers/constants.dart';
-import 'Helpers/hero_dialogue_route.dart';
 import 'Helpers/task_view_cards.dart';
-import 'Helpers/user_data_helper.dart';
 
 class TaskViewPage extends StatefulWidget {
   const TaskViewPage({Key? key, required this.famID}) : super(key: key);
@@ -35,39 +30,9 @@ class TaskViewPageState extends State<TaskViewPage> {
   List<TaskData> _taskData = []; // Hold all the task data
   List<TaskData> _archivedTaskData = []; // Hold all the archive data
   Map<String, UserData> _users = {};
-  final double _statusIconSize = 30; // Icon size for the status on right side of card
-  late final List<Reaction<Status>> _statusCardReactions; // Reaction objects for statuses
   late DatabaseService ds = DatabaseService(widget.famID); // Get data from Database
   late Stream<FamilyTaskData> stream = ds.taskDataForFamily; // Put data in the stream
   AuthenticationService auth = AuthenticationService();
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Populate status card reactions
-    _statusCardReactions = List<Reaction<Status>>.generate(
-        Status.values.length,
-            (int index) {
-          return Reaction<Status>(
-              previewIcon: Container(
-                padding: const EdgeInsets.all(10),
-                child: Icon(
-                    _getIconForStatus(Status.values.elementAt(index)),
-                    color: _getColorForStatus(Status.values.elementAt(index)),
-                    size: _statusIconSize
-                ),
-              ),
-              icon: Icon(
-                  _getIconForStatus(Status.values.elementAt(index)),
-                  color: _getColorForStatus(Status.values.elementAt(index)),
-                  size: _statusIconSize
-              ),
-              value: Status.values.elementAt(index)
-          );
-        }
-    );
-  }
 
   // When user adds a new task
   Future<bool> addTask() async {
@@ -78,44 +43,6 @@ class TaskViewPageState extends State<TaskViewPage> {
     _taskData.add(TaskData());
     await ds.updateTaskData(_taskData); // Send data to Firebase
     return true;
-  }
-
-  // A helper function to get the icon data based on a task type
-  IconData _getIconForTaskType(TaskType tt) {
-    switch (tt) {
-      case TaskType.garbage:
-        return FontAwesomeIcons.trash;
-      case TaskType.cleaning:
-        return FontAwesomeIcons.soap;
-      case TaskType.cooking:
-        return FontAwesomeIcons.utensils;
-      case TaskType.shopping:
-        return FontAwesomeIcons.cartShopping;
-      case TaskType.other:
-        return FontAwesomeIcons.star;
-    }
-  }
-
-  IconData _getIconForStatus(Status s) {
-    switch (s) {
-      case Status.complete:
-        return Icons.check_circle;
-      case Status.start:
-        return FontAwesomeIcons.hourglassStart;
-      case Status.inProgress:
-        return Icons.timelapse;
-    }
-  }
-
-  Color _getColorForStatus(Status s) {
-    switch (s) {
-      case Status.complete:
-        return Colors.greenAccent;
-      case Status.start:
-        return Colors.black;
-      case Status.inProgress:
-        return Colors.amber;
-    }
   }
 
   void _archiveTask(int index) {
@@ -131,103 +58,6 @@ class TaskViewPageState extends State<TaskViewPage> {
       ds.updateTaskData(_taskData);
       ds.updateArchiveData(_archivedTaskData);
     }
-  }
-
-  Widget _createTaskCard(BuildContext context, int i) {
-    return InkWell(
-      child: Hero(
-        tag: i, // Animation for card pop up effect
-        createRectTween: (begin, end) {
-          return CustomRectTween(begin: begin, end: end);
-        },
-        child: Card(
-          elevation: 5,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 10, top: 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Container(
-                  decoration: BoxDecoration(
-                    color: _taskData[i].color,
-                    borderRadius: const BorderRadius.all(Radius.elliptical(90,45)),
-                  ),
-                  width: 80,
-                  height: 10
-                ),
-                ListTile(
-                  leading: Icon(_getIconForTaskType(_taskData[i].taskType)), // Put the icon for the type of task
-                  title: Text(_taskData[i].name), // Name of task
-                  subtitle: Text('${daysOfWeek[_taskData[i].due.toLocal().weekday]}, '
-                      '${DateFormat('h:mm a').format(_taskData[i].due.toLocal())}'), // Due date
-                  /*trailing: ReactionButton<Status>( // Right side reaction button
-                    boxPosition: Position.BOTTOM,
-                    boxElevation: 10,
-                    onReactionChanged: (Status? value) {
-                      _taskData[i].status = value ?? Status.inProgress;
-                      if (value == Status.complete) {
-                        _archiveTask(i); // Immediately archive task if set to complete
-                      } else {
-                        ds.updateTaskData(_taskData); // Otherwise just update the task data
-                      }
-                    },
-                    initialReaction: Reaction<Status>(
-                        icon: Icon(
-                            _getIconForStatus(_taskData[i].status),
-                            color: _getColorForStatus(_taskData[i].status),
-                            size: _statusIconSize
-                        ),
-                        value: _taskData[i].status
-                        ),
-                    reactions: _statusCardReactions,
-                    boxDuration: const Duration(milliseconds: 100),
-                  ),*/
-                  trailing: SizedBox(
-                    width: 100,
-                    child: UserDataHelper.avatarStack(
-                      _taskData[i].assignedUsers.map((user) => UserData(name: _users[user]?.name ?? '?')).toList(),
-                      20,
-                      Colors.transparent,
-                      const SizedBox.shrink()
-                    )
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      onTap: () {
-        // Pop up the task editing menu
-        Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-          return EditTaskData(
-            selectedTask: i,
-            taskData: TaskData.fromTaskData(_taskData.elementAt(i)),
-            users: _users,
-            padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/6, left: 30, right: 30, bottom: MediaQuery.of(context).size.height/6),
-            onExit: (TaskData? data) async {
-              if (data != null) {
-                // Non-null means task data was saved.
-                _taskData[i] = TaskData.fromTaskData(data);
-                await ds.updateTaskData(_taskData);
-                if (data.status == Status.complete) {
-                  _archiveTask(i); // Archive if completed
-                }
-              } else {
-                // Null means task was deleted
-                _taskData.removeAt(i);
-                ds.updateTaskData(_taskData);
-              }
-
-              Navigator.of(context).pop();
-              setState((){});
-            },
-          );
-        }));
-      },
-      key: ValueKey(i), // The reorderables package requires a key for each of its elements
-    );
   }
 
   Widget createArchiveCardList(EdgeInsets padding) {
@@ -284,7 +114,33 @@ class TaskViewPageState extends State<TaskViewPage> {
                   );
                 } else {
                   // If we have task data, we just list it instead of loading
-                  List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
+                  List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => TaskCard(
+                    number: i,
+                    taskData: _taskData[i],
+                    users: _users,
+                    onComplete: () => _archiveTask(i),
+                    onDelete: () {
+                      _taskData.removeAt(i);
+                      ds.updateTaskData(_taskData);
+                    },
+                    onEditComplete: (TaskData? data) async {
+                      if (data != null) {
+                        // Non-null means task data was saved.
+                        _taskData[i] = TaskData.fromTaskData(data);
+                        await ds.updateTaskData(_taskData);
+                        if (data.status == Status.complete) {
+                          _archiveTask(i); // Archive if completed
+                        }
+                      } else {
+                        // Null means task was deleted
+                        _taskData.removeAt(i);
+                        ds.updateTaskData(_taskData);
+                      }
+
+                      Navigator.of(context).pop();
+                      setState((){});
+                    },
+                  ));
                   return Container(
                     padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                     child: Column(
@@ -297,7 +153,34 @@ class TaskViewPageState extends State<TaskViewPage> {
                 _taskData = snapshot.data == null ? [] : snapshot.data!.tasks;
                 _archivedTaskData = snapshot.data == null ? [] : snapshot.data!.archive;
                 _users = snapshot.data == null ? {} : snapshot.data!.users;
-                List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => _createTaskCard(context, i));
+                List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => TaskCard(
+                  key: ValueKey(i),
+                  number: i,
+                  taskData: _taskData[i],
+                  users: _users,
+                  onComplete: () => _archiveTask(i),
+                  onDelete: () {
+                    _taskData.removeAt(i);
+                    ds.updateTaskData(_taskData);
+                  },
+                  onEditComplete: (TaskData? data) async {
+                    if (data != null) {
+                      // Non-null means task data was saved.
+                      _taskData[i] = TaskData.fromTaskData(data);
+                      await ds.updateTaskData(_taskData);
+                      if (data.status == Status.complete) {
+                        _archiveTask(i); // Archive if completed
+                      }
+                    } else {
+                      // Null means task was deleted
+                      _taskData.removeAt(i);
+                      ds.updateTaskData(_taskData);
+                    }
+
+                    Navigator.of(context).pop();
+                    setState((){});
+                  },
+                ));
                 return ReorderableColumn(
                   scrollController: ScrollController(),
                   header: _taskData.isEmpty ? Card( // A small help widget to display if no tasks exist
