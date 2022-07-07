@@ -12,6 +12,14 @@ enum SignResults {
 }
 
 class AuthenticationService {
+  static final AuthenticationService _instance = AuthenticationService._();
+
+  AuthenticationService._();
+
+  factory AuthenticationService() {
+    return _instance;
+  }
+
   Future<SignResults> signIn(String email, String password) async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(

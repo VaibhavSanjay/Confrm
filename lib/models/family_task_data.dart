@@ -9,19 +9,12 @@ enum TaskType {
   other
 }
 
-enum Status {
-  inProgress,
-  start,
-  complete
-}
-
 // A class to represent the data for a task
 class TaskData {
   late String name; // User provided name for a task
   late TaskType taskType; // User provided type of task
   late String desc; // User provided task description (optional)
   late ColorSwatch color;
-  late Status status;
   late DateTime due;
   late DateTime archived;
   late String location;
@@ -31,7 +24,7 @@ class TaskData {
   late List<String> assignedUsers;
 
   TaskData({this.name = 'New Task', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
-    this.status = Status.start, this.location = '', List<double>? coords, DateTime? due, DateTime? archived, DateTime? lastRem,
+    this.location = '', List<double>? coords, DateTime? due, DateTime? archived, DateTime? lastRem,
     this.completedBy = '', List<String>? assignedUsers}) {
       this.due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
       this.archived = archived ?? DateTime(2101);
@@ -45,7 +38,6 @@ class TaskData {
       taskType = td.taskType;
       desc = td.desc;
       color = td.color;
-      status = td.status;
       due = td.due;
       archived = td.archived;
       location = td.location;

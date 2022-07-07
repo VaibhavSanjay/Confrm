@@ -38,7 +38,6 @@ class DatabaseService {
             name: data['data'][index]['name'],
             desc: data['data'][index]['desc'],
             taskType: TaskType.values[data['data'][index]['taskType']],
-            status: Status.values[data['data'][index]['status']],
             due: (data['data'][index]['due'] as Timestamp).toDate(),
             color: availableColors[data['data'][index]['color']],
             location: data['data'][index]['location'],
@@ -53,7 +52,6 @@ class DatabaseService {
               name: data['archive'][index]['name'],
               desc: data['archive'][index]['desc'],
               taskType: TaskType.values[data['archive'][index]['taskType']],
-              status: Status.values[data['archive'][index]['status']],
               due: (data['archive'][index]['due'] as Timestamp).toDate(),
               color: availableColors[data['archive'][index]['color']],
               location: data['archive'][index]['location'],
@@ -85,7 +83,6 @@ class DatabaseService {
         'name': td.name,
         'desc': td.desc,
         'taskType': TaskType.values.indexOf(td.taskType),
-        'status': Status.values.indexOf(td.status),
         'due': Timestamp.fromDate(td.due),
         'color': availableColors.indexOf(td.color),
         'location': td.location,
@@ -103,7 +100,6 @@ class DatabaseService {
         'name': td.name,
         'desc': td.desc,
         'taskType': TaskType.values.indexOf(td.taskType),
-        'status': Status.values.indexOf(td.status),
         'due': Timestamp.fromDate(td.due),
         'color': availableColors.indexOf(td.color),
         'location': td.location,
@@ -152,14 +148,14 @@ class DatabaseService {
 
   Future setUserFamily(String famID) async {
     this.famID = famID;
+    Map<String, dynamic> current = (await taskDataCollection.doc(famID).get()).get('users');
+    current[auth.id!] = {
+      'name': auth.name!,
+      'email': auth.email!,
+      'color': UserDataHelper.getRandomColor().value
+    };
     taskDataCollection.doc(famID).update({
-      'users': {
-        auth.id!: {
-          'name': auth.name!,
-          'email': auth.email!,
-          'color': UserDataHelper.getRandomColor().value
-        }
-      }
+      'users': current
     });
     await userCollection.doc(auth.id!).update({'group': famID});
   }
@@ -169,10 +165,10 @@ class DatabaseService {
   }
 
   Future leaveUserFamily() async {
-    Map userMap = await ((await taskDataCollection.doc(famID).get()).data() as Map)['users'];
-    userMap.remove(auth.id!);
+    Map<String, dynamic> current = (await taskDataCollection.doc(famID).get()).get('users');
+    current.remove(auth.id!);
     await taskDataCollection.doc(famID).update({
-      'users': userMap
+      'users': current
     });
     await userCollection.doc(auth.id!).update({'group': '0'});
   }

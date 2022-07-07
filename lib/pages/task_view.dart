@@ -71,7 +71,7 @@ class TaskViewPageState extends State<TaskViewPage> {
         archivedTasks: _archivedTaskData,
         onUnarchive: (int i) {
           // Add task back to regular task list and change archive date to 2101
-          _taskData.add(_archivedTaskData.removeAt(i)..status = Status.inProgress..archived = DateTime(2101));
+          _taskData.add(_archivedTaskData.removeAt(i)..archived = DateTime(2101));
           ds.updateTaskData(_taskData);
           ds.updateArchiveData(_archivedTaskData);
         },
@@ -133,9 +133,6 @@ class TaskViewPageState extends State<TaskViewPage> {
                         // Non-null means task data was saved.
                         _taskData[i] = TaskData.fromTaskData(data);
                         await ds.updateTaskData(_taskData);
-                        if (data.status == Status.complete) {
-                          _archiveTask(i); // Archive if completed
-                        }
                       } else {
                         // Null means task was deleted
                         _taskData.removeAt(i);
@@ -176,9 +173,6 @@ class TaskViewPageState extends State<TaskViewPage> {
                       // Non-null means task data was saved.
                       _taskData[i] = TaskData.fromTaskData(data);
                       await ds.updateTaskData(_taskData);
-                      if (data.status == Status.complete) {
-                        _archiveTask(i); // Archive if completed
-                      }
                     } else {
                       // Null means task was deleted
                       _taskData.removeAt(i);
