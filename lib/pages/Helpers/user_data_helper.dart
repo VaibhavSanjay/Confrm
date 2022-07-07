@@ -4,13 +4,17 @@ import 'dart:math';
 import '../../models/user_data.dart';
 
 class UserDataHelper {
+  static Color getRandomColor() {
+    return Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
+  }
+
   static Widget avatarFromUserData(UserData user, double radius) {
     return CircleAvatar(
         radius: radius,
-        backgroundColor: Colors.grey,
+        backgroundColor: user.color,
         child: Text(
           user.initials,
-          style: TextStyle(fontSize: radius, color: Colors.white),
+          style: TextStyle(fontSize: radius, color: user.color.computeLuminance() > 0.5 ? Colors.black : Colors.white),
           overflow: TextOverflow.fade, softWrap: false,
         )
     );

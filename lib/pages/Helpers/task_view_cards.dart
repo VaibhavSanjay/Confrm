@@ -112,36 +112,27 @@ class _TaskCardState extends State<TaskCard> {
         },
         child: Card(
           elevation: 5,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 10, top: 10),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Container(
-                    decoration: BoxDecoration(
-                      color: widget.taskData.color,
-                      borderRadius: const BorderRadius.all(Radius.elliptical(90,45)),
-                    ),
-                    width: 80,
-                    height: 10
-                ),
-                ListTile(
-                  leading: Icon(_getIconForTaskType(widget.taskData.taskType)), // Put the icon for the type of task
-                  title: Text(widget.taskData.name), // Name of task
-                  subtitle: Text('${daysOfWeek[widget.taskData.due.toLocal().weekday]}, '
-                      '${DateFormat('h:mm a').format(widget.taskData.due.toLocal())}'), // Due date
-                  trailing: SizedBox(
-                      width: 100,
-                      child: UserDataHelper.avatarStack(
-                          widget.taskData.assignedUsers.map((user) => UserData(name: widget.users[user]?.name ?? '?')).toList(),
-                          20,
-                          Colors.transparent,
-                          const SizedBox.shrink()
-                      )
-                  ),
-                ),
-              ],
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: widget.taskData.color, width: 7)
+              )
+            ),
+            child: ListTile(
+              leading: Icon(_getIconForTaskType(widget.taskData.taskType)), // Put the icon for the type of task
+              title: Text(widget.taskData.name), // Name of task
+              subtitle: Text('${daysOfWeek[widget.taskData.due.toLocal().weekday]}, '
+                  '${DateFormat('h:mm a').format(widget.taskData.due.toLocal())}'), // Due date
+              trailing: SizedBox(
+                  width: 100,
+                  child: UserDataHelper.avatarStack(
+                      widget.taskData.assignedUsers.map((user) =>
+                          UserData(name: widget.users[user]?.name ?? '?', color: widget.users[user]?.color ?? Colors.grey)).toList(),
+                      20,
+                      Colors.transparent,
+                      const SizedBox.shrink()
+                  )
+              ),
             ),
           ),
         ),
@@ -353,7 +344,10 @@ class _EditTaskDataState extends State<EditTaskData> {
                                                               _userController.showMenu();
                                                               setState(() {});
                                                             },
-                                                            child: UserDataHelper.avatarColumnFromUserData(value[0], 20)
+                                                            child: Opacity(
+                                                              opacity: value[1] ? 1 : 0.5,
+                                                              child: UserDataHelper.avatarColumnFromUserData(value[0], 20)
+                                                            )
                                                           ),
                                                         )
                                                     )

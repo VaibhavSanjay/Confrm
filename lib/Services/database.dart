@@ -1,9 +1,12 @@
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/models/family_task_data.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../models/user_data.dart';
 import '../pages/Helpers/constants.dart';
+import '../pages/Helpers/user_data_helper.dart';
 
 class DatabaseService {
   String famID;
@@ -66,7 +69,8 @@ class DatabaseService {
             key,
             UserData(
               name: value['name'] as String,
-              email: value['email'] as String
+              email: value['email'] as String,
+              color: Color(value['color'] as int)
             )
           )
         ),
@@ -152,7 +156,8 @@ class DatabaseService {
       'users': {
         auth.id!: {
           'name': auth.name!,
-          'email': auth.email!
+          'email': auth.email!,
+          'color': UserDataHelper.getRandomColor().value
         }
       }
     });

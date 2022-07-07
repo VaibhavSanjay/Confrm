@@ -4,24 +4,19 @@ import 'dart:ui';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:family_tasks/join_create.dart';
-import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
 import 'package:family_tasks/pages/auth_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:family_tasks/pages/account.dart';
 import 'package:family_tasks/pages/task_view.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_circular_text/circular_text.dart';
 
 import 'Services/authentication.dart';
 import 'Services/location_callback.dart';
 import 'Services/location_service.dart';
 import 'models/user_data.dart';
-
-late SharedPreferences prefs; // Used to store family ID on the phone
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure widget initialization
@@ -149,12 +144,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final PageController _pageController = PageController();
-  final GlobalKey<TaskViewPageState> _keyTaskView = GlobalKey(); // Used to control state of pages
   /* This app is made of two screens, the task view screen and the account screen
   * The task view screen holds all of the tasks that the group adds while the account screen holds data such as the
   * name of the group, tasks left, and options such as leaving.
   */
-  late final List<Widget> _screens = [TaskViewPage(key: _keyTaskView, famID: widget.user.famID),
+  late final List<Widget> _screens = [TaskViewPage(famID: widget.user.famID),
                                       AccountPage(famID: widget.user.famID, onLeave: widget.onLeave, location: widget.user.location)];
   int _curPage = 0;
 
@@ -323,72 +317,6 @@ class _MyHomePageState extends State<MyHomePage> {
         controller: _pageController,
         children: _screens,
         onPageChanged: _onPageChanged,
-      ),
-      floatingActionButton: SpeedDial(
-        spaceBetweenChildren: 12,
-        heroTag: 'archive', // Hero animation when archive is clicked
-        child: const Icon(FontAwesomeIcons.bars),
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.add),
-            backgroundColor: Colors.green,
-            label: 'New Task',
-            onTap: () async {
-              // We animate to the task view page if necessary
-              _pageController.animateToPage(0,
-                  curve: Curves.easeOut,
-                  duration: const Duration(milliseconds: 500)
-              );
-              // Wait for animation to finish if necessary
-              Future.delayed(Duration(milliseconds: _curPage == 0 ? 0 : 500)).whenComplete(() async {
-                if (_keyTaskView.currentState != null) {
-                  if (! (await _keyTaskView.currentState!.addTask())) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Maximum of 20 tasks reached.')
-                    ));
-                  }
-                }
-              });
-            }
-          ),
-          SpeedDialChild(
-              child: const Icon(Icons.inbox),
-              backgroundColor: Colors.orange,
-              label: 'Archive',
-              onTap: () async {
-                _pageController.animateToPage(0,
-                    curve: Curves.easeOut,
-                    duration: const Duration(milliseconds: 500)
-                );
-                Future.delayed(Duration(milliseconds: _curPage == 0 ? 0 : 500)).whenComplete(() {
-                  // Push hero dialog route, creates animation
-                  Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-                    if (_keyTaskView.currentState != null) {
-                      // Create the archive card list from the widget
-                      return _keyTaskView.currentState!.createArchiveCardList(
-                          EdgeInsets.only(top: MediaQuery.of(context).size.height / 6, left: 30, right: 30,
-                              bottom: MediaQuery.of(context).size.height / 6
-                          )
-                      );
-                    }
-                    return const SizedBox.shrink(); // Should never happen
-                  }));
-                });
-              }
-          ),
-          SpeedDialChild(
-            backgroundColor: Colors.grey,
-            child: _curPage == 0 ? const Icon(Icons.people) : const Icon(FontAwesomeIcons.clipboard),
-            label: _curPage == 0 ? 'Family' : 'Tasks',
-            onTap: () {
-              // Switch between task view and account page
-              _pageController.animateToPage(1 - _curPage,
-                  curve: Curves.easeOut,
-                  duration: const Duration(milliseconds: 500)
-              );
-            }
-          )
-        ]
       ),
     );
   }
