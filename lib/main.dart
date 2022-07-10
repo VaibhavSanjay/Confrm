@@ -46,7 +46,6 @@ void main() async {
         print('Notification!');
       }
   );
-  await AuthenticationService().signOut();
   runApp(const FamilyTasks());
 }
 

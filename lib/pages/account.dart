@@ -124,6 +124,54 @@ class AccountPageState extends State<AccountPage> {
     }
   }
 
+  Widget _topMenuButton(IconData iconData, String text, Function() onPress, Color noteColor, String noteText) {
+    return InkWell(
+      onTap: onPress,
+      child: Container(
+          decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                  margin: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.cyan
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(iconData, size: 35),
+                      const Divider(height: 5, color: Colors.transparent),
+                      Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold))
+                    ],
+                  ),
+              ),
+              Positioned(
+                right: 0,
+                left: 45,
+                top: 0,
+                child: Card(
+                    color: noteColor,
+                    shape: const CircleBorder(),
+                    child: Align(
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Text(noteText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                      alignment: Alignment.center,)
+                ),
+              )
+            ],
+          )
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<FamilyTaskData>(
@@ -185,235 +233,109 @@ class AccountPageState extends State<AccountPage> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(top: 8, right: 10, left: 10),
-                        child: InkWell(
-                          onTap: () {
-                            showDialog(
-                                context: context,
-                                builder: (cont) {
-                                  return Form(
-                                    key: _formKey,
-                                    child: AlertDialog(
-                                        title: const Text('Edit Name',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                        contentPadding: const EdgeInsets.only(
-                                            top: 20, left: 24, right: 24),
-                                        content: TextFormField(
-                                          initialValue: name,
-                                          maxLength: 20,
+                        child: Card(
+                          elevation: 5,
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: 300,
+                                child: Stack(
+                                  children: [
+                                    Positioned(
+                                      top: 0,
+                                      left: 0,
+                                      right: 0,
+                                      height: 105,
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          color: Colors.blue,
+                                          borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 0,
+                                      left: 0,
+                                      right: 50,
+                                      child: Form(
+                                        key: _formKey,
+                                        child: TextFormField(
+                                          cursorColor: Colors.cyanAccent,
+                                          style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white,
+                                              overflow: TextOverflow.ellipsis),
                                           decoration: const InputDecoration(
-                                              hintText: 'Group Name',
-                                              border: OutlineInputBorder(),
-                                              counterText: ''
+                                            isDense: true,
+                                            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                            enabledBorder: OutlineInputBorder(
+                                              // width: 0.0 produces a thin "hairline" border
+                                              borderSide: BorderSide(color: Colors.transparent, width: 0.0),
+                                            ),
+                                            hintText: 'Name',
+                                            //border: OutlineInputBorder(),
+                                            counterText: '',
                                           ),
-                                          onChanged: (String? value) {
-                                            _input = value ?? '';
+                                          initialValue: name,
+                                          maxLength: 30,
+                                          onChanged: (String? value) async {
+                                            if (_formKey.currentState!.validate() && value != null) {
+                                              await ds.updateFamilyName(
+                                                  value);
+                                            }
                                           },
                                           validator: (String? value) {
                                             if (value == null ||
                                                 value.isEmpty) {
+                                              print('here');
                                               return 'Please enter a name';
                                             }
                                             return null;
-                                          },
+                                          }
                                         ),
-                                        actions: [
-                                          TextButton(
-                                              child: const Text('Cancel'),
+                                      )
+                                    ),
+                                    Positioned(
+                                      top: 5,
+                                      right: 5,
+                                      child: Hero(
+                                        tag: 'group_id',
+                                        child: CircleAvatar(
+                                          backgroundColor: Colors.cyanAccent,
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            child: IconButton(
+                                              color: Colors.black,
+                                              icon: const Icon(Icons.people),
                                               onPressed: () {
-                                                Navigator.pop(context);
-                                              }
-                                          ),
-                                          TextButton(
-                                              child: const Text('Update'),
-                                              onPressed: () async {
-                                                if (_formKey.currentState!
-                                                    .validate()) {
-                                                  Navigator.pop(context);
-                                                  await ds.updateFamilyName(
-                                                      _input);
-                                                }
-                                              }
-                                          ),
-                                        ]
-                                    ),
-                                  );
-                                }
-                            );
-                          },
-                          child: Container(
-                              alignment: Alignment.center,
-                              child: Material(
-                                  elevation: 5,
-                                  color: Colors.transparent,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          stops: const [0.15, 0.9],
-                                          colors: [
-                                            bgColor.withOpacity(0.6),
-                                            bgColor
-                                          ],
-                                        ),
-                                        borderRadius: const BorderRadius.only(
-                                          topRight: Radius.circular(27),
-                                          topLeft: Radius.circular(27),
-                                        )
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Flexible(
-                                          child: Container(
-                                              padding: const EdgeInsets.only(top: 10, right: 10),
-                                              child: AutoSizeText(name,
-                                                  textAlign: TextAlign.right,
-                                                  style: const TextStyle(
-                                                      fontSize: 40, fontWeight: FontWeight.bold),
-                                                  maxLines: 1)
+                                                Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                                                  return FamilyIDPopUp(famID: widget.famID);
+                                                }));
+                                              },
+                                            ),
                                           ),
                                         ),
-                                        Container(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 5),
-                                            child: const Icon(
-                                                Icons.edit, size: 30))
-                                      ],
+                                      )
                                     ),
-                                  )
+                                    Positioned(
+                                      top: 70,
+                                      left: 0,
+                                      right: 100,
+                                      child: _topMenuButton(FontAwesomeIcons.clipboardList, 'Tasks', () => null, Colors.red, '$taskCount')
+                                    ),
+                                    Positioned(
+                                        top: 70,
+                                        right: 0,
+                                        left: 100,
+                                        child: _topMenuButton(FontAwesomeIcons.boxArchive, 'Archive', () => null, Colors.green, '$archiveCount')
+                                    ),
+                                  ],
+                                ),
                               )
+                            ],
                           ),
-                        ),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(left: 10, right: 10),
-                        child: Material(
-                          color: bgColor,
-                          child: Container(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Row(
-                                mainAxisAlignment: MainAxisAlignment
-                                    .spaceAround,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Card(
-                                      elevation: 5,
-                                      child: Column(
-                                          mainAxisAlignment: MainAxisAlignment
-                                              .end,
-                                          children: [
-                                            Stack(
-                                              alignment: Alignment.center,
-                                              children: [
-                                                Container(
-                                                    padding: const EdgeInsets
-                                                        .only(
-                                                        top: 10, bottom: 10),
-                                                    child: const Icon(
-                                                        FontAwesomeIcons
-                                                            .clipboard,
-                                                        size: 110)
-                                                ),
-                                                Card(
-                                                  margin: const EdgeInsets
-                                                      .only(top: 10),
-                                                  color: taskCount > 0
-                                                      ? Colors.red
-                                                      : Colors.green,
-                                                  elevation: 5,
-                                                  shape: const CircleBorder(),
-                                                  child: taskCount > 0
-                                                      ? Padding(
-                                                    padding: const EdgeInsets
-                                                        .all(16.0),
-                                                    child: Text('$taskCount',
-                                                        style: const TextStyle(
-                                                            fontSize: 30,
-                                                            fontWeight: FontWeight
-                                                                .w900,
-                                                            color: Colors
-                                                                .white)),
-                                                  )
-                                                      :
-                                                  const Icon(Icons.check,
-                                                      color: Colors.white,
-                                                      size: 45),
-                                                )
-                                              ],
-                                            ),
-                                            Container(
-                                                padding: const EdgeInsets
-                                                    .only(left: 25,
-                                                    right: 25,
-                                                    bottom: 20),
-                                                child: const Text('To Do',
-                                                    style: TextStyle(
-                                                        fontSize: 30,
-                                                        color: Colors
-                                                            .lightBlue))
-                                            ),
-                                          ]
-                                      )
-                                  ),
-                                  Card(
-                                      elevation: 5,
-                                      child: Column(
-                                          mainAxisAlignment: MainAxisAlignment
-                                              .end,
-                                          children: [
-                                            Stack(
-                                              alignment: Alignment.center,
-                                              children: [
-                                                Container(
-                                                    padding: const EdgeInsets
-                                                        .only(
-                                                        top: 14, bottom: 4),
-                                                    child: const Icon(
-                                                        FontAwesomeIcons
-                                                            .boxArchive,
-                                                        size: 110)
-                                                ),
-                                                Card(
-                                                    margin: const EdgeInsets
-                                                        .only(top: 3),
-                                                    shape: const CircleBorder(),
-                                                    color: Colors.green,
-                                                    elevation: 5,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets
-                                                          .all(16.0),
-                                                      child: Text(
-                                                          '$archiveCount',
-                                                          style: const TextStyle(
-                                                              fontSize: 30,
-                                                              fontWeight: FontWeight
-                                                                  .w900,
-                                                              color: Colors
-                                                                  .white)),
-                                                    )
-                                                )
-                                              ],
-                                            ),
-                                            Container(
-                                                padding: const EdgeInsets
-                                                    .only(left: 10,
-                                                    right: 10,
-                                                    bottom: 20),
-                                                child: const Text('Archived',
-                                                    style: TextStyle(
-                                                        fontSize: 30,
-                                                        color: Colors
-                                                            .lightBlue))
-                                            ),
-                                          ]
-                                      )
-                                  )
-                                ]
-                            ),
-                          ),
-                        ),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
+                          )
+                        )
                       ),
                       _getSectionText('Members'),
                       Padding(
@@ -560,21 +482,6 @@ class AccountPageState extends State<AccountPage> {
                           ),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                        child: Row(
-                          children: [
-                            Container(
-                                padding: const EdgeInsets.only(right: 10),
-                                child: GroupIDWidget(famID: widget.famID)
-                            ),
-                            LeaveWidget(onLeave: () {
-                              widget.onLeave();
-                              setState(() {});
-                            })
-                          ],
-                        ),
-                      )
                     ]
                 );
               case ConnectionState.done:

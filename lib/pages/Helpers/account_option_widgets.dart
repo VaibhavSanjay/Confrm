@@ -3,101 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'hero_dialogue_route.dart';
-
-class GroupIDWidget extends StatefulWidget {
-  const GroupIDWidget({Key? key, required this.famID}) : super(key: key);
-
-  final String famID;
-
-  @override
-  State<GroupIDWidget> createState() => _GroupIDWidgetState();
-}
-
-class _GroupIDWidgetState extends State<GroupIDWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Hero(
-      tag: 'groupID',
-      createRectTween: (begin, end) {
-        return CustomRectTween(begin: begin, end: end);
-      },
-      child: TextButton(
-        style: TextButton.styleFrom(
-            elevation: 5,
-            backgroundColor: Colors.white,
-            textStyle: const TextStyle(fontSize: 20)
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Padding(
-              padding: EdgeInsets.only(left: 8.0),
-              child: Icon(Icons.perm_identity),
-            ),
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('Group ID'),
-            ),
-          ],
-        ),
-        onPressed: () {
-          Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-            return FamilyIDPopUp(famID: widget.famID);
-          }));
-        },
-      ),
-    );
-  }
-}
-
-class LeaveWidget extends StatefulWidget {
-  const LeaveWidget({Key? key, required this.onLeave}) : super(key: key);
-
-  final Function() onLeave;
-
-  @override
-  State<LeaveWidget> createState() => _LeaveWidgetState();
-}
-
-class _LeaveWidgetState extends State<LeaveWidget> {
-  @override
-  Widget build(BuildContext context) {
-    return Hero(
-      tag: 'leave',
-      createRectTween: (begin, end) {
-        return CustomRectTween(begin: begin, end: end);
-      },
-      child: TextButton(
-        style: TextButton.styleFrom(
-            primary: Colors.white,
-            elevation: 5,
-            backgroundColor: Colors.red,
-            textStyle: const TextStyle(fontSize: 20, color: Colors.white)
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Padding(
-              padding: EdgeInsets.only(left: 8.0),
-              child: Icon(Icons.exit_to_app, color: Colors.white),
-            ),
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text('Leave'),
-            ),
-          ],
-        ),
-        onPressed: () {
-          Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-            return LeavePopUp(onLeave: widget.onLeave);
-          }));
-        },
-      ),
-    );
-  }
-}
-
-
 class FamilyIDPopUp extends StatefulWidget {
   final String famID;
 
@@ -121,7 +26,7 @@ class _FamilyIDPopUpState extends State<FamilyIDPopUp> {
           .size
           .height / 2 - 70),
       child: Hero(
-        tag: "groupID",
+        tag: "group_id",
         createRectTween: (begin, end) {
           return CustomRectTween(begin: begin, end: end);
         },
