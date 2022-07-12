@@ -20,7 +20,7 @@ class UserDataHelper {
     );
   }
 
-  static Widget avatarColumnFromUserData(UserData user, double radius) {
+  static Widget avatarColumnFromUserData(UserData user, double radius, Color textColor) {
     return Column(
       children: [
         avatarFromUserData(user, radius),
@@ -28,7 +28,7 @@ class UserDataHelper {
           height: radius * 1/4,
           color: Colors.transparent
         ),
-        Text(user.name, style: TextStyle(fontSize: radius * 2/5, color: Colors.white), overflow: TextOverflow.ellipsis)
+        Text(user.name, style: TextStyle(fontSize: radius * 2/5, color: textColor), overflow: TextOverflow.ellipsis)
       ],
     );
   }

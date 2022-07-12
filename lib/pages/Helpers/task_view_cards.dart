@@ -69,70 +69,81 @@ class _TaskCardState extends State<TaskCard> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPopupMenu(
-      verticalMargin: 0,
-      horizontalMargin: 0,
-      controller: _controller,
-      menuBuilder: () {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: Container(
-              color: const Color(0xFF4C4C4C),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
-                child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _getTaskCardOption('Edit', FontAwesomeIcons.pen, Colors.white, () {
-                        _controller.hideMenu();
-                        // Pop up the task editing menu
-                        Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-                          return EditTaskData(
-                            selectedTask: widget.number,
-                            taskData: TaskData.fromTaskData(widget.taskData),
-                            users: widget.users,
-                            padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/6, left: 30, right: 30, bottom: MediaQuery.of(context).size.height/6),
-                            onExit: widget.onEditComplete
-                          );
-                        }));
-                      }),
-                      _getTaskCardOption('Complete', FontAwesomeIcons.circleCheck, Colors.green, widget.onComplete),
-                      _getTaskCardOption('Delete', FontAwesomeIcons.circleXmark, Colors.red, widget.onDelete)
-                    ]
-                ),
-              )
-          ),
-        );
+    return Hero(
+      tag: widget.number,
+      createRectTween: (begin, end) {
+        return CustomRectTween(begin: begin, end: end);
       },
-      pressType: PressType.singleClick,
-      child: Hero(
-        tag: widget.number, // Animation for card pop up effect
-        createRectTween: (begin, end) {
-          return CustomRectTween(begin: begin, end: end);
-        },
-        child: Card(
-          elevation: 5,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(color: widget.taskData.color, width: 7)
-              )
-            ),
-            child: ListTile(
-              leading: Icon(_getIconForTaskType(widget.taskData.taskType)), // Put the icon for the type of task
-              title: Text(widget.taskData.name), // Name of task
-              subtitle: Text('${daysOfWeek[widget.taskData.due.toLocal().weekday]}, '
-                  '${DateFormat('h:mm a').format(widget.taskData.due.toLocal())}'), // Due date
-              trailing: SizedBox(
-                  width: 100,
-                  child: UserDataHelper.avatarStack(
-                      widget.taskData.assignedUsers.map((user) =>
-                          UserData(name: widget.users[user]?.name ?? '?', color: widget.users[user]?.color ?? Colors.grey)).toList(),
-                      20,
-                      Colors.transparent,
-                      const SizedBox.shrink()
-                  )
-              ),
+      child: Card(
+        elevation: 5,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: widget.taskData.color, width: 7)
+            )
+          ),
+          child: IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(
+                  child: CustomPopupMenu(
+                    verticalMargin: 0,
+                    horizontalMargin: 0,
+                    controller: _controller,
+                    menuBuilder: () {
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: Container(
+                            color: const Color(0xFF4C4C4C),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 10),
+                              child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _getTaskCardOption('Edit', FontAwesomeIcons.pen, Colors.white, () {
+                                      _controller.hideMenu();
+                                      // Pop up the task editing menu
+                                      Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                                        return EditTaskData(
+                                            selectedTask: widget.number,
+                                            taskData: TaskData.fromTaskData(widget.taskData),
+                                            users: widget.users,
+                                            padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/6, left: 30, right: 30, bottom: MediaQuery.of(context).size.height/6),
+                                            onExit: widget.onEditComplete
+                                        );
+                                      }));
+                                    }),
+                                    _getTaskCardOption('Complete', FontAwesomeIcons.circleCheck, Colors.green, widget.onComplete),
+                                    _getTaskCardOption('Delete', FontAwesomeIcons.circleXmark, Colors.red, widget.onDelete)
+                                  ]
+                              ),
+                            )
+                        ),
+                      );
+                    },
+                    pressType: PressType.singleClick,
+                    child: ListTile(
+                      leading: Icon(_getIconForTaskType(widget.taskData.taskType)), // Put the icon for the type of task
+                      title: Text(widget.taskData.name), // Name of task
+                      subtitle: Text('${daysOfWeek[widget.taskData.due.toLocal().weekday]}, '
+                          '${DateFormat('h:mm a').format(widget.taskData.due.toLocal())}'), // Due date
+                      trailing: SizedBox(
+                          width: 100,
+                          child: UserDataHelper.avatarStack(
+                              widget.taskData.assignedUsers.map((user) =>
+                                  UserData(name: widget.users[user]?.name ?? '?', color: widget.users[user]?.color ?? Colors.grey)).toList(),
+                              20,
+                              Colors.transparent,
+                              const SizedBox.shrink()
+                          )
+                      ),
+                    ),
+                  ),
+                ),
+                const VerticalDivider(width: 5, color: Colors.grey, thickness: 2, indent: 3, endIndent: 3,),
+                const VerticalDivider(width: 5, color: Colors.grey, thickness: 2, indent: 3, endIndent: 3,),
+                const VerticalDivider(width: 5, color: Colors.transparent)
+              ],
             ),
           ),
         ),
@@ -346,7 +357,7 @@ class _EditTaskDataState extends State<EditTaskData> {
                                                             },
                                                             child: Opacity(
                                                               opacity: value[1] ? 1 : 0.5,
-                                                              child: UserDataHelper.avatarColumnFromUserData(value[0], 20)
+                                                              child: UserDataHelper.avatarColumnFromUserData(value[0], 20, Colors.white)
                                                             )
                                                           ),
                                                         )

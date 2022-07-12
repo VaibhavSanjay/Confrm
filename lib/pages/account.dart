@@ -5,7 +5,6 @@ import 'package:family_tasks/pages/Helpers/constants.dart';
 import 'package:family_tasks/pages/Helpers/user_data_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 
 import '../Services/authentication.dart';
 import '../Services/database.dart';
@@ -29,7 +28,6 @@ class AccountPageState extends State<AccountPage> {
   late bool _locationEnabled = widget.location;
   late DatabaseService ds = DatabaseService(widget.famID);
   AuthenticationService auth = AuthenticationService();
-  String _input = '';
   final _formKey = GlobalKey<FormState>();
 
   String _getTimeText(Duration dur) {
@@ -211,6 +209,24 @@ class AccountPageState extends State<AccountPage> {
                     snapshot.data!.users) as Map<String, UserData>;
                 int archiveCount = archive.length;
 
+                Map<String, int> tasksCompleted = users.map((key, value) => MapEntry(key, 0));
+                for (var td in archive) {
+                  tasksCompleted[td.completedBy] == null ? null :
+                    tasksCompleted[td.completedBy] = tasksCompleted[td.completedBy]! + 1;
+                }
+
+                Map<int, int> dayTasks = {1: 0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0};
+                Map<int, int> userDayTasks = {1: 0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0};
+                DateTime today = DateTime.now();
+                for (var td in archive) {
+                  if (today.difference(td.archived).inDays < 7) {
+                    dayTasks[td.archived.weekday] = dayTasks[td.archived.weekday]! + 1;
+                    if (td.completedBy == auth.id!) {
+                      userDayTasks[td.archived.weekday] = userDayTasks[td.archived.weekday]! + 1;
+                    }
+                  }
+                }
+
                 TaskData? lastTask = archiveCount > 0 ? archive[archiveCount -
                     1] : null;
                 DateTime? lastArchived = archiveCount > 0
@@ -236,9 +252,10 @@ class AccountPageState extends State<AccountPage> {
                         child: Card(
                           elevation: 5,
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               SizedBox(
-                                height: 300,
+                                height: 150,
                                 child: Stack(
                                   children: [
                                     Positioned(
@@ -329,7 +346,22 @@ class AccountPageState extends State<AccountPage> {
                                     ),
                                   ],
                                 ),
-                              )
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Wrap(
+                                    spacing: 10,
+                                    children: users.map(
+                                            (key, value) => MapEntry(
+                                            key,
+                                            SizedBox(
+                                                width: 60,
+                                                child: UserDataHelper.avatarColumnFromUserData(value, 30, Colors.black)
+                                            )
+                                        )
+                                    ).values.toList()
+                                ),
+                              ),
                             ],
                           ),
                           shape: const RoundedRectangleBorder(
@@ -337,29 +369,28 @@ class AccountPageState extends State<AccountPage> {
                           )
                         )
                       ),
-                      _getSectionText('Members'),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 3, left: 10, right: 10),
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          color: Colors.blueGrey,
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Wrap(
-                              spacing: 10,
-                              children: users.map(
-                                (key, value) => MapEntry(
-                                    key,
-                                    SizedBox(
-                                      width: 60,
-                                      child: UserDataHelper.avatarColumnFromUserData(value, 30)
-                                    )
-                                )
-                              ).values.toList()
+                      Container(
+                        height: 180,
+                        padding: const EdgeInsets.only(left: 10, top: 10, right: 10),
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width - 40,
+                              child: ContributeCard(
+                                users: tasksCompleted.keys.map((s) => users[s]!).toList(),
+                                tasksCompleted: tasksCompleted.values.toList(),
+                                curUser: 0,
+                              ),
                             ),
-                          )
+                            SizedBox(
+                              width: MediaQuery.of(context).size.width - 25,
+                              child: DaysCard(
+                                dayTasks: dayTasks.values.toList(),
+                                userDayTasks: userDayTasks.values.toList(),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       _getSectionText('Tasks'),

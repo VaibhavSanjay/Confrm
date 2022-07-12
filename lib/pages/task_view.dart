@@ -37,7 +37,7 @@ class TaskViewPageState extends State<TaskViewPage> {
   late Stream<FamilyTaskData> stream = ds.taskDataForFamily; // Put data in the stream
   AuthenticationService auth = AuthenticationService();
   bool _menuOpen = false;
-  bool _filter = false;
+  bool _filter = false, _sorting = false;
 
   // When user adds a new task
   Future<bool> _addTask() async {
@@ -153,29 +153,36 @@ class TaskViewPageState extends State<TaskViewPage> {
                 }
               case ConnectionState.active:
                 _taskData = snapshot.data == null ? [] : snapshot.data!.tasks;
+
+                int i = 0;
+                List<List> shownTaskData = _taskData.map((td) => [td, i++]).toList();
                 if (_filter) {
-                  _taskData = _taskData.where((item) => item.assignedUsers.contains(auth.id!)).toList();
+                  shownTaskData = shownTaskData.where((item) => item[0].assignedUsers.contains(auth.id!)).toList();
                 }
+                if (_sorting) {
+                  shownTaskData.sort((a, b) => a[0].due.compareTo(b[0].due));
+                }
+
                 _archivedTaskData = snapshot.data == null ? [] : snapshot.data!.archive;
                 _users = snapshot.data == null ? {} : snapshot.data!.users;
-                List<Widget> tasks = List<Widget>.generate(_taskData.length, (i) => TaskCard(
+                List<Widget> tasks = List<Widget>.generate(shownTaskData.length, (i) => TaskCard(
                   key: ValueKey(i),
                   number: i,
-                  taskData: _taskData[i],
+                  taskData: shownTaskData[i][0],
                   users: _users,
-                  onComplete: () => _archiveTask(i),
+                  onComplete: () => _archiveTask(shownTaskData[i][1]),
                   onDelete: () {
-                    _taskData.removeAt(i);
+                    _taskData.removeAt(shownTaskData[i][1]);
                     ds.updateTaskData(_taskData);
                   },
                   onEditComplete: (TaskData? data) async {
                     if (data != null) {
                       // Non-null means task data was saved.
-                      _taskData[i] = TaskData.fromTaskData(data);
+                      _taskData[shownTaskData[i][1]] = TaskData.fromTaskData(data);
                       await ds.updateTaskData(_taskData);
                     } else {
                       // Null means task was deleted
-                      _taskData.removeAt(i);
+                      _taskData.removeAt(shownTaskData[i][1]);
                       ds.updateTaskData(_taskData);
                     }
 
@@ -204,11 +211,11 @@ class TaskViewPageState extends State<TaskViewPage> {
                         onClose: () => setState(() {_menuOpen = false;}),
                         children: [
                           SpeedDialChild(
-                              elevation: _filter ? 0 : null,
-                              child: Icon(Icons.add, color: Colors.white.withOpacity(_filter ? 0.5 : 1)),
-                              backgroundColor: Colors.red.withOpacity(_filter ? 0.5 : 1),
+                              elevation: (_filter || _sorting) ? 0 : null,
+                              child: Icon(Icons.add, color: Colors.white.withOpacity((_filter || _sorting) ? 0.5 : 1)),
+                              backgroundColor: Colors.red.withOpacity((_filter || _sorting) ? 0.5 : 1),
                               onTap: () async {
-                                if (!_filter && !(await _addTask())) {
+                                if (!(_filter || _sorting) && !(await _addTask())) {
                                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                                       content: Text('Maximum of 20 tasks reached.')
                                   ));
@@ -229,9 +236,14 @@ class TaskViewPageState extends State<TaskViewPage> {
                               }
                           ),
                           SpeedDialChild(
-                              child: Icon(_filter ? Icons.filter_list_off : Icons.filter_list),
+                              child: Icon(_filter ? Icons.filter_list_off : Icons.filter_list, color: Colors.white),
                               backgroundColor: Colors.green,
                               onTap: () => setState(() {_filter = !_filter;})
+                          ),
+                          SpeedDialChild(
+                              child: Icon(_sorting ? Icons.cancel : Icons.sort, color: Colors.white),
+                              backgroundColor: Colors.indigo,
+                              onTap: () => setState(() {_sorting = !_sorting;})
                           )
                         ],
                       )

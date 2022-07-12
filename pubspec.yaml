@@ -53,6 +53,7 @@ dependencies:
   flutter_dotenv: ^5.0.2
   firebase_auth: ^3.3.20
   custom_pop_up_menu: ^1.2.3+1
+  fl_chart: ^0.55.0
 
 flutter_icons:
   image_path_android: "assets/icon/icon_android.png"

@@ -17,4 +17,4 @@ final List<ColorSwatch> availableColors = [Colors.red, Colors.orange, Colors.yel
       900: Color(0xFFFFFFFF),
     },
   )];
-const int maxTasks = 20;
+const int maxTasks = 50;
