@@ -227,29 +227,20 @@ class AccountPageState extends State<AccountPage> {
                   }
                 }
 
-                TaskData? lastTask = archiveCount > 0 ? archive[archiveCount -
-                    1] : null;
-                DateTime? lastArchived = archiveCount > 0
-                    ? lastTask!.archived
-                    : null;
-                Duration? sinceLastArchived = archiveCount > 0 ? DateTime
-                    .now().difference(lastArchived!) : null;
-                Duration? archiveGap = archiveCount > 0 ? lastArchived!
-                    .difference(lastTask!.due) : null;
-                Color bgColor = _getBgColor(taskCount, maxTasks);
-                TaskData? dueEarliest = taskData.isNotEmpty ? taskData
-                    .reduce((cur, next) =>
-                cur.due.isBefore(next.due)
-                    ? cur
-                    : next) : null;
-                Duration? taskGap = taskData.isNotEmpty ? DateTime.now()
-                    .difference(dueEarliest!.due) : null;
+                taskData.sort((a, b) => a.due.compareTo(b.due));
+                List<TaskData> lateTasks = taskData.where((td) => DateTime.now().isAfter(td.due)).toList();
+                bool late = lateTasks.isNotEmpty;
+                if (!late) {
+                  lateTasks = taskData.take(3).toList();
+                }
 
-                return ListView(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8, right: 10, left: 10),
-                        child: Card(
+                Color bgColor = _getBgColor(taskCount, maxTasks);
+
+                return Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 10, top: 8),
+                  child: ListView(
+                      children: [
+                        Card(
                           elevation: 5,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,153 +358,66 @@ class AccountPageState extends State<AccountPage> {
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
                           )
-                        )
-                      ),
-                      Container(
-                        height: 180,
-                        padding: const EdgeInsets.only(left: 10, top: 10, right: 10),
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: [
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width - 40,
-                              child: ContributeCard(
-                                users: tasksCompleted.keys.map((s) => users[s]!).toList(),
-                                tasksCompleted: tasksCompleted.values.toList(),
-                                curUser: 0,
-                              ),
-                            ),
-                            SizedBox(
-                              width: MediaQuery.of(context).size.width - 25,
-                              child: DaysCard(
-                                dayTasks: dayTasks.values.toList(),
-                                userDayTasks: userDayTasks.values.toList(),
-                              ),
-                            ),
-                          ],
                         ),
-                      ),
-                      _getSectionText('Tasks'),
-                      dueEarliest != null ? DataCard(
-                        taskColor: dueEarliest.color,
-                        taskName: dueEarliest.name,
-                        textSpan: TextSpan(
-                            style: const TextStyle(
-                                color: Colors.black, fontSize: 20),
+                        const Divider(height: 15, color: Colors.transparent),
+                        TaskStatusCard(tasks: lateTasks, late: late),
+                        const Divider(height: 15, color: Colors.transparent),
+                        SizedBox(
+                          height: 180,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
                             children: [
-                              TextSpan(text: taskGap!.isNegative
-                                  ? 'Due in '
-                                  : 'Was due ', style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: taskGap.isNegative ? Colors
-                                      .lightGreenAccent : Colors.amber)),
-                              TextSpan(text: _getTimeText(taskGap),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                              TextSpan(
-                                  text: taskGap.isNegative ? '.' : ' ago.'),
-                            ]
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width - 40,
+                                child: ContributeCard(
+                                  users: tasksCompleted.keys.map((s) => users[s]!).toList(),
+                                  tasksCompleted: tasksCompleted.values.toList(),
+                                  curUser: 0,
+                                ),
+                              ),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width - 25,
+                                child: DaysCard(
+                                  dayTasks: dayTasks.values.toList(),
+                                  userDayTasks: userDayTasks.values.toList(),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ) : const AccountCard(
-                        icon: FontAwesomeIcons.listCheck,
-                        opacity: 0.7,
-                        title: 'Task List Empty',
-                        subtitle: 'You\'re free!',
-                        iconSize: 200,
-                        bottomPadding: 10,
-                        bgColor: Colors.lightGreen,
-                        iconColor: Colors.green,
-                      ),
-                      lastArchived != null ? Stack(
-                        alignment: Alignment.topRight,
-                        children: [
-                          DataCard(
-                            taskName: lastTask!.name,
-                            taskColor: lastTask.color,
-                            textSpan: TextSpan(
-                                text: 'Completed ',
-                                style: const TextStyle(color: Colors.black),
-                                children: [
-                                  TextSpan(text: _getTimeText(archiveGap!),
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  TextSpan(text: archiveGap.isNegative
-                                      ? ' before '
-                                      : ' after ',
-                                      style: TextStyle(
-                                          color: archiveGap.isNegative
-                                              ? Colors.lightGreenAccent
-                                              : Colors.amber,
-                                          fontWeight: FontWeight.bold)),
-                                  const TextSpan(text: 'the deadline.')
-                                ]
+                        _getSectionText('Settings'),
+                        InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                                HeroDialogRoute(builder: (context) {
+                                  return _getLocationActivationWidget(MediaQuery
+                                      .of(context)
+                                      .size
+                                      .height / 2 - 150);
+                                }));
+                          },
+                          child: Hero(
+                            tag: 'location',
+                            child: AccountCard(
+                              bgColor: _locationEnabled ? Colors.green : Colors
+                                  .blue,
+                              iconColor: _locationEnabled
+                                  ? Colors.lightGreen
+                                  : Colors.lightBlueAccent,
+                              icon: _locationEnabled
+                                  ? Icons.check
+                                  : FontAwesomeIcons.mapLocationDot,
+                              title: 'Location',
+                              subtitle: _locationEnabled
+                                  ? 'Activated'
+                                  : 'Click for Information',
+                              iconSize: _locationEnabled ? 300 : 250,
+                              bottomPadding: _locationEnabled ? 85 : 45,
                             ),
                           ),
-                          Material(
-                              shape: const CircleBorder(),
-                              color: _getBgColor(
-                                  sinceLastArchived!.inHours, 72),
-                              elevation: 10,
-                              child: Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment
-                                        .spaceBetween,
-                                    children: [
-                                      Text(_getTimeText(sinceLastArchived)
-                                          .split(' ')[0],
-                                          style: const TextStyle(fontSize: 18,
-                                              fontWeight: FontWeight.bold)),
-                                      Text('${_getTimeText(sinceLastArchived)
-                                          .split(' ')[1]} ago',
-                                          style: const TextStyle(fontSize: 8))
-                                    ],
-                                  )
-                              )
-                          )
-                        ],
-                      ) : const AccountCard(
-                        opacity: 0.7,
-                        icon: FontAwesomeIcons.boxOpen,
-                        title: 'Archive Empty',
-                        subtitle: 'Complete some tasks!',
-                        iconSize: 175,
-                        bottomPadding: 40,
-                        bgColor: Colors.red,
-                        iconColor: Colors.orangeAccent,
-                      ),
-                      _getSectionText('Settings'),
-                      InkWell(
-                        onTap: () {
-                          Navigator.of(context).push(
-                              HeroDialogRoute(builder: (context) {
-                                return _getLocationActivationWidget(MediaQuery
-                                    .of(context)
-                                    .size
-                                    .height / 2 - 150);
-                              }));
-                        },
-                        child: Hero(
-                          tag: 'location',
-                          child: AccountCard(
-                            bgColor: _locationEnabled ? Colors.green : Colors
-                                .blue,
-                            iconColor: _locationEnabled
-                                ? Colors.lightGreen
-                                : Colors.lightBlueAccent,
-                            icon: _locationEnabled
-                                ? Icons.check
-                                : FontAwesomeIcons.mapLocationDot,
-                            title: 'Location',
-                            subtitle: _locationEnabled
-                                ? 'Activated'
-                                : 'Click for Information',
-                            iconSize: _locationEnabled ? 300 : 250,
-                            bottomPadding: _locationEnabled ? 85 : 45,
-                          ),
                         ),
-                      ),
-                    ]
+                      ]
+                  ),
                 );
               case ConnectionState.done:
                 return const Center(

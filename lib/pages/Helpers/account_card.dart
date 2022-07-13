@@ -2,9 +2,12 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:family_tasks/pages/Helpers/user_data_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/family_task_data.dart';
 import '../../models/user_data.dart';
+import 'constants.dart';
 
 class ContributeCard extends StatelessWidget {
   const ContributeCard({Key? key, required this.users, required this.tasksCompleted, required this.curUser}) : super(key: key);
@@ -288,13 +291,131 @@ class DaysCard extends StatelessWidget {
 }
 
 class TaskStatusCard extends StatelessWidget {
-  const TaskStatusCard({Key? key, required this.task}) : super(key: key);
+  const TaskStatusCard({Key? key, required this.tasks, required this.late}) : super(key: key);
 
-  final TaskData task;
+  final List<TaskData> tasks;
+  final bool late;
+
+  // A helper function to get the icon data based on a task type
+  IconData _getIconForTaskType(TaskType tt) {
+    switch (tt) {
+      case TaskType.garbage:
+        return FontAwesomeIcons.trash;
+      case TaskType.cleaning:
+        return FontAwesomeIcons.soap;
+      case TaskType.cooking:
+        return FontAwesomeIcons.utensils;
+      case TaskType.shopping:
+        return FontAwesomeIcons.cartShopping;
+      case TaskType.other:
+        return FontAwesomeIcons.star;
+    }
+  }
+
+  Widget _getTimeText(Duration dur) {
+    Duration duration = dur.abs();
+    String time;
+    String text;
+    
+    if (duration.compareTo(const Duration(hours: 1)) < 0) {
+      time = '${duration.inMinutes}';
+      text = duration.inMinutes == 1 ? 'minute': 'minutes';
+    } else {
+      time = '${duration.inHours}';
+      text = duration.inHours == 1 ? 'hour': 'hours';
+    }
+    
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(time, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
+        Text(text)
+      ],
+    );
+  }
+
+  Widget _taskLate() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text('ATTENTION', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),),
+                  Divider(height: 5, color: Colors.transparent,),
+                  AutoSizeText('Overdue Tasks', maxLines: 1, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 30),),
+                ],
+              ),
+            ),
+            const VerticalDivider(width: 10, color: Colors.transparent),
+            IntrinsicWidth(
+              child: Stack(
+                alignment: Alignment.centerRight,
+                children: [
+                  const Icon(FontAwesomeIcons.fire, size: 60, color: Colors.deepOrangeAccent),
+                  Positioned(
+                    right: 0,
+                    bottom: 15,
+                    child: Card(
+                        color: Colors.amber,
+                        shape: const CircleBorder(),
+                        child: Align(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Text('${tasks.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 25)),
+                          ),
+                          alignment: Alignment.center,)
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+        const Divider(height: 20, color: Colors.transparent,),
+        ListView.separated(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemBuilder: (context, i) => ListTile(
+              iconColor: Colors.yellow,
+              leading: Icon(_getIconForTaskType(tasks[i].taskType)),
+              textColor: Colors.white,
+              title: Text(tasks[i].name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              subtitle: Text('${daysOfWeek[tasks[i].due.toLocal().weekday]}, '
+                  '${DateFormat('h:mm a').format(tasks[i].due.toLocal())}'),
+              trailing: _getTimeText(DateTime.now().difference(tasks[i].due))
+            ),
+            separatorBuilder: (context, i) => const Divider(height: 5, color: Colors.white),
+            itemCount: tasks.length
+        )
+      ],
+
+    );
+  }
+
+  Widget _taskEarly() {
+    return Container();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Card(
+      elevation: 5,
+      color: late ? Colors.pink[700] : Colors.green,
+      shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(15.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: late ? _taskLate() : _taskEarly()
+      ),
+    );
   }
 }
 
