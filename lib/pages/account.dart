@@ -360,32 +360,32 @@ class AccountPageState extends State<AccountPage> {
                           )
                         ),
                         const Divider(height: 15, color: Colors.transparent),
-                        TaskStatusCard(tasks: lateTasks, late: late),
+                        late ? LateStatusCard(tasks: lateTasks) : CaughtUpStatusCard(tasks: lateTasks),
                         const Divider(height: 15, color: Colors.transparent),
                         SizedBox(
-                          height: 180,
+                          height: 340,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             children: [
                               SizedBox(
-                                width: MediaQuery.of(context).size.width - 40,
+                                width: MediaQuery.of(context).size.width - 35,
+                                child: DaysCard(
+                                  dayTasks: dayTasks.values.toList(),
+                                  userDayTasks: userDayTasks.values.toList(),
+                                ),
+                              ),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width - 35,
                                 child: ContributeCard(
                                   users: tasksCompleted.keys.map((s) => users[s]!).toList(),
                                   tasksCompleted: tasksCompleted.values.toList(),
                                   curUser: 0,
                                 ),
                               ),
-                              SizedBox(
-                                width: MediaQuery.of(context).size.width - 25,
-                                child: DaysCard(
-                                  dayTasks: dayTasks.values.toList(),
-                                  userDayTasks: userDayTasks.values.toList(),
-                                ),
-                              ),
                             ],
                           ),
                         ),
-                        _getSectionText('Settings'),
+                        const Divider(height: 10, color: Colors.transparent),
                         InkWell(
                           onTap: () {
                             Navigator.of(context).push(
@@ -403,7 +403,7 @@ class AccountPageState extends State<AccountPage> {
                                   .blue,
                               iconColor: _locationEnabled
                                   ? Colors.lightGreen
-                                  : Colors.lightBlueAccent,
+                                  : Colors.lightBlue,
                               icon: _locationEnabled
                                   ? Icons.check
                                   : FontAwesomeIcons.mapLocationDot,
@@ -413,6 +413,7 @@ class AccountPageState extends State<AccountPage> {
                                   : 'Click for Information',
                               iconSize: _locationEnabled ? 300 : 250,
                               bottomPadding: _locationEnabled ? 85 : 45,
+                              textColor: Colors.white,
                             ),
                           ),
                         ),

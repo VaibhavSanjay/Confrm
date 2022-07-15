@@ -79,12 +79,6 @@ class TaskViewPageState extends State<TaskViewPage> {
           _archivedTaskData.removeAt(i);
           ds.updateArchiveData(_archivedTaskData);
         },
-        onClean: () {
-          // Delete tasks that are over an hour old
-          DateTime hourAgo = DateTime.now().toUtc().subtract(const Duration(hours: 1));
-          _archivedTaskData = _archivedTaskData.where((td) => td.archived.isAfter(hourAgo)).toList();
-          ds.updateArchiveData(_archivedTaskData);
-        },
         stream: stream,
         users: _users,
     );
@@ -193,61 +187,64 @@ class TaskViewPageState extends State<TaskViewPage> {
 
                 return ReorderableColumn(
                   scrollController: ScrollController(),
-                  header: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AnimatedOpacity(
-                          opacity: _menuOpen ? 0 : 1,
-                          duration: const Duration(milliseconds: 150),
-                          child: const Text('Your Tasks', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold))
-                      ),
-                      SpeedDial(
-                        child: const Icon(FontAwesomeIcons.caretLeft, color: Colors.white),
-                        activeChild: const Icon(FontAwesomeIcons.caretRight, color: Colors.white),
-                        overlayOpacity: 0,
-                        direction: SpeedDialDirection.left,
-                        heroTag: 'archive',
-                        onOpen: () => setState(() {_menuOpen = true;}),
-                        onClose: () => setState(() {_menuOpen = false;}),
-                        children: [
-                          SpeedDialChild(
-                              elevation: (_filter || _sorting) ? 0 : null,
-                              child: Icon(Icons.add, color: Colors.white.withOpacity((_filter || _sorting) ? 0.5 : 1)),
-                              backgroundColor: Colors.red.withOpacity((_filter || _sorting) ? 0.5 : 1),
-                              onTap: () async {
-                                if (!(_filter || _sorting) && !(await _addTask())) {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                      content: Text('Maximum of 20 tasks reached.')
-                                  ));
+                  header: Padding(
+                    padding: const EdgeInsets.only(bottom: 5),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        AnimatedOpacity(
+                            opacity: _menuOpen ? 0 : 1,
+                            duration: const Duration(milliseconds: 150),
+                            child: const Text('Your Tasks', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold))
+                        ),
+                        SpeedDial(
+                          child: const Icon(FontAwesomeIcons.caretLeft, color: Colors.white),
+                          activeChild: const Icon(FontAwesomeIcons.caretRight, color: Colors.white),
+                          overlayOpacity: 0,
+                          direction: SpeedDialDirection.left,
+                          heroTag: 'archive',
+                          onOpen: () => setState(() {_menuOpen = true;}),
+                          onClose: () => setState(() {_menuOpen = false;}),
+                          children: [
+                            SpeedDialChild(
+                                elevation: (_filter || _sorting) ? 0 : null,
+                                child: Icon(Icons.add, color: Colors.white.withOpacity((_filter || _sorting) ? 0.5 : 1)),
+                                backgroundColor: Colors.lightBlue.withOpacity((_filter || _sorting) ? 0.5 : 1),
+                                onTap: () async {
+                                  if (!(_filter || _sorting) && !(await _addTask())) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                        content: Text('Maximum of 20 tasks reached.')
+                                    ));
+                                  }
                                 }
-                              }
-                          ),
-                          SpeedDialChild(
-                              child: const Icon(Icons.inbox, color: Colors.white),
-                              backgroundColor: Colors.orange,
-                              onTap: () async {
-                                Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-                                  return _createArchiveCardList(
-                                      EdgeInsets.only(top: MediaQuery.of(context).size.height / 6, left: 30, right: 30,
-                                          bottom: MediaQuery.of(context).size.height / 6
-                                      )
-                                  );
-                                }));
-                              }
-                          ),
-                          SpeedDialChild(
-                              child: Icon(_filter ? Icons.filter_list_off : Icons.filter_list, color: Colors.white),
-                              backgroundColor: Colors.green,
-                              onTap: () => setState(() {_filter = !_filter;})
-                          ),
-                          SpeedDialChild(
-                              child: Icon(_sorting ? Icons.cancel : Icons.sort, color: Colors.white),
-                              backgroundColor: Colors.indigo,
-                              onTap: () => setState(() {_sorting = !_sorting;})
-                          )
-                        ],
-                      )
-                    ],
+                            ),
+                            SpeedDialChild(
+                                child: const Icon(Icons.inbox, color: Colors.white),
+                                backgroundColor: Colors.blue,
+                                onTap: () async {
+                                  Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                                    return _createArchiveCardList(
+                                        EdgeInsets.only(top: MediaQuery.of(context).size.height / 6, left: 30, right: 30,
+                                            bottom: MediaQuery.of(context).size.height / 6
+                                        )
+                                    );
+                                  }));
+                                }
+                            ),
+                            SpeedDialChild(
+                                child: Icon(_filter ? Icons.filter_list_off : Icons.filter_list, color: Colors.white),
+                                backgroundColor: Colors.blueAccent,
+                                onTap: () => setState(() {_filter = !_filter;})
+                            ),
+                            SpeedDialChild(
+                                child: Icon(_sorting ? Icons.cancel : Icons.sort, color: Colors.white),
+                                backgroundColor: Colors.indigoAccent,
+                                onTap: () => setState(() {_sorting = !_sorting;})
+                            )
+                          ],
+                        )
+                      ],
+                    ),
                   ),
                   crossAxisAlignment: CrossAxisAlignment.center,
                   padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),

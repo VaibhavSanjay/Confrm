@@ -41,7 +41,7 @@ class _FamilyIDPopUpState extends State<FamilyIDPopUp> {
                     children: [
                       const Padding(
                         padding: EdgeInsets.only(bottom: 10, top: 10),
-                        child: Text('Copy and send to others!', style: TextStyle(
+                        child: Text('Copy and Send!', style: TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 20)),
                       ),
                       Row(
@@ -49,6 +49,7 @@ class _FamilyIDPopUpState extends State<FamilyIDPopUp> {
                           Flexible(
                             flex: 1,
                             child: Container(
+                                padding: const EdgeInsets.all(5),
                                 decoration: BoxDecoration(
                                     border: Border.all(color: Colors.grey)
                                 ),

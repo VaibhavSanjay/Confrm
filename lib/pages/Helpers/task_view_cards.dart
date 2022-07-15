@@ -652,11 +652,10 @@ class ArchiveTaskData extends StatefulWidget {
   final List<TaskData> archivedTasks;
   final Map<String, UserData> users;
   final Stream<FamilyTaskData> stream;
-  final void Function() onClean;
 
   const ArchiveTaskData({Key? key, this.padding = const EdgeInsets.all(0),
     required this.archivedTasks, required this.onUnarchive, required this.onDelete,
-    required this.stream, required this.onClean, required this.users}) : super(key: key);
+    required this.stream, required this.users}) : super(key: key);
 
   @override
   State<ArchiveTaskData> createState() => _ArchiveTaskDataState();
@@ -747,15 +746,7 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
                   children: [
                     Container(
                       padding: const EdgeInsets.only(top: 20),
-                      child: const Text('Archived', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 40))
-                    ),
-                    TextButton(
-                      style: TextButton.styleFrom(elevation: 5,
-                          backgroundColor: Colors.white,
-                          textStyle: const TextStyle(fontSize: 18)
-                      ),
-                      child: const Text('Clean'),
-                      onPressed: widget.onClean
+                      child: const Text('Archive', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 40))
                     ),
                     StreamBuilder<FamilyTaskData>(
                       stream: widget.stream,
