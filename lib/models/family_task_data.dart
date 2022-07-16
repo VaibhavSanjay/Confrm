@@ -23,7 +23,7 @@ class TaskData {
   late String completedBy;
   late List<String> assignedUsers;
 
-  TaskData({this.name = 'New Task', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
+  TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
     this.location = '', List<double>? coords, DateTime? due, DateTime? archived, DateTime? lastRem,
     this.completedBy = '', List<String>? assignedUsers}) {
       this.due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));

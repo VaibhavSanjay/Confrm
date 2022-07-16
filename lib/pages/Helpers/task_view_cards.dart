@@ -154,7 +154,7 @@ class _TaskCardState extends State<TaskCard> {
 
 
 class EditTaskData extends StatefulWidget {
-  final int selectedTask;
+  final dynamic selectedTask;
   final EdgeInsets padding;
   final TaskData taskData;
   final Map<String, UserData> users;
@@ -177,6 +177,7 @@ class _EditTaskDataState extends State<EditTaskData> {
   final CustomPopupMenuController _userController = CustomPopupMenuController();
   final CustomPopupMenuController _dueController = CustomPopupMenuController();
   final CustomPopupMenuController _locationController = CustomPopupMenuController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -264,25 +265,34 @@ class _EditTaskDataState extends State<EditTaskData> {
                                         children: [
                                           Flexible(
                                             fit: FlexFit.loose,
-                                            child: TextFormField(
-                                              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                                              decoration: const InputDecoration(
-                                                isDense: true,
-                                                contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                                enabledBorder: OutlineInputBorder(
-                                                  // width: 0.0 produces a thin "hairline" border
-                                                  borderSide: BorderSide(color: Colors.transparent, width: 0.0),
+                                            child: Form(
+                                              key: _formKey,
+                                              child: TextFormField(
+                                                style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                                                decoration: const InputDecoration(
+                                                  isDense: true,
+                                                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                                  enabledBorder: OutlineInputBorder(
+                                                    // width: 0.0 produces a thin "hairline" border
+                                                    borderSide: BorderSide(color: Colors.transparent, width: 0.0),
+                                                  ),
+                                                  hintText: 'Name',
+                                                  //border: OutlineInputBorder(),
+                                                  counterText: '',
+                                                  border: OutlineInputBorder(),
                                                 ),
-                                                hintText: 'Name',
-                                                //border: OutlineInputBorder(),
-                                                counterText: '',
-                                                border: OutlineInputBorder(),
+                                                initialValue: _newTask.name,
+                                                maxLength: 30,
+                                                onChanged: (String? value) {
+                                                  _newTask.name = value ?? '';
+                                                },
+                                                validator: (String? value) {
+                                                  if (value == null || value.isEmpty) {
+                                                    return 'Task must have a name.';
+                                                  }
+                                                  return null;
+                                                },
                                               ),
-                                              initialValue: _newTask.name,
-                                              maxLength: 30,
-                                              onChanged: (String? value) {
-                                                _newTask.name = value ?? '';
-                                              },
                                             ),
                                           ),
                                           Flexible(
@@ -589,11 +599,7 @@ class _EditTaskDataState extends State<EditTaskData> {
                               TextButton(
                                   child: const Text('Save'),
                                   onPressed: () {
-                                    if (_newTask.name == '') {
-                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                                        content: Text('Task must have a name'),
-                                      ));
-                                    } else {
+                                    if (_formKey.currentState!.validate()) {
                                       widget.onExit(_newTask);
                                     }
                                   }

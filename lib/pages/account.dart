@@ -368,14 +368,14 @@ class AccountPageState extends State<AccountPage> {
                             scrollDirection: Axis.horizontal,
                             children: [
                               SizedBox(
-                                width: MediaQuery.of(context).size.width - 35,
+                                width: MediaQuery.of(context).size.width - 42,
                                 child: DaysCard(
                                   dayTasks: dayTasks.values.toList(),
                                   userDayTasks: userDayTasks.values.toList(),
                                 ),
                               ),
                               SizedBox(
-                                width: MediaQuery.of(context).size.width - 35,
+                                width: MediaQuery.of(context).size.width - 42,
                                 child: ContributeCard(
                                   users: tasksCompleted.keys.map((s) => users[s]!).toList(),
                                   tasksCompleted: tasksCompleted.values.toList(),

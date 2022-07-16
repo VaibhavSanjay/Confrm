@@ -45,8 +45,26 @@ class TaskViewPageState extends State<TaskViewPage> {
     if (_taskData.length >= maxTasks) {
       return false;
     }
-    _taskData.add(TaskData());
-    await ds.updateTaskData(_taskData); // Send data to Firebase
+
+    Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+      return EditTaskData(
+          selectedTask: false,
+          taskData: TaskData(),
+          users: _users,
+          padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/6, left: 30, right: 30, bottom: MediaQuery.of(context).size.height/6),
+          onExit: (TaskData? data) async {
+            if (data != null) {
+              // Non-null means task data was saved.
+              _taskData.add(TaskData.fromTaskData(data));
+              ds.updateTaskData(_taskData);
+            }
+
+            Navigator.of(context).pop();
+            setState((){});
+          }
+      );
+    }));
+
     return true;
   }
 
@@ -187,8 +205,9 @@ class TaskViewPageState extends State<TaskViewPage> {
 
                 return ReorderableColumn(
                   scrollController: ScrollController(),
-                  header: Padding(
-                    padding: const EdgeInsets.only(bottom: 5),
+                  header: AnimatedContainer(
+                    padding: EdgeInsets.only(bottom: _menuOpen ? 15: 5),
+                    duration: const Duration(milliseconds: 150),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -199,6 +218,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                         ),
                         SpeedDial(
                           child: const Icon(FontAwesomeIcons.caretLeft, color: Colors.white),
+                          spaceBetweenChildren: 15,
                           activeChild: const Icon(FontAwesomeIcons.caretRight, color: Colors.white),
                           overlayOpacity: 0,
                           direction: SpeedDialDirection.left,
@@ -207,6 +227,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                           onClose: () => setState(() {_menuOpen = false;}),
                           children: [
                             SpeedDialChild(
+                                labelWidget: const Text('Add', style: TextStyle(fontWeight: FontWeight.bold),),
                                 elevation: (_filter || _sorting) ? 0 : null,
                                 child: Icon(Icons.add, color: Colors.white.withOpacity((_filter || _sorting) ? 0.5 : 1)),
                                 backgroundColor: Colors.lightBlue.withOpacity((_filter || _sorting) ? 0.5 : 1),
@@ -219,6 +240,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                                 }
                             ),
                             SpeedDialChild(
+                                labelWidget: const Text('Archive', style: TextStyle(fontWeight: FontWeight.bold),),
                                 child: const Icon(Icons.inbox, color: Colors.white),
                                 backgroundColor: Colors.blue,
                                 onTap: () async {
@@ -232,11 +254,13 @@ class TaskViewPageState extends State<TaskViewPage> {
                                 }
                             ),
                             SpeedDialChild(
+                                labelWidget: const Text('Filter', style: TextStyle(fontWeight: FontWeight.bold),),
                                 child: Icon(_filter ? Icons.filter_list_off : Icons.filter_list, color: Colors.white),
                                 backgroundColor: Colors.blueAccent,
                                 onTap: () => setState(() {_filter = !_filter;})
                             ),
                             SpeedDialChild(
+                                labelWidget: const Text('Sort', style: TextStyle(fontWeight: FontWeight.bold),),
                                 child: Icon(_sorting ? Icons.cancel : Icons.sort, color: Colors.white),
                                 backgroundColor: Colors.indigoAccent,
                                 onTap: () => setState(() {_sorting = !_sorting;})
