@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:awesome_notifications/awesome_notifications.dart';
-import 'package:background_locator/background_locator.dart';
-import 'package:background_locator/location_dto.dart';
-import 'package:background_locator/settings/android_settings.dart';
-import 'package:background_locator/settings/ios_settings.dart';
-import 'package:background_locator/settings/locator_settings.dart';
+import 'package:background_locator_2/background_locator.dart';
+import 'package:background_locator_2/location_dto.dart';
+import 'package:background_locator_2/settings/android_settings.dart';
+import 'package:background_locator_2/settings/ios_settings.dart';
+import 'package:background_locator_2/settings/locator_settings.dart';
 import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:family_tasks/models/family_task_data.dart';
@@ -50,7 +50,6 @@ class LocationCallbackHandler {
     WidgetsFlutterBinding.ensureInitialized();
     await Firebase.initializeApp();
 
-    print(AuthenticationService().id!);
     DatabaseService ds = DatabaseService((await DatabaseService('').getUser()).famID);
     FamilyTaskData ftd = await ds.getSingleSnapshot();
     List<TaskData> taskData = ftd.tasks;
@@ -62,6 +61,7 @@ class LocationCallbackHandler {
             LatLng(taskData[i].coords[0], taskData[i].coords[1])
         );
 
+        print(meter);
         if (meter < 1000 && (taskData[i].lastRem.add(const Duration(hours: 1)).isBefore(DateTime.now()))) {
           taskData[i].lastRem = DateTime.now();
           ds.updateTaskData(taskData);
@@ -86,6 +86,7 @@ class LocationCallbackHandler {
   }
 
   static Future<bool> onStart() async {
+    print('Locator Starting.');
     if (await Notifications.requestNotifications() && await checkLocationPermission()) {
       await startLocator();
       return true;
@@ -95,7 +96,14 @@ class LocationCallbackHandler {
   }
 
   static Future<bool> checkLocationPermission() async {
-    return await Permission.locationAlways.request().isGranted;
+    print('Requesting Location Permission.');
+    if (await Permission.locationWhenInUse.request().isGranted) {
+      return await Permission.locationAlways
+          .request()
+          .isGranted;
+    } else {
+      return false;
+    }
   }
 
   static Future<void> startLocator() async{

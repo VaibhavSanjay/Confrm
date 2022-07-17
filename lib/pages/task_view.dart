@@ -213,10 +213,12 @@ class TaskViewPageState extends State<TaskViewPage> {
                       children: [
                         AnimatedOpacity(
                             opacity: _menuOpen ? 0 : 1,
-                            duration: const Duration(milliseconds: 150),
+                            duration: const Duration(milliseconds: 300),
                             child: const Text('Your Tasks', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold))
                         ),
                         SpeedDial(
+                          animationSpeed: 225,
+                          switchLabelPosition: true,
                           child: const Icon(FontAwesomeIcons.caretLeft, color: Colors.white),
                           spaceBetweenChildren: 15,
                           activeChild: const Icon(FontAwesomeIcons.caretRight, color: Colors.white),

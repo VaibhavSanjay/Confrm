@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../models/family_task_data.dart';
 import '../../models/user_data.dart';
 import 'constants.dart';
+import 'hero_dialogue_route.dart';
 
 Widget _getTimeText(Duration dur) {
   Duration duration = dur.abs();
@@ -527,63 +528,129 @@ class LateStatusCard extends StatelessWidget {
 }
 
 class AccountCard extends StatefulWidget {
-  const AccountCard({Key? key, this.bgColor = Colors.white, this.iconColor = Colors.black, this.opacity = 1,
-    required this.icon, required this.title, required this.subtitle, required this.iconSize, required this.bottomPadding,
-    required this.textColor}) : super(key: key);
+  const AccountCard({Key? key, this.locationEnabled = false, required this.onDisable, required this.onActivate, required this.getLocation}) : super(key: key);
 
-  final Color bgColor;
-  final Color iconColor;
-  final Color textColor;
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final double opacity;
-  final double iconSize;
-  final double bottomPadding;
+  final bool locationEnabled;
+  final Function() onActivate;
+  final Function() onDisable;
+  final Function() getLocation;
 
   @override
   State<AccountCard> createState() => _AccountCardState();
 }
 
 class _AccountCardState extends State<AccountCard> {
+  late bool _locationEnabled = widget.locationEnabled;
+
+  Widget _getLocationActivationWidget(double verticalPadding) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: verticalPadding),
+      child: Hero(
+          tag: 'location',
+          createRectTween: (begin, end) {
+            return CustomRectTween(begin: begin, end: end);
+          },
+          child: _locationEnabled ? LocationInfo(
+              bgColor: Colors.green,
+              iconBgColor: Colors.green,
+              icon: const Icon(Icons.check, color: Colors.lightGreen, size: 80),
+              title: 'Activated',
+              subtitle: 'You will receive notifications whenever you\'re near a task. Click "Disable" to disable location tracking (you can always activate it again later).',
+              confirmText: 'Disable',
+              onCancel: () {
+                Navigator.of(context).pop();
+              },
+              onConfirm: () async {
+                widget.onDisable();
+                setState(() {
+                  _locationEnabled = false;
+                });
+              }
+          ) : LocationInfo(
+            bgColor: Colors.blue,
+            iconBgColor: Colors.green,
+            icon: const Icon(FontAwesomeIcons.earthAmericas, size: 80, color: Colors.blue),
+            title: 'Get reminders!',
+            subtitle: 'You can provide locations of a task to get a reminder when you arrive there. After pressing activate, make sure to accept the requested permissions!',
+            confirmText: 'Activate',
+            onCancel: () {
+              Navigator.of(context).pop();
+            },
+            onConfirm: () async {
+              widget.onActivate();
+              setState(() {
+                _locationEnabled = true;
+              });
+            }
+          )
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-        color: widget.bgColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.0),
-        ),
-        child: Stack(
-          children: [
-            SizedBox(
-              height: 100,
-              width: double.infinity,
-              child: ClipRect(
-                child: Container(
-                  transform: Matrix4.translationValues(0, -widget.bottomPadding, 0),
-                  child: Opacity(
-                    opacity: widget.opacity,
-                    child: Icon(
-                        widget.icon,
-                        size: widget.iconSize,
-                        color: widget.iconColor
-                    ),
+    return FutureBuilder<bool>(
+      future: widget.getLocation(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          _locationEnabled = snapshot.data!;
+          return InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                  HeroDialogRoute(builder: (context) {
+                    return _getLocationActivationWidget(MediaQuery
+                        .of(context)
+                        .size
+                        .height / 2 - 150);
+                  }));
+            },
+            child: Hero(
+              tag: 'location',
+              child: Card(
+                  color: _locationEnabled ? Colors.green : Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0),
                   ),
-                )
+                  child: Stack(
+                    children: [
+                      SizedBox(
+                        height: 100,
+                        width: double.infinity,
+                        child: ClipRect(
+                            child: Container(
+                              transform: Matrix4.translationValues(0, _locationEnabled ? 85 : 45, 0),
+                              child: Opacity(
+                                opacity: 0.5,
+                                child: Icon(
+                                    _locationEnabled ? Icons.check : FontAwesomeIcons.mapLocationDot,
+                                    size: _locationEnabled ? 300 : 250,
+                                    color: _locationEnabled ? Colors.lightGreen : Colors.lightBlue
+                                ),
+                              ),
+                            )
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16, top: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Location',
+                                style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
+                            Text(_locationEnabled ? 'Activated' : 'Click for Information',
+                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white))
+                          ],
+                        ),
+                      )
+                    ],
+                  )
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 16, top: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(widget.title, style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: widget.textColor)),
-                  Text(widget.subtitle, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.textColor))
-                ],
-              ),
-            )
-          ],
-        )
+          );
+        } else {
+          return CircularProgressIndicator();
+        }
+      }
     );
   }
 }

@@ -25,86 +25,11 @@ class AccountPage extends StatefulWidget {
 }
 
 class AccountPageState extends State<AccountPage> {
-  late bool _locationEnabled = widget.location;
+  bool _locationEnabled = false;
   late DatabaseService ds = DatabaseService(widget.famID);
   AuthenticationService auth = AuthenticationService();
   final _formKey = GlobalKey<FormState>();
 
-  String _getTimeText(Duration dur) {
-    Duration duration = dur.abs();
-    if (duration.compareTo(const Duration(hours: 1)) < 0) {
-      if (duration.inMinutes == 1) {
-        return "1 minute";
-      } else {
-        return '${duration.inMinutes} minutes';
-      }
-    } else {
-      if (duration.inHours == 1) {
-        return "1 hour";
-      } else {
-        return '${duration.inHours} hours';
-      }
-    }
-  }
-
-  Widget _getLocationActivationWidget(double verticalPadding) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: verticalPadding),
-      child: Hero(
-        tag: 'location',
-        createRectTween: (begin, end) {
-          return CustomRectTween(begin: begin, end: end);
-        },
-        child: _locationEnabled ? LocationInfo(
-            bgColor: Colors.green,
-            iconBgColor: Colors.green,
-            icon: const Icon(Icons.check, color: Colors.lightGreen, size: 80),
-            title: 'Activated',
-            subtitle: 'You will receive notifications whenever you\'re near a task. Click "Disable" to disable location tracking (you can always activate it again later).',
-            confirmText: 'Disable',
-            onCancel: () {
-              Navigator.of(context).pop();
-            },
-            onConfirm: () async {
-              Navigator.pop(context);
-              await LocationCallbackHandler.onStop();
-              await ds.updateUserLocation(false);
-              setState(() {
-                _locationEnabled = false;
-              });
-            }
-        ) : LocationInfo(
-          bgColor: Colors.blue,
-          iconBgColor: Colors.green,
-          icon: const Icon(FontAwesomeIcons.earthAmericas, size: 80, color: Colors.blue),
-          title: 'Get reminders!',
-          subtitle: 'You can provide locations of a task to get a reminder when you arrive there. After pressing activate, make sure to accept the requested permissions!',
-          confirmText: 'Activate',
-          onCancel: () {
-            Navigator.of(context).pop();
-          },
-          onConfirm: () async {
-            Navigator.pop(context);
-            if (await LocationCallbackHandler.onStart()) {
-              await ds.updateUserLocation(true);
-              setState(() {
-                _locationEnabled = true;
-              });
-            } else {
-              print('Error starting locator (notifications problem?)');
-            }
-          },
-        )
-      ),
-    );
-  }
-
-  Widget _getSectionText(String text) {
-    return Padding(
-        padding: const EdgeInsets.only(left: 10, right: 10, top: 15),
-        child: Text(text, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold))
-    );
-  }
 
   Color _getBgColor(int val, int max) {
     ColorTween good = ColorTween(
@@ -386,36 +311,26 @@ class AccountPageState extends State<AccountPage> {
                           ),
                         ),
                         const Divider(height: 10, color: Colors.transparent),
-                        InkWell(
-                          onTap: () {
-                            Navigator.of(context).push(
-                                HeroDialogRoute(builder: (context) {
-                                  return _getLocationActivationWidget(MediaQuery
-                                      .of(context)
-                                      .size
-                                      .height / 2 - 150);
-                                }));
+                        AccountCard(
+                          locationEnabled: _locationEnabled,
+                          onActivate: () async {
+                            Navigator.pop(context);
+                            if (await LocationCallbackHandler.onStart()) {
+                              ds.updateUserLocation(true);
+                              _locationEnabled = true;
+                            } else {
+                              print('Error starting locator (notifications problem?)');
+                            }
                           },
-                          child: Hero(
-                            tag: 'location',
-                            child: AccountCard(
-                              bgColor: _locationEnabled ? Colors.green : Colors
-                                  .blue,
-                              iconColor: _locationEnabled
-                                  ? Colors.lightGreen
-                                  : Colors.lightBlue,
-                              icon: _locationEnabled
-                                  ? Icons.check
-                                  : FontAwesomeIcons.mapLocationDot,
-                              title: 'Location',
-                              subtitle: _locationEnabled
-                                  ? 'Activated'
-                                  : 'Click for Information',
-                              iconSize: _locationEnabled ? 300 : 250,
-                              bottomPadding: _locationEnabled ? 85 : 45,
-                              textColor: Colors.white,
-                            ),
-                          ),
+                          onDisable: () async {
+                            Navigator.pop(context);
+                            LocationCallbackHandler.onStop();
+                            ds.updateUserLocation(false);
+                            _locationEnabled = false;
+                          },
+                          getLocation: () async {
+                            return (await ds.getUser()).location;
+                          },
                         ),
                       ]
                   ),

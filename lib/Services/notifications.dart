@@ -39,6 +39,7 @@ class Notifications {
 
   static Future<bool> requestNotifications() async {
     AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
+      print('Notifications are allowed: $isAllowed');
       if (!isAllowed) {
         AwesomeNotifications().requestPermissionToSendNotifications();
       }

@@ -155,6 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
   ReceivePort port = ReceivePort();
 
   AuthenticationService auth = AuthenticationService();
+  late UserData _user;
 
   @override
   void initState() {
@@ -174,6 +175,8 @@ class _MyHomePageState extends State<MyHomePage> {
         print('Got data in app!');
       },
     );
+
+    _user = widget.user;
   }
 
   @override

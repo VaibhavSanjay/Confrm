@@ -122,7 +122,8 @@ class DatabaseService {
     return (await taskDataCollection.add({
       'name': name,
       'data': [],
-      'archive': []
+      'archive': [],
+      'users': {}
     })).id;
   }
 
@@ -147,6 +148,8 @@ class DatabaseService {
   }
 
   Future setUserFamily(String famID) async {
+    await userCollection.doc(auth.id!).update({'group': famID});
+
     this.famID = famID;
     Map<String, dynamic> current = (await taskDataCollection.doc(famID).get()).get('users');
     current[auth.id!] = {
@@ -157,7 +160,6 @@ class DatabaseService {
     taskDataCollection.doc(famID).update({
       'users': current
     });
-    await userCollection.doc(auth.id!).update({'group': famID});
   }
 
   Future updateUserLocation(bool location) async {
