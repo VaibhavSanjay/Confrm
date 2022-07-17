@@ -201,12 +201,11 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Choose Option', style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold, color: Colors.white), textAlign: TextAlign.start,),
-              const Divider(height: 10, color: Colors.transparent),
+              const Divider(height: 20),
               _getButton(
                 FontAwesomeIcons.userPlus,
                 'Create',
-                'Create a New Task Listing. Send the group ID to those you want to add.',
+                'Create a new group. Send the group ID to your team so they can join.',
                     () {
                   _input = '';
                   showDialog(
@@ -270,7 +269,7 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
                 },
               ),
               const Divider(
-                height: 15,
+                height: 25,
                 color: Colors.transparent,
               ),
               _getButton(

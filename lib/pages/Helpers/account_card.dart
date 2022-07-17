@@ -648,7 +648,7 @@ class _AccountCardState extends State<AccountCard> {
             ),
           );
         } else {
-          return CircularProgressIndicator();
+          return const CircularProgressIndicator();
         }
       }
     );
@@ -750,7 +750,7 @@ class LocationInfo extends StatelessWidget {
               ),
               Container(
                   padding: const EdgeInsets.only(left: 8, right: 8, top: 8),
-                  child: Text(subtitle, style: const TextStyle(fontSize: 18), textAlign: TextAlign.justify)
+                  child: Text(subtitle, style: const TextStyle(fontSize: 18))
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,

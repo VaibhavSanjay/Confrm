@@ -16,6 +16,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
   AuthenticationService auth = AuthenticationService();
 
   @override
@@ -59,12 +60,22 @@ class _SignUpWidgetState extends State<SignUpWidget> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
-            child: TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                  labelText: 'Name/Username',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person)
+            child: Form(
+              key: _formKey,
+              child: TextFormField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                    labelText: 'Name/Username',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person)
+                ),
+                validator: (value) {
+                  if (value == null ||
+                      value.isEmpty) {
+                    return 'Please enter a name';
+                  }
+                  return null;
+                },
               ),
             ),
           ),
@@ -99,20 +110,22 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                   minimumSize: const Size.fromHeight(50), // NEW
                 ),
                 onPressed: () async {
-                  SignResults res = await auth.signUp(nameController.text.trim(), emailController.text.trim(), passwordController.text.trim());
-                  switch (res) {
-                    case SignResults.emailInUse:
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('An Account with this email already exists')));
-                      break;
-                    case SignResults.weakPass:
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password too weak')));
-                      break;
-                    case SignResults.invalidEmail:
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid Email')));
-                      break;
-                    case SignResults.fail:
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('An error occurred signing up')));
-                      break;
+                  if (_formKey.currentState!.validate()) {
+                    SignResults res = await auth.signUp(nameController.text.trim(), emailController.text.trim(), passwordController.text.trim());
+                    switch (res) {
+                      case SignResults.emailInUse:
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('An account with this email already exists')));
+                        break;
+                      case SignResults.weakPass:
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password too weak')));
+                        break;
+                      case SignResults.invalidEmail:
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid email')));
+                        break;
+                      case SignResults.fail:
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('An error occurred signing up')));
+                        break;
+                    }
                   }
                 },
                 icon: const Icon(FontAwesomeIcons.rightToBracket),

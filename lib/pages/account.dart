@@ -217,7 +217,6 @@ class AccountPageState extends State<AccountPage> {
                                           validator: (String? value) {
                                             if (value == null ||
                                                 value.isEmpty) {
-                                              print('here');
                                               return 'Please enter a name';
                                             }
                                             return null;

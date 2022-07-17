@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:family_tasks/join_create.dart';
+import 'package:family_tasks/pages/Helpers/account_card.dart';
+import 'package:family_tasks/pages/Helpers/hero_dialogue_route.dart';
 import 'package:family_tasks/pages/auth_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -153,6 +155,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                       AccountPage(famID: widget.user.famID, onLeave: widget.onLeave, location: widget.user.location)];
 
   ReceivePort port = ReceivePort();
+  late DatabaseService ds = DatabaseService(widget.user.famID);
 
   AuthenticationService auth = AuthenticationService();
 
@@ -181,6 +184,58 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<bool> getLocation () async {
+    return (await ds.getUser()).location;
+  }
+
+  Widget _getLocationActivationWidget(bool locationEnabled, double verticalPadding) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: verticalPadding),
+      child: Hero(
+          tag: 'locationDrawer',
+          createRectTween: (begin, end) {
+            return CustomRectTween(begin: begin, end: end);
+          },
+          child: locationEnabled ? LocationInfo(
+              bgColor: Colors.green,
+              iconBgColor: Colors.green,
+              icon: const Icon(Icons.check, color: Colors.lightGreen, size: 80),
+              title: 'Activated',
+              subtitle: 'You will receive notifications whenever you\'re near a task. Click "Disable" to disable location tracking (you can always activate it again later).',
+              confirmText: 'Disable',
+              onCancel: () {
+                Navigator.of(context).pop();
+              },
+              onConfirm: () async {
+                Navigator.pop(context);
+                LocationCallbackHandler.onStop();
+                ds.updateUserLocation(false);
+                setState(() {});
+              }
+          ) : LocationInfo(
+              bgColor: Colors.blue,
+              iconBgColor: Colors.green,
+              icon: const Icon(FontAwesomeIcons.earthAmericas, size: 80, color: Colors.blue),
+              title: 'Get reminders!',
+              subtitle: 'You can provide locations of a task to get a reminder when you arrive there. After pressing activate, make sure to accept the requested permissions!',
+              confirmText: 'Activate',
+              onCancel: () {
+                Navigator.of(context).pop();
+              },
+              onConfirm: () async {
+                Navigator.pop(context);
+                if (await LocationCallbackHandler.onStart()) {
+                  ds.updateUserLocation(true);
+                  setState(() {});
+                } else {
+                  print('Error starting locator (notifications problem?)');
+                }
+              }
+          )
+      ),
+    );
   }
 
   @override
@@ -286,7 +341,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       title: const Text('Leave Group', style: TextStyle(fontSize: 14)),
                       onTap: () async {
                         Navigator.pop(context);
-                        await DatabaseService(widget.user.famID).leaveUserFamily();
+                        await ds.leaveUserFamily();
                         widget.onLeave();
                       }
                     ),
@@ -304,6 +359,51 @@ class _MyHomePageState extends State<MyHomePage> {
                   ],
                 ),
               ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(10.0),
+              child: Text('Settings', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: FutureBuilder<bool>(
+                future: getLocation(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const CircularProgressIndicator();
+                  } else {
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      color: snapshot.data! ? Colors.green : Colors.blue,
+                      child: Column(
+                        children: [
+                          Hero(
+                            tag: 'locationDrawer',
+                            child: Material(
+                              color: Colors.transparent,
+                              child: ListTile(
+                                  leading: const Icon(FontAwesomeIcons.locationDot),
+                                  title: const Text('Location', style: TextStyle(fontSize: 14)),
+                                  onTap: () async {
+                                    Navigator.of(context).push(
+                                        HeroDialogRoute(builder: (context) {
+                                          return _getLocationActivationWidget(snapshot.data!, MediaQuery
+                                              .of(context)
+                                              .size
+                                              .height / 2 - 150);
+                                        }));
+                                  }
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                },
+              )
             ),
           ]
         )
