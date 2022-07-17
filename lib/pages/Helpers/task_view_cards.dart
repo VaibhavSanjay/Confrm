@@ -172,11 +172,10 @@ class _EditTaskDataState extends State<EditTaskData> {
   final double _editIconSize = 25;
   late TaskData _newTask;
   late Map<String, List> _users;
-  late final List<Reaction<TaskType>> _taskTypeReactions;
   final TextEditingController _textController = TextEditingController();
   final CustomPopupMenuController _userController = CustomPopupMenuController();
-  final CustomPopupMenuController _dueController = CustomPopupMenuController();
-  final CustomPopupMenuController _locationController = CustomPopupMenuController();
+  final CustomPopupMenuController _colorController = CustomPopupMenuController();
+  final CustomPopupMenuController _taskTypeController = CustomPopupMenuController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -184,51 +183,60 @@ class _EditTaskDataState extends State<EditTaskData> {
     super.initState();
     _newTask = widget.taskData;
     _users = widget.users.map((key, value) => MapEntry(key, [value, _newTask.assignedUsers.contains(key)]));
-    _textController.text = _newTask.location;
-
-    _taskTypeReactions = List<Reaction<TaskType>>.generate(
-        TaskType.values.length,
-            (int index) {
-          return Reaction<TaskType>(
-              previewIcon: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                  child: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _editIconSize * 2/3)
-              ),
-              icon: Icon(_getIconForTaskType(TaskType.values.elementAt(index)), size: _editIconSize),
-              value: TaskType.values.elementAt(index)
-          );
-        }
-    );
   }
 
   @override
   void dispose() {
     _textController.dispose();
-    _locationController.dispose();
     _userController.dispose();
-    _dueController.dispose();
+    _colorController.dispose();
+    _taskTypeController.dispose();
     super.dispose();
   }
 
-  Widget _getOptionButton(Widget child, String text) {
-    return Container(
-        width: 90,
-        height: 80,
-        decoration: BoxDecoration(
-          borderRadius: const BorderRadius.all(Radius.circular(20)),
-          color: Colors.grey[300],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              child,
-              const Divider(height: 10, color: Colors.transparent),
-              Text(text, style: const TextStyle(fontWeight: FontWeight.bold))
-            ],
+  Future<DateTime?> _dayPicker() {
+    return showDatePicker(
+        context: context,
+        initialDate: _newTask.due.toLocal(),
+        firstDate: DateTime(2022),
+        lastDate: DateTime(2100));
+  }
+
+  Future<TimeOfDay?> _timePicker() {
+    return showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(_newTask.due.toLocal())
+    );
+  }
+
+  Widget _getOptionButton(Widget child, String text, Widget menuWidget, CustomPopupMenuController controller) {
+    return CustomPopupMenu(
+      position: PreferredPosition.bottom,
+      controller: controller,
+      pressType: PressType.singleClick,
+      menuBuilder: () => menuWidget,
+      child: Container(
+          width: 120,
+          height: 100,
+          decoration: BoxDecoration(
+            borderRadius: const BorderRadius.all(Radius.circular(20)),
+            color: Colors.grey[300],
           ),
-        )
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  height: 50,
+                  child: child,
+                ),
+                const Divider(height: 10, color: Colors.transparent),
+                Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20))
+              ],
+            ),
+          )
+      ),
     );
   }
 
@@ -382,10 +390,98 @@ class _EditTaskDataState extends State<EditTaskData> {
                                 ],
                               ),
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                                padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
+                                    Expanded(
+                                     child: InkWell(
+                                       onTap: () async {
+                                         DateTime? picked = await _dayPicker();
+                                         if (picked != null) {
+                                           _newTask.due = DateTime(picked.year, picked.month, picked.day, _newTask.due.hour, _newTask.due.minute);
+                                           TimeOfDay? timePicked = await _timePicker();
+                                           if (timePicked != null) {
+                                             _newTask.due = DateTime(_newTask.due.toLocal().year, _newTask.due.toLocal().month,
+                                                 _newTask.due.toLocal().day, timePicked.hour, timePicked.minute).toUtc();
+                                           }
+                                           setState(() {});
+                                         }
+                                       },
+                                       child: Row(
+                                         children: [
+                                           const Icon(FontAwesomeIcons.calendarDay, size: 30,),
+                                           const VerticalDivider(width: 10,),
+                                           Text('${daysOfWeek[_newTask.due.toLocal().weekday]} '
+                                               '${_newTask.due.toLocal().month}/${_newTask.due.toLocal().day}',
+                                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),)
+                                         ],
+                                       ),
+                                     ),
+                                    ),
+                                    Expanded(
+                                      child: InkWell(
+                                        onTap: () async {
+                                          TimeOfDay? timePicked = await _timePicker();
+                                          if (timePicked != null) {
+                                            _newTask.due = DateTime(_newTask.due.toLocal().year, _newTask.due.toLocal().month,
+                                                _newTask.due.toLocal().day, timePicked.hour, timePicked.minute).toUtc();
+                                            setState(() {});
+                                          }
+                                        },
+                                        child: Row(
+                                          children: [
+                                            const Icon(FontAwesomeIcons.solidClock, size: 30),
+                                            const VerticalDivider(width: 10,),
+                                            Text(DateFormat('h:mm a').format(_newTask.due.toLocal()),
+                                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),)
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 20, left: 10, right: 10),
+                                child: InkWell(
+                                  onTap: () async {
+                                    String sessionToken = const Uuid().v4();
+                                    Suggestion? result = await showSearch(
+                                        context: context,
+                                        delegate: AddressSearch(sessionToken),
+                                        query: _newTask.location
+                                    );
+                                    if (result != null) {
+                                      List<double> loc = await PlaceApiProvider(sessionToken)
+                                          .getPlaceDetailFromId(result.placeId);
+                                      _newTask.location = result.description;
+                                      _newTask.coords = loc;
+                                      setState(() {});
+                                    }
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(FontAwesomeIcons.locationDot, size: 30),
+                                      const VerticalDivider(width: 10,),
+                                      Expanded(
+                                        child: Text(_newTask.location.isEmpty ? 'Empty' : _newTask.location,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(color: _newTask.location.isEmpty ? Colors.grey : Colors.black,
+                                                           fontSize: 16,
+                                                           fontStyle: _newTask.location.isEmpty ? FontStyle.italic : FontStyle.normal)
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    /*
                                     _getOptionButton(ReactionButton<TaskType>(
                                       boxPosition: Position.BOTTOM,
                                       boxElevation: 10,
@@ -398,190 +494,69 @@ class _EditTaskDataState extends State<EditTaskData> {
                                       ),
                                       reactions: _taskTypeReactions,
                                       boxDuration: const Duration(milliseconds: 100),
-                                    ), 'Type'),
+                                    ), 'Type'),*/
                                     _getOptionButton(
-                                      CustomPopupMenu(
-                                          controller: _dueController,
-                                          child: Icon(FontAwesomeIcons.calendarDay, size: _editIconSize),
-                                          menuBuilder: () {
-                                            return ClipRRect(
-                                              borderRadius: BorderRadius.circular(5),
-                                              child: Container(
-                                                color: const Color(0xFF4C4C4C),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(12),
-                                                  child: Column(
-                                                    children: [
-                                                      Padding(
-                                                        padding: const EdgeInsets.only(bottom: 10),
-                                                        child: InkWell(
-                                                          onTap: () async {
-                                                            _dueController.hideMenu();
-                                                            DateTime? picked = await showDatePicker(
-                                                                context: context,
-                                                                initialDate: _newTask.due.toLocal(),
-                                                                firstDate: DateTime(2022),
-                                                                lastDate: DateTime(2100));
-                                                            if (picked != null) {
-                                                              picked = picked.toUtc();
-                                                              setState(() {
-                                                                _newTask.due = DateTime((picked!).year, picked.month, picked.day, _newTask.due.hour, _newTask.due.minute);
-                                                              });
-                                                            }
-                                                          },
-                                                          child: Row(
-                                                            mainAxisSize: MainAxisSize.min,
-                                                            children: [
-                                                              const Icon(FontAwesomeIcons.calendar, color: Colors.white),
-                                                              const VerticalDivider(width: 10),
-                                                              Text('${daysOfWeek[_newTask.due.toLocal().weekday]}, '
-                                                                  '${_newTask.due.toLocal().month}/${_newTask.due.toLocal().day}',
-                                                                   style: const TextStyle(
-                                                                     color: Colors.white
-                                                                   )
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      InkWell(
-                                                        onTap: () async {
-                                                          _dueController.hideMenu();
-                                                          TimeOfDay? picked = await showTimePicker(
-                                                              context: context,
-                                                              initialTime: TimeOfDay.fromDateTime(_newTask.due.toLocal())
-                                                          );
-                                                          if (picked != null) {
-                                                            setState(() {
-                                                              _newTask.due = DateTime(_newTask.due.toLocal().year, _newTask.due.toLocal().month,
-                                                                  _newTask.due.toLocal().day, picked.hour, picked.minute).toUtc();
-                                                            });
-                                                          }
-                                                        },
-                                                        child: Row(
-                                                          mainAxisSize: MainAxisSize.min,
-                                                          children: [
-                                                            const Icon(FontAwesomeIcons.clock, color: Colors.white),
-                                                            const VerticalDivider(width: 10),
-                                                            Text(DateFormat('h:mm a').format(_newTask.due.toLocal()),
-                                                                 style: const TextStyle(
-                                                                    color: Colors.white
-                                                                )
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                )
-                                              ),
-                                            );
-                                          },
-                                          pressType: PressType.singleClick
+                                        Card(
+                                          elevation: 5,
+                                          shape: const CircleBorder(),
+                                          child: Container(width: 40, height: 40, color: Colors.transparent),
+                                          color: _newTask.color,
+                                        ),
+                                        availableColorsStrings[availableColors.indexOf(_newTask.color)],
+                                        ClipRRect(
+                                            borderRadius: BorderRadius.circular(5),
+                                          child: Container(
+                                            color: const Color(0xFF4C4C4C),
+                                            child: MaterialColorPicker(
+                                              physics: const NeverScrollableScrollPhysics(),
+                                              selectedColor: _newTask.color,
+                                              allowShades: false,
+                                              onMainColorChange: (newColor) {
+                                                _colorController.hideMenu();
+                                                setState(() {
+                                                  _newTask.color = newColor ?? Colors.grey;
+                                                });
+                                              },
+                                              colors: availableColors
+                                          ),
                                       ),
-                                      'Due'
+                                        ),
+                                      _colorController
                                     ),
                                     _getOptionButton(
-                                      CustomPopupMenu(
-                                          controller: _locationController,
-                                          child: Icon(FontAwesomeIcons.locationDot, size: _editIconSize),
-                                          menuBuilder: () {
-                                            return ClipRRect(
-                                              borderRadius: BorderRadius.circular(5),
-                                              child: Container(
-                                                  color: const Color(0xFF4C4C4C),
-                                                  child: Padding(
-                                                    padding: const EdgeInsets.all(8),
-                                                    child: Column(
-                                                      children: [
-                                                        Container(
-                                                          width: 100,
-                                                          padding: const EdgeInsets.only(bottom: 10),
-                                                          child: Text(
-                                                            _newTask.location.isEmpty ? 'No Location' : _newTask.location,
-                                                            textAlign: TextAlign.center,
-                                                            maxLines: 3,
-                                                            overflow: TextOverflow.ellipsis,
-                                                            style: TextStyle(
-                                                                color: Colors.white,
-                                                                fontSize: 11,
-                                                                fontStyle: _newTask.location.isEmpty ? FontStyle.italic : FontStyle.normal)
-                                                          ),
-                                                        ),
-                                                        Row(
-                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                          mainAxisSize: MainAxisSize.min,
-                                                          children: [
-                                                            InkWell(
-                                                              onTap: () async {
-                                                                _locationController.hideMenu();
-                                                                String sessionToken = const Uuid().v4();
-                                                                Suggestion? result = await showSearch(
-                                                                    context: context,
-                                                                    delegate: AddressSearch(sessionToken),
-                                                                    query: _newTask.location
-                                                                );
-                                                                if (result != null) {
-                                                                  List<double> loc = await PlaceApiProvider(sessionToken)
-                                                                      .getPlaceDetailFromId(result.placeId);
-                                                                  _newTask.location = result.description;
-                                                                  _textController.text = result.description;
-                                                                  _newTask.coords = loc;
-                                                                }
-                                                              },
-                                                              child: Column(
-                                                                children: const [
-                                                                  Padding(
-                                                                    padding: EdgeInsets.only(bottom: 8.0),
-                                                                    child: Icon(FontAwesomeIcons.pen, color: Colors.white),
-                                                                  ),
-                                                                  Text('Edit', style: TextStyle(color: Colors.white, fontSize: 10))
-                                                                ],
-                                                              ),
-                                                            ),
-                                                            const VerticalDivider(width: 20),
-                                                            InkWell(
-                                                              onTap: () {
-                                                                _newTask.location = '';
-                                                                _locationController.hideMenu();
-                                                              },
-                                                              child: Column(
-                                                                children: const [
-                                                                  Padding(
-                                                                    padding: EdgeInsets.only(bottom: 8.0),
-                                                                    child: Icon(FontAwesomeIcons.circleXmark, color: Colors.white),
-                                                                  ),
-                                                                  Text('Delete', style: TextStyle(color: Colors.white, fontSize: 10))
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        )
-                                                      ],
-                                                    )
-                                                  )
-                                              ),
-                                            );
-                                          },
-                                          pressType: PressType.singleClick
-                                      ),
-                                      'Location'
-                                    )
+                                        Icon(_getIconForTaskType(_newTask.taskType), size: 40),
+                                        taskTypes[_newTask.taskType]!,
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(5),
+                                          child: Container(
+                                            color: const Color(0xFF4C4C4C),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: TaskType.values.map((tt) => InkWell(
+                                                onTap: () {
+                                                  _taskTypeController.hideMenu();
+                                                  setState(() {
+                                                    _newTask.taskType = tt;
+                                                  });
+                                                },
+                                                child: SizedBox(
+                                                  width: 50,
+                                                  height: 50,
+                                                  child: Column(
+                                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                    children: [
+                                                      Icon(_getIconForTaskType(tt), color: Colors.white),
+                                                      Text(taskTypes[tt]!, style: const TextStyle(color: Colors.white, fontSize: 8))
+                                                    ],
+                                                  ),
+                                                ),
+                                              )).toList()
+                                            )
+                                          ),
+                                        ),
+                                      _taskTypeController
+                                    ),
                                   ],
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 40),
-                                child: MaterialColorPicker(
-                                    physics: const NeverScrollableScrollPhysics(),
-                                    selectedColor: _newTask.color,
-                                    allowShades: false,
-                                    onMainColorChange: (newColor) {
-                                      setState(() {
-                                        _newTask.color = newColor ?? Colors.grey;
-                                      });
-                                    },
-                                    colors: availableColors
                                 ),
                               ),
                             ]
@@ -673,7 +648,7 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
   @override
   void initState() {
     super.initState();
-    _taskData = widget.archivedTasks;
+    _taskData = widget.archivedTasks.reversed.toList();
   }
 
   Widget _buildList() {
@@ -696,14 +671,15 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
                   title: Text(_taskData[i].name), // Name of task
                   subtitle: Text('Completed: ${daysOfWeek[_taskData[i].archived.toLocal().weekday]}, '
                       '${DateFormat('h:mm a').format(_taskData[i].archived.toLocal())}'), // Due date
+                  /*
                   trailing: ReactionButton<String>(
                     boxPosition: Position.BOTTOM,
                     boxElevation: 10,
                     onReactionChanged: (String? value) {
                       if (value == 'unarchive') {
-                        widget.onUnarchive(i);
+                        widget.onUnarchive(_taskData.length - i - 1);
                       } else if (value == 'delete') {
-                        widget.onDelete(i);
+                        widget.onDelete(_taskData.length - i - 1);
                       }
                     },
                     initialReaction: Reaction<String>(
@@ -729,6 +705,50 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
                       )
                     ],
                     boxDuration: const Duration(milliseconds: 100),
+                  ),
+                   */
+                  trailing: CustomPopupMenu(
+                    position: PreferredPosition.bottom,
+                    pressType: PressType.singleClick,
+                    child: const Icon(Icons.more_vert),
+                    menuBuilder: () {
+                      return Container(
+                          color: const Color(0xFF4C4C4C),
+                          child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                InkWell(
+                                  onTap: () => widget.onUnarchive(_taskData.length - i - 1),
+                                  child: SizedBox(
+                                    width: 50,
+                                    height: 50,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: const [
+                                        Icon(Icons.outbox, color: Colors.white),
+                                        Text('Unarchive', style: TextStyle(color: Colors.white, fontSize: 8))
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () => widget.onDelete(_taskData.length - i - 1),
+                                  child: SizedBox(
+                                    width: 50,
+                                    height: 50,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: const [
+                                        Icon(Icons.delete_forever, color: Colors.white),
+                                        Text('Delete', style: TextStyle(color: Colors.white, fontSize: 8))
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              ]
+                          )
+                      );
+                    },
                   ),
                 ),
               ],

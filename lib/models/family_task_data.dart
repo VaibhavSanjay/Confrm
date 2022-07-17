@@ -9,6 +9,14 @@ enum TaskType {
   other
 }
 
+Map<TaskType, String> taskTypes = {
+  TaskType.garbage : 'Garbage',
+  TaskType.shopping : 'Shopping',
+  TaskType.cooking : 'Cooking',
+  TaskType.cleaning : 'Cleaning',
+  TaskType.other : 'Other'
+};
+
 // A class to represent the data for a task
 class TaskData {
   late String name; // User provided name for a task
@@ -26,9 +34,9 @@ class TaskData {
   TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
     this.location = '', List<double>? coords, DateTime? due, DateTime? archived, DateTime? lastRem,
     this.completedBy = '', List<String>? assignedUsers}) {
-      this.due = due ?? DateTime.now().toUtc().add(const Duration(minutes: 5));
+      this.due = due ?? DateTime.now().toUtc().add(const Duration(hours: 1));
       this.archived = archived ?? DateTime(2101);
-      this.lastRem = lastRem ?? DateTime.now().toUtc().subtract(const Duration(minutes: 15));
+      this.lastRem = lastRem ?? DateTime.now().toUtc().subtract(const Duration(minutes: 45));
       this.coords = coords ?? [];
       this.assignedUsers = assignedUsers ?? [];
     }

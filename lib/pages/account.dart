@@ -47,51 +47,48 @@ class AccountPageState extends State<AccountPage> {
     }
   }
 
-  Widget _topMenuButton(IconData iconData, String text, Function() onPress, Color noteColor, String noteText) {
-    return InkWell(
-      onTap: onPress,
-      child: Container(
-          decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                  margin: const EdgeInsets.all(4),
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.cyan
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(iconData, size: 35),
-                      const Divider(height: 5, color: Colors.transparent),
-                      Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold))
-                    ],
-                  ),
-              ),
-              Positioned(
-                right: 0,
-                left: 45,
-                top: 0,
-                child: Card(
-                    color: noteColor,
-                    shape: const CircleBorder(),
-                    child: Align(
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Text(noteText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      ),
-                      alignment: Alignment.center,)
+  Widget _topMenuButton(IconData iconData, String text, Color noteColor, String noteText) {
+    return Container(
+        decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+                margin: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.cyan
                 ),
-              )
-            ],
-          )
-      )
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(iconData, size: 35),
+                    const Divider(height: 5, color: Colors.transparent),
+                    Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold))
+                  ],
+                ),
+            ),
+            Positioned(
+              right: 0,
+              left: 45,
+              top: 0,
+              child: Card(
+                  color: noteColor,
+                  shape: const CircleBorder(),
+                  child: Align(
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Text(noteText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                    alignment: Alignment.center,)
+              ),
+            )
+          ],
+        )
     );
   }
 
@@ -101,12 +98,13 @@ class AccountPageState extends State<AccountPage> {
         stream: ds.taskDataForFamily,
         builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
           if (snapshot.hasError) {
-            return Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: const [
-                  Icon(Icons.error_outline, size: 100),
-                  Text('Error!', style: TextStyle(fontSize: 30))
-                ]
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to load content'),));
+            return const Center(
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: CircularProgressIndicator(),
+                )
             );
           } else {
             switch (snapshot.connectionState) {
@@ -139,6 +137,7 @@ class AccountPageState extends State<AccountPage> {
                   tasksCompleted[td.completedBy] == null ? null :
                     tasksCompleted[td.completedBy] = tasksCompleted[td.completedBy]! + 1;
                 }
+                int curUser = tasksCompleted.keys.toList().indexOf(auth.id!);
 
                 Map<int, int> dayTasks = {1: 0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0};
                 Map<int, int> userDayTasks = {1: 0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0};
@@ -252,13 +251,13 @@ class AccountPageState extends State<AccountPage> {
                                       top: 70,
                                       left: 0,
                                       right: 100,
-                                      child: _topMenuButton(FontAwesomeIcons.clipboardList, 'Tasks', () => null, Colors.red, '$taskCount')
+                                      child: _topMenuButton(FontAwesomeIcons.clipboardList, 'Tasks', Colors.red, '$taskCount')
                                     ),
                                     Positioned(
                                         top: 70,
                                         right: 0,
                                         left: 100,
-                                        child: _topMenuButton(FontAwesomeIcons.boxArchive, 'Archive', () => null, Colors.green, '$archiveCount')
+                                        child: _topMenuButton(FontAwesomeIcons.boxArchive, 'Archive', Colors.green, '$archiveCount')
                                     ),
                                   ],
                                 ),
@@ -304,7 +303,7 @@ class AccountPageState extends State<AccountPage> {
                                 child: ContributeCard(
                                   users: tasksCompleted.keys.map((s) => users[s]!).toList(),
                                   tasksCompleted: tasksCompleted.values.toList(),
-                                  curUser: 0,
+                                  curUser: curUser,
                                 ),
                               ),
                             ],

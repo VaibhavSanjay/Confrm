@@ -75,7 +75,7 @@ class TaskViewPageState extends State<TaskViewPage> {
         ..completedBy = auth.id!
       );
       // Remove the earliest completed task if more than MAX_TASKS archived
-      if (_archivedTaskData.length > maxTasks) {
+      if (_archivedTaskData.length > maxArchiveTasks) {
         _archivedTaskData.removeAt(0);
       }
       ds.updateTaskData(_taskData);
@@ -110,12 +110,13 @@ class TaskViewPageState extends State<TaskViewPage> {
         builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
           if (snapshot.hasError) {
             print(snapshot.error);
-            return Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: const [
-                  Icon(Icons.error_outline, size: 100),
-                  Text('Error!', style: TextStyle(fontSize: 30))
-                ]
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to load content'),));
+            return const Center(
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: CircularProgressIndicator(),
+                )
             );
           } else {
             switch (snapshot.connectionState) {

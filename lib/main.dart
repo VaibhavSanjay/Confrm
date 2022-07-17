@@ -12,6 +12,7 @@ import 'package:family_tasks/pages/task_view.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_circular_text/circular_text.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import 'Services/authentication.dart';
 import 'Services/location_callback.dart';
@@ -113,7 +114,7 @@ class _TopPageState extends State<TopPage> {
                     if (_famExists) {
                       return MyHomePage(user: user, onLeave: () => setState((){}));
                     } else {
-                      return JoinCreateGroupPage(onJoinOrCreate: () => setState((){}));
+                      return JoinCreateGroupPage(user: user, onJoinOrCreate: () => setState((){}));
                     }
                 }
               }
@@ -150,12 +151,10 @@ class _MyHomePageState extends State<MyHomePage> {
   */
   late final List<Widget> _screens = [TaskViewPage(famID: widget.user.famID),
                                       AccountPage(famID: widget.user.famID, onLeave: widget.onLeave, location: widget.user.location)];
-  int _curPage = 0;
 
   ReceivePort port = ReceivePort();
 
   AuthenticationService auth = AuthenticationService();
-  late UserData _user;
 
   @override
   void initState() {
@@ -176,19 +175,12 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
 
-    _user = widget.user;
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
-  }
-
-  void _onPageChanged(int index) {
-    setState(() {
-      _curPage = index;
-    });
   }
 
   @override
@@ -316,10 +308,25 @@ class _MyHomePageState extends State<MyHomePage> {
           ]
         )
       ),
-      body: PageView(
-        controller: _pageController,
-        children: _screens,
-        onPageChanged: _onPageChanged,
+      body: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          PageView(
+            controller: _pageController,
+            children: _screens,
+          ),
+          Positioned(
+            bottom: 30,
+            child: SmoothPageIndicator(
+              controller: _pageController,
+              count: 2,
+              effect: const WormEffect(
+                activeDotColor: Colors.lightBlueAccent,
+                spacing: 12
+              ),
+            )
+          )
+        ],
       ),
     );
   }

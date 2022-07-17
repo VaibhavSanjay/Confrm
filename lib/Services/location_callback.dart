@@ -9,6 +9,7 @@ import 'package:background_locator_2/settings/locator_settings.dart';
 import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:family_tasks/models/family_task_data.dart';
+import 'package:family_tasks/pages/Helpers/constants.dart';
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -62,7 +63,7 @@ class LocationCallbackHandler {
         );
 
         print(meter);
-        if (meter < 1000 && (taskData[i].lastRem.add(const Duration(hours: 1)).isBefore(DateTime.now()))) {
+        if (meter < alertDistance && (taskData[i].lastRem.add(const Duration(hours: 1)).isBefore(DateTime.now()))) {
           taskData[i].lastRem = DateTime.now();
           ds.updateTaskData(taskData);
           AwesomeNotifications().createNotification(
@@ -113,12 +114,12 @@ class LocationCallbackHandler {
         initDataCallback: data,
         disposeCallback: disposeCallback,
         iosSettings: const IOSSettings(
-            accuracy: LocationAccuracy.NAVIGATION, distanceFilter: 20),
+            accuracy: LocationAccuracy.NAVIGATION, distanceFilter: filterDistance),
         autoStop: false,
         androidSettings: const AndroidSettings(
             accuracy: LocationAccuracy.NAVIGATION,
             interval: 15,
-            distanceFilter: 20,
+            distanceFilter: filterDistance,
             client: LocationClient.google,
             androidNotificationSettings: AndroidNotificationSettings(
                 notificationChannelName: 'Location tracking',
