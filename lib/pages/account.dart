@@ -1,7 +1,6 @@
 import 'package:family_tasks/Services/authentication.dart';
 import 'package:family_tasks/Services/location_callback.dart';
 import 'package:family_tasks/pages/Helpers/account_option_widgets.dart';
-import 'package:family_tasks/pages/Helpers/constants.dart';
 import 'package:family_tasks/pages/Helpers/user_data_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -29,23 +28,6 @@ class AccountPageState extends State<AccountPage> {
   late DatabaseService ds = DatabaseService(widget.famID);
   AuthenticationService auth = AuthenticationService();
   final _formKey = GlobalKey<FormState>();
-
-
-  Color _getBgColor(int val, int max) {
-    ColorTween good = ColorTween(
-        begin: Colors.lightBlueAccent, end: Colors.green);
-    ColorTween mid = ColorTween(begin: Colors.yellow, end: Colors.orange);
-    ColorTween bad = ColorTween(begin: Colors.orange, end: Colors.red);
-    if (val <= max / 4) {
-      return good.lerp(val / (max / 4)) ?? Colors.green;
-    } else if (val <= 3 * max / 5) {
-      val -= max ~/ 4;
-      return mid.lerp(val / (max / 2)) ?? Colors.orange;
-    } else {
-      val -= max ~/ 2;
-      return bad.lerp(val / (max / 4)) ?? Colors.red;
-    }
-  }
 
   Widget _topMenuButton(IconData iconData, String text, Color noteColor, String noteText) {
     return Container(
@@ -158,8 +140,6 @@ class AccountPageState extends State<AccountPage> {
                   lateTasks = taskData.take(3).toList();
                 }
 
-                Color bgColor = _getBgColor(taskCount, maxTasks);
-
                 return Padding(
                   padding: const EdgeInsets.only(left: 10, right: 10, top: 8),
                   child: ListView(
@@ -263,17 +243,20 @@ class AccountPageState extends State<AccountPage> {
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: Wrap(
-                                    spacing: 10,
-                                    children: users.map(
-                                            (key, value) => MapEntry(
-                                            key,
-                                            SizedBox(
-                                                width: 60,
-                                                child: UserDataHelper.avatarColumnFromUserData(value, 30, Colors.black)
-                                            )
-                                        )
-                                    ).values.toList()
+                                child: Center(
+                                  child: Wrap(
+                                      spacing: 10,
+                                      runSpacing: 5,
+                                      children: users.map(
+                                              (key, value) => MapEntry(
+                                              key,
+                                              SizedBox(
+                                                  width: 60,
+                                                  child: UserDataHelper.avatarColumnFromUserData(value, 30, Colors.black)
+                                              )
+                                          )
+                                      ).values.toList()
+                                  ),
                                 ),
                               ),
                             ],
@@ -307,28 +290,6 @@ class AccountPageState extends State<AccountPage> {
                               ),
                             ],
                           ),
-                        ),
-                        const Divider(height: 10, color: Colors.transparent),
-                        AccountCard(
-                          locationEnabled: _locationEnabled,
-                          onActivate: () async {
-                            Navigator.pop(context);
-                            if (await LocationCallbackHandler.onStart()) {
-                              ds.updateUserLocation(true);
-                              _locationEnabled = true;
-                            } else {
-                              print('Error starting locator (notifications problem?)');
-                            }
-                          },
-                          onDisable: () async {
-                            Navigator.pop(context);
-                            LocationCallbackHandler.onStop();
-                            ds.updateUserLocation(false);
-                            _locationEnabled = false;
-                          },
-                          getLocation: () async {
-                            return (await ds.getUser()).location;
-                          },
                         ),
                       ]
                   ),

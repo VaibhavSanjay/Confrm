@@ -18,7 +18,7 @@ final List<ColorSwatch> availableColors = [Colors.red, Colors.orange, Colors.yel
     },
   )];
 final List<String> availableColorsStrings = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Indigo', 'Purple', 'Gray', 'White'];
-const int maxArchiveTasks = 50;
-const int maxTasks = 20;
+const int maxArchiveTasks = 500;
+const int maxTasks = 50;
 const double filterDistance = 20; // 20 Meters
-const double alertDistance = 100; // 1000 Meters
+const double alertDistance = 1000; // 1000 Meters

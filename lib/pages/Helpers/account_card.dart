@@ -527,30 +527,25 @@ class LateStatusCard extends StatelessWidget {
   }
 }
 
-class AccountCard extends StatefulWidget {
-  const AccountCard({Key? key, this.locationEnabled = false, required this.onDisable, required this.onActivate, required this.getLocation}) : super(key: key);
+class LocationActivationWidget extends StatelessWidget {
+  const LocationActivationWidget({Key? key, required this.locationEnabled, required this.onActivate, required this.onDisable, required this.heroTag}) : super(key: key);
 
   final bool locationEnabled;
   final Function() onActivate;
   final Function() onDisable;
-  final Function() getLocation;
+  final String heroTag;
 
   @override
-  State<AccountCard> createState() => _AccountCardState();
-}
-
-class _AccountCardState extends State<AccountCard> {
-  late bool _locationEnabled = widget.locationEnabled;
-
-  Widget _getLocationActivationWidget(double verticalPadding) {
+  Widget build(BuildContext context) {
+    double height = locationEnabled ? 285.0 : 400.0;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: verticalPadding),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: MediaQuery.of(context).size.height/2 - height/2),
       child: Hero(
-          tag: 'location',
+          tag: heroTag,
           createRectTween: (begin, end) {
             return CustomRectTween(begin: begin, end: end);
           },
-          child: _locationEnabled ? LocationInfo(
+          child: locationEnabled ? LocationInfo(
               bgColor: Colors.green,
               iconBgColor: Colors.green,
               icon: const Icon(Icons.check, color: Colors.lightGreen, size: 80),
@@ -560,158 +555,37 @@ class _AccountCardState extends State<AccountCard> {
               onCancel: () {
                 Navigator.of(context).pop();
               },
-              onConfirm: () async {
-                widget.onDisable();
-                setState(() {
-                  _locationEnabled = false;
-                });
-              }
+              onConfirm: onDisable
           ) : LocationInfo(
-            bgColor: Colors.blue,
-            iconBgColor: Colors.green,
-            icon: const Icon(FontAwesomeIcons.earthAmericas, size: 80, color: Colors.blue),
-            title: 'Get reminders!',
-            subtitle: 'You can provide locations of a task to get a reminder when you arrive there. After pressing activate, make sure to accept the requested permissions!',
-            confirmText: 'Activate',
-            onCancel: () {
-              Navigator.of(context).pop();
-            },
-            onConfirm: () async {
-              widget.onActivate();
-              setState(() {
-                _locationEnabled = true;
-              });
-            }
-          )
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<bool>(
-      future: widget.getLocation(),
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          _locationEnabled = snapshot.data!;
-          return InkWell(
-            onTap: () {
-              Navigator.of(context).push(
-                  HeroDialogRoute(builder: (context) {
-                    return _getLocationActivationWidget(MediaQuery
-                        .of(context)
-                        .size
-                        .height / 2 - 150);
-                  }));
-            },
-            child: Hero(
-              tag: 'location',
-              child: Card(
-                  color: _locationEnabled ? Colors.green : Colors.blue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.0),
-                  ),
-                  child: Stack(
-                    children: [
-                      SizedBox(
-                        height: 100,
-                        width: double.infinity,
-                        child: ClipRect(
-                            child: Container(
-                              transform: Matrix4.translationValues(0, _locationEnabled ? 85 : 45, 0),
-                              child: Opacity(
-                                opacity: 0.5,
-                                child: Icon(
-                                    _locationEnabled ? Icons.check : FontAwesomeIcons.mapLocationDot,
-                                    size: _locationEnabled ? 300 : 250,
-                                    color: _locationEnabled ? Colors.lightGreen : Colors.lightBlue
-                                ),
-                              ),
-                            )
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 16, top: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Location',
-                                style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
-                            Text(_locationEnabled ? 'Activated' : 'Click for Information',
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white))
-                          ],
-                        ),
-                      )
-                    ],
-                  )
-              ),
-            ),
-          );
-        } else {
-          return const CircularProgressIndicator();
-        }
-      }
-    );
-  }
-}
-
-class DataCard extends StatelessWidget {
-  const DataCard({Key? key, required this.taskName, required this.taskColor, required this.textSpan}) : super(key: key);
-
-  final String taskName;
-  final Color taskColor;
-  final TextSpan textSpan;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(left: 10, right: 10, top: 5),
-      child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.0),
-          ),
-          color: taskColor,
-          elevation: 5,
-          child: SizedBox(
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.only(left: 16.0, right: 16, top: 15),
-                    child: AutoSizeText(taskName, maxLines: 1, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold)),
-                  ),
-                  const Divider(
-                    color: Colors.black,
-                    thickness: 3,
-                    indent: 16,
-                    endIndent: 200,
-                  ),
-                  Container(
-                      padding: const EdgeInsets.only(left: 16.0, right: 16, bottom: 10),
-                      child : AutoSizeText.rich(
-                        textSpan,
-                        maxLines: 1,
-                      )
-                  )
-                ],
-              )
+              bgColor: Colors.blue,
+              iconBgColor: Colors.green,
+              icon: const Icon(FontAwesomeIcons.earthAmericas, size: 80, color: Colors.blue),
+              title: 'Use your location',
+              subtitle: 'Confrm! would like to remind you to complete tasks when you are near a task location. To receive alerts, press activate and allow Confrm! to access location data at all times.',
+              subtitle2: 'Confrm! only uses location data to provide alerts. It does not store, collect or share your immediate location data. This feature can be deactivated at any time in the account menu.',
+              confirmText: 'Activate',
+              onCancel: () {
+                Navigator.of(context).pop();
+              },
+              onConfirm: onActivate
           )
       ),
     );
   }
 }
+
 
 class LocationInfo extends StatelessWidget {
   const LocationInfo({Key? key, required this.bgColor, required this.icon, required this.title,
     required this.subtitle, required this.confirmText, required this.onCancel, required this.onConfirm,
-    required this.iconBgColor}) : super(key: key);
+    required this.iconBgColor, this.subtitle2}) : super(key: key);
 
   final Color bgColor;
   final Color iconBgColor;
   final Icon icon;
   final String title;
   final String subtitle;
+  final String? subtitle2;
   final String confirmText;
   final Function() onCancel;
   final Function() onConfirm;
@@ -719,54 +593,70 @@ class LocationInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-        child: SingleChildScrollView(
+        child: CustomScrollView(
           physics: const NeverScrollableScrollPhysics(),
-          child: Column(
-            children: [
-              Stack(
-                alignment: Alignment.topCenter,
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                      color: bgColor,
-                      height: 80
-                  ),
-                  Container(
-                      transform: Matrix4.translationValues(0, 30, 0),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 5,
-                        ),
-                        color: iconBgColor,
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Stack(
+                        alignment: Alignment.topCenter,
+                        children: [
+                          Container(
+                              color: bgColor,
+                              height: 80
+                          ),
+                          Container(
+                              transform: Matrix4.translationValues(0, 30, 0),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 5,
+                                ),
+                                color: iconBgColor,
+                              ),
+                              child: icon
+                          ),
+                        ],
                       ),
-                      child: icon
+                      Container(
+                          padding: const EdgeInsets.only(top: 32),
+                          child: Text(title, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold))
+                      ),
+                      Container(
+                          padding: const EdgeInsets.only(left: 8, right: 8, top: 15),
+                          child: Text(subtitle, style: const TextStyle(fontSize: 14), textAlign: TextAlign.left,)
+                      ),
+                      subtitle2 != null ? Container(
+                          padding: const EdgeInsets.only(left: 8, right: 8, top: 25),
+                          child: Text(subtitle2!, style: const TextStyle(fontSize: 14), textAlign: TextAlign.left,)
+                      ) : const SizedBox.shrink(),
+                    ],
                   ),
-                ],
-              ),
-              Container(
-                  padding: const EdgeInsets.only(top: 32),
-                  child: Text(title, style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold))
-              ),
-              Container(
-                  padding: const EdgeInsets.only(left: 8, right: 8, top: 8),
-                  child: Text(subtitle, style: const TextStyle(fontSize: 18))
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                      child: const Text('Cancel'),
-                      onPressed: onCancel
-                  ),
-                  TextButton(
-                      child: Text(confirmText),
-                      onPressed: onConfirm
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                          child: const Text('Cancel'),
+                          onPressed: onCancel
+                      ),
+                      TextButton(
+                          child: Text(confirmText),
+                          onPressed: onConfirm
+                      )
+                    ],
                   )
                 ],
-              )
-            ],
-          ),
+              ),
+            ),
+          ],
         )
     );
   }

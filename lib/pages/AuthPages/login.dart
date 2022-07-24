@@ -92,13 +92,15 @@ class _LoginWidgetState extends State<LoginWidget> {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User does not exist')));
                       break;
                     case SignResults.wrongPass:
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Incorrect Password')));
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Incorrect Password')));
                       break;
                     case SignResults.invalidEmail:
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid Email')));
                       break;
                     case SignResults.fail:
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('An error occurred signing in')));
+                      break;
+                    default:
                       break;
                   }
                 },
@@ -111,9 +113,9 @@ class _LoginWidgetState extends State<LoginWidget> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Don't have an account? ", style: TextStyle(fontSize: 16)),
+                const Text("Don't have an account? ", style: TextStyle(fontSize: 16)),
                 InkWell(
-                  child: Text('Sign up', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  child: const Text('Sign up', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   onTap: widget.swap
                 )
               ]

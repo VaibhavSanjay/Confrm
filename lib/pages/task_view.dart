@@ -109,7 +109,6 @@ class TaskViewPageState extends State<TaskViewPage> {
         stream: stream,
         builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
           if (snapshot.hasError) {
-            print(snapshot.error);
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to load content'),));
             return const Center(
                 child: SizedBox(

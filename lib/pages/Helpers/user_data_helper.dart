@@ -41,7 +41,7 @@ class UserDataHelper {
           length,
               (index) => Positioned(
             top: 5,
-            right: (length - index - 1) * (2/3 * radius) + 5,
+            right: (length - index - 1) * (5/12 * radius) + 5,
             child: avatarFromUserData(users[index], radius)
           )
       ) : [

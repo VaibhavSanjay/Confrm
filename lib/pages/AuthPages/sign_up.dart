@@ -125,6 +125,8 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                       case SignResults.fail:
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('An error occurred signing up')));
                         break;
+                      default:
+                        break;
                     }
                   }
                 },

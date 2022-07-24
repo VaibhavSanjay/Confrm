@@ -28,15 +28,17 @@ class TaskData {
   late String location;
   late List<double> coords;
   late DateTime lastRem;
+  late List<String> reminded;
   late String completedBy;
   late List<String> assignedUsers;
 
   TaskData({this.name = '', this.taskType = TaskType.other, this.desc = '', this.color = Colors.grey,
     this.location = '', List<double>? coords, DateTime? due, DateTime? archived, DateTime? lastRem,
-    this.completedBy = '', List<String>? assignedUsers}) {
+    List<String>? reminded, this.completedBy = '', List<String>? assignedUsers}) {
       this.due = due ?? DateTime.now().toUtc().add(const Duration(hours: 1));
       this.archived = archived ?? DateTime(2101);
       this.lastRem = lastRem ?? DateTime.now().toUtc().subtract(const Duration(minutes: 45));
+      this.reminded = reminded ?? [];
       this.coords = coords ?? [];
       this.assignedUsers = assignedUsers ?? [];
     }
@@ -51,6 +53,7 @@ class TaskData {
       location = td.location;
       coords = td.coords;
       lastRem = td.lastRem;
+      reminded = td.reminded;
       completedBy = td.completedBy;
       assignedUsers = td.assignedUsers;
     }

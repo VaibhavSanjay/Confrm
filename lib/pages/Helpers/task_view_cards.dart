@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:family_tasks/pages/Helpers/user_data_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_material_color_picker/flutter_material_color_picker.dart';
-import 'package:flutter_reaction_button/flutter_reaction_button.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
@@ -169,7 +168,6 @@ class EditTaskData extends StatefulWidget {
 }
 
 class _EditTaskDataState extends State<EditTaskData> {
-  final double _editIconSize = 25;
   late TaskData _newTask;
   late Map<String, List> _users;
   final TextEditingController _textController = TextEditingController();
@@ -308,9 +306,9 @@ class _EditTaskDataState extends State<EditTaskData> {
                                             child: Padding(
                                               padding: const EdgeInsets.only(bottom: 10),
                                               child: TextFormField(
-                                                keyboardType: TextInputType.multiline,
                                                 minLines: 1,
                                                 maxLines: 2,
+                                                keyboardType: TextInputType.text,
                                                 decoration: const InputDecoration(
                                                     isDense: true,
                                                     contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -323,7 +321,7 @@ class _EditTaskDataState extends State<EditTaskData> {
                                                     counterText: ''
                                                 ),
                                                 initialValue: _newTask.desc,
-                                                maxLength: 60,
+                                                maxLength: 150,
                                                 onChanged: (String? value) {
                                                   _newTask.desc = value ?? '';
                                                 },
@@ -671,42 +669,6 @@ class _ArchiveTaskDataState extends State<ArchiveTaskData> {
                   title: Text(_taskData[i].name), // Name of task
                   subtitle: Text('Completed: ${daysOfWeek[_taskData[i].archived.toLocal().weekday]}, '
                       '${DateFormat('h:mm a').format(_taskData[i].archived.toLocal())}'), // Due date
-                  /*
-                  trailing: ReactionButton<String>(
-                    boxPosition: Position.BOTTOM,
-                    boxElevation: 10,
-                    onReactionChanged: (String? value) {
-                      if (value == 'unarchive') {
-                        widget.onUnarchive(_taskData.length - i - 1);
-                      } else if (value == 'delete') {
-                        widget.onDelete(_taskData.length - i - 1);
-                      }
-                    },
-                    initialReaction: Reaction<String>(
-                        icon: const Icon(Icons.more_vert),
-                        value: 'edit'
-                    ),
-                    reactions: [
-                      Reaction<String>(
-                          previewIcon: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                              child: const Icon(Icons.outbox, size: 30)
-                          ),
-                          icon: const SizedBox.shrink(),
-                          value: 'unarchive'
-                      ),
-                      Reaction<String>(
-                          previewIcon: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                              child: const Icon(Icons.delete_forever, size: 30)
-                          ),
-                          icon: const SizedBox.shrink(),
-                          value: 'delete'
-                      )
-                    ],
-                    boxDuration: const Duration(milliseconds: 100),
-                  ),
-                   */
                   trailing: CustomPopupMenu(
                     position: PreferredPosition.bottom,
                     pressType: PressType.singleClick,
@@ -897,7 +859,13 @@ class UserPicker extends StatefulWidget {
 }
 
 class _UserPickerState extends State<UserPicker> {
-  late Map<String, List> _userPicked = widget.userPicked;
+  late Map<String, List> _userPicked;
+
+  @override
+  void initState() {
+    super.initState();
+    _userPicked = widget.userPicked;
+  }
 
   @override
   Widget build(BuildContext context) {

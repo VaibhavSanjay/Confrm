@@ -62,8 +62,8 @@ class AuthenticationService {
         return SignResults.fail;
       }
     }
-    await userCredential.user?.updateDisplayName(name);
-    await DatabaseService('').newUser(userCredential.user!.uid);
+    userCredential.user?.updateDisplayName(name);
+    DatabaseService('').newUser(userCredential.user!.uid);
     return SignResults.success;
   }
 

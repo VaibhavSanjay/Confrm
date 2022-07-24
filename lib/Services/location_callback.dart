@@ -14,37 +14,37 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'location_service.dart';
 import 'notifications.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+
+enum LocationStart {
+  success,
+  notificationFail,
+  locationWhenInUseFail,
+  locationAlwaysFail
+}
 
 class LocationCallbackHandler {
   static const Distance distance = Distance();
 
   static Future<void> initPlatformState(bool location) async {
-    print('Initializing...');
+    debugPrint('Initializing...');
     await BackgroundLocator.initialize();
-    print('Initialization done');
-    print('Running');
-    print(await BackgroundLocator.isRegisterLocationUpdate());
-    print(await BackgroundLocator.isServiceRunning());
+    debugPrint('Initialization done');
+    debugPrint('Running');
     if (location && !await BackgroundLocator.isRegisterLocationUpdate()) {
-      print('Reregister background locator');
+      debugPrint('Reregister background locator');
       startLocator();
     }
   }
 
   static Future<void> initCallback(Map<dynamic, dynamic> params) async {
-    LocationServiceRepository myLocationCallbackRepository =
-    LocationServiceRepository();
-    await myLocationCallbackRepository.init(params);
+    debugPrint('init locator');
   }
 
   static Future<void> disposeCallback() async {
-    LocationServiceRepository myLocationCallbackRepository =
-    LocationServiceRepository();
-    await myLocationCallbackRepository.dispose();
+    debugPrint('dispose locator');
   }
 
   static Future<void> callback(LocationDto data) async {
@@ -52,6 +52,7 @@ class LocationCallbackHandler {
     await Firebase.initializeApp();
 
     DatabaseService ds = DatabaseService((await DatabaseService('').getUser()).famID);
+    AuthenticationService auth = AuthenticationService();
     FamilyTaskData ftd = await ds.getSingleSnapshot();
     List<TaskData> taskData = ftd.tasks;
 
@@ -62,56 +63,58 @@ class LocationCallbackHandler {
             LatLng(taskData[i].coords[0], taskData[i].coords[1])
         );
 
-        print(meter);
-        if (meter < alertDistance && (taskData[i].lastRem.add(const Duration(hours: 1)).isBefore(DateTime.now()))) {
+        // (taskData[i].lastRem.add(const Duration(hours: 1)).isBefore(DateTime.now()))
+        if (meter < alertDistance && !taskData[i].reminded.contains(auth.id!)) {
           taskData[i].lastRem = DateTime.now();
+          taskData[i].reminded.add(auth.id!);
           ds.updateTaskData(taskData);
+
           AwesomeNotifications().createNotification(
               content: NotificationContent(
                   id: 10,
                   channelKey: 'basic_channel',
-                  title: 'Task: ${taskData[i].name}',
+                  title: 'Reminder to complete "${taskData[i].name}"',
                   body: 'You have arrived at ${taskData[i].location}, so remember to finish your task!'
               )
           );
-          LocationServiceRepository myLocationCallbackRepository =
-          LocationServiceRepository();
-          await myLocationCallbackRepository.callback(data);
-      }
+
+        }
       }
     }
   }
 
   static Future<void> notificationCallback() async {
-    print('***notificationCallback');
+    debugPrint('***notificationCallback');
   }
 
-  static Future<bool> onStart() async {
-    print('Locator Starting.');
-    if (await Notifications.requestNotifications() && await checkLocationPermission()) {
-      await startLocator();
-      return true;
+  static Future<LocationStart> onStart() async {
+    debugPrint('Locator Starting.');
+    if (await Notifications.requestNotifications()) {
+      LocationStart status = await checkLocationPermission();
+      if (status == LocationStart.success) {
+        startLocator();
+      }
+      return status;
     } else {
-      return false;
+      return LocationStart.notificationFail;
     }
   }
 
-  static Future<bool> checkLocationPermission() async {
-    print('Requesting Location Permission.');
+  static Future<LocationStart> checkLocationPermission() async {
+    debugPrint('Requesting Location Permission.');
     if (await Permission.locationWhenInUse.request().isGranted) {
       return await Permission.locationAlways
           .request()
-          .isGranted;
+          .isGranted ? LocationStart.success : LocationStart.locationAlwaysFail;
     } else {
-      return false;
+      return LocationStart.locationWhenInUseFail;
     }
   }
 
-  static Future<void> startLocator() async{
-    Map<String, dynamic> data = {'countInit': 1};
+  static Future<void> startLocator() async {
     return await BackgroundLocator.registerLocationUpdate(callback,
         initCallback: initCallback,
-        initDataCallback: data,
+        initDataCallback: {'data': 1},
         disposeCallback: disposeCallback,
         iosSettings: const IOSSettings(
             accuracy: LocationAccuracy.NAVIGATION, distanceFilter: filterDistance),
@@ -122,11 +125,12 @@ class LocationCallbackHandler {
             distanceFilter: filterDistance,
             client: LocationClient.google,
             androidNotificationSettings: AndroidNotificationSettings(
-                notificationChannelName: 'Location tracking',
-                notificationTitle: 'Start Location Tracking',
-                notificationMsg: 'You will be notified when you are close to a task location',
+                notificationChannelName: 'Background Location Notifications',
+                notificationTitle: 'Background Location Notifications',
+                notificationMsg: 'You will be notified when you are close to a task location.',
                 notificationBigMsg:
-                'You have activated the location settings option. When you are close to a location of a task, the app will notify you. You can turn this feature off at any time in the Confrm! app or in your settings.',
+                'You have activated the location settings option. When you are close to the location of a task, the app will notify you even'
+                    'when the app is closed. You can turn this feature off at any time in the Confrm! app or in your settings.',
                 notificationIconColor: Colors.blue,
                 notificationTapCallback:
                 notificationCallback)

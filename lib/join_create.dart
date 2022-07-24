@@ -41,29 +41,23 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                  children: [
-                    Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 0),
-                        child: Icon(icon, size: MediaQuery
-                            .of(context)
-                            .size
-                            .height / 8, color: Colors.white)
-                    ),
-                    Container(padding: const EdgeInsets.only(left: 20),
-                        child: Text(text, style: const TextStyle(
-                            fontSize: 50, color: Colors.white)))
-                  ]
+              SizedBox(
+                width: 175,
+                child: Column(
+                    children: [
+                      Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 10, horizontal: 0),
+                          child: Icon(icon, size: 100, color: Colors.white)
+                      ),
+                      Container(padding: const EdgeInsets.only(left: 20),
+                          child: Text(text, style: const TextStyle(
+                              fontSize: 50, color: Colors.white)))
+                    ]
+                ),
               ),
-              Container(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width / 3,
-                padding: const EdgeInsets.only(top: 10),
-                child: Text(desc, style: const TextStyle(fontSize: 16, color: Colors.white)),
-              )
+              const VerticalDivider(width: 10, color: Colors.transparent),
+              Expanded(child: Text(desc, style: const TextStyle(fontSize: 16, color: Colors.white)))
             ],
           ),
         ),
@@ -97,8 +91,8 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
                             fontWeight: FontWeight.bold
                         ),
                       ),
-                      space: 8,
-                      startAngle: -87,
+                      space: 7,
+                      startAngle: -88,
                       startAngleAlignment: StartAngleAlignment.center
                   )
                 ],
@@ -199,9 +193,23 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
               )
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Divider(height: 20),
+              Padding(
+                padding: const EdgeInsets.only(top: 10, bottom: 10),
+                child: Row(
+                  children: [
+                    Image.asset( // Icon at the top
+                        'assets/icon/icon_android.png',
+                        fit: BoxFit.contain,
+                        height: 80
+                    ),
+                    const VerticalDivider(width: 20, color: Colors.transparent),
+                    const Expanded(child: Text('Make your tasks count!', style: TextStyle(fontSize: 30, color: Colors.white, fontWeight: FontWeight.bold)))
+                  ],
+                ),
+              ),
+              const Divider(height: 20, color: Colors.transparent),
               _getButton(
                 FontAwesomeIcons.userPlus,
                 'Create',
@@ -273,7 +281,7 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
                 color: Colors.transparent,
               ),
               _getButton(
-                  FontAwesomeIcons.peopleRoof,
+                  FontAwesomeIcons.userGroup,
                   'Join',
                   'If someone already created a group, join it with their ID.',
                       () {

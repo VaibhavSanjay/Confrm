@@ -43,6 +43,7 @@ class DatabaseService {
             location: data['data'][index]['location'],
             coords: data['data'][index]['coords'].cast<double>(),
             lastRem: (data['data'][index]['lastRem'] as Timestamp).toDate(),
+            reminded: data['data'][index]['reminded'].cast<String>(),
             assignedUsers: data['data'][index]['assignedUsers'].cast<String>()
           )
         ),
@@ -57,6 +58,7 @@ class DatabaseService {
               location: data['archive'][index]['location'],
               coords: data['archive'][index]['coords'].cast<double>(),
               lastRem: (data['archive'][index]['lastRem'] as Timestamp).toDate(),
+              reminded: data['archive'][index]['reminded'].cast<String>(),
               assignedUsers: data['archive'][index]['assignedUsers'].cast<String>(),
               archived: (data['archive'][index]['archived'] as Timestamp).toDate(),
               completedBy: data['archive'][index]['completedBy']
@@ -88,6 +90,7 @@ class DatabaseService {
         'location': td.location,
         'coords': td.coords.cast<dynamic>(),
         'lastRem': Timestamp.fromDate(td.lastRem),
+        'reminded': td.reminded.cast<dynamic>(),
         'assignedUsers': td.assignedUsers.cast<dynamic>()
       }).toList()
     });
@@ -105,6 +108,7 @@ class DatabaseService {
         'location': td.location,
         'coords': td.coords.cast<dynamic>(),
         'lastRem': Timestamp.fromDate(td.lastRem),
+        'reminded': td.reminded.cast<dynamic>(),
         'assignedUsers': td.assignedUsers.cast<dynamic>(),
         'archived': Timestamp.fromDate(td.archived),
         'completedBy': td.completedBy

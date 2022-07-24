@@ -1,6 +1,3 @@
-import 'dart:isolate';
-import 'dart:ui';
-
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:family_tasks/Services/database.dart';
 import 'package:family_tasks/join_create.dart';
@@ -18,7 +15,6 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import 'Services/authentication.dart';
 import 'Services/location_callback.dart';
-import 'Services/location_service.dart';
 import 'models/user_data.dart';
 
 void main() async {
@@ -46,7 +42,7 @@ void main() async {
       debug: true
   );
   AwesomeNotifications().actionStream.listen((ReceivedNotification receivedNotification){
-        print('Notification!');
+    debugPrint('Notification!');
       }
   );
   runApp(const FamilyTasks());
@@ -76,14 +72,15 @@ class TopPage extends StatefulWidget {
 }
 
 class _TopPageState extends State<TopPage> {
-  bool _famExists = false;
   late UserData user;
   DatabaseService ds = DatabaseService('');
   AuthenticationService as = AuthenticationService();
 
-  Future _checkExists() async {
-    user = await ds.getUser();
-    _famExists = await ds.famExists(user.famID);
+  Future<bool> _checkExists() async {
+    return Future<bool>.delayed(const Duration(seconds: 1), () async {
+      user = await ds.getUser();
+      return await ds.famExists(user.famID);
+    });
   }
 
   @override
@@ -94,7 +91,7 @@ class _TopPageState extends State<TopPage> {
           if (!snapshot.hasData) {
             return const AuthPage();
           } else {
-            return FutureBuilder(
+            return FutureBuilder<bool>(
               future: _checkExists(),
               builder: (context, snapshot) {
                 switch (snapshot.connectionState) {
@@ -113,7 +110,7 @@ class _TopPageState extends State<TopPage> {
                   case ConnectionState.active:
                     return const Text('');
                   case ConnectionState.done:
-                    if (_famExists) {
+                    if (snapshot.data!) {
                       return MyHomePage(user: user, onLeave: () => setState((){}));
                     } else {
                       return JoinCreateGroupPage(user: user, onJoinOrCreate: () => setState((){}));
@@ -154,7 +151,6 @@ class _MyHomePageState extends State<MyHomePage> {
   late final List<Widget> _screens = [TaskViewPage(famID: widget.user.famID),
                                       AccountPage(famID: widget.user.famID, onLeave: widget.onLeave, location: widget.user.location)];
 
-  ReceivePort port = ReceivePort();
   late DatabaseService ds = DatabaseService(widget.user.famID);
 
   AuthenticationService auth = AuthenticationService();
@@ -163,21 +159,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     LocationCallbackHandler.initPlatformState(widget.user.location);
-    if (IsolateNameServer.lookupPortByName(
-        LocationServiceRepository.isolateName) !=
-        null) {
-      IsolateNameServer.removePortNameMapping(
-          LocationServiceRepository.isolateName);
-    }
-
-    IsolateNameServer.registerPortWithName(
-        port.sendPort, LocationServiceRepository.isolateName);
-
-    port.listen( (dynamic data) async {
-        print('Got data in app!');
-      },
-    );
-
   }
 
   @override
@@ -190,85 +171,27 @@ class _MyHomePageState extends State<MyHomePage> {
     return (await ds.getUser()).location;
   }
 
-  Widget _getLocationActivationWidget(bool locationEnabled, double verticalPadding) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: verticalPadding),
-      child: Hero(
-          tag: 'locationDrawer',
-          createRectTween: (begin, end) {
-            return CustomRectTween(begin: begin, end: end);
-          },
-          child: locationEnabled ? LocationInfo(
-              bgColor: Colors.green,
-              iconBgColor: Colors.green,
-              icon: const Icon(Icons.check, color: Colors.lightGreen, size: 80),
-              title: 'Activated',
-              subtitle: 'You will receive notifications whenever you\'re near a task. Click "Disable" to disable location tracking (you can always activate it again later).',
-              confirmText: 'Disable',
-              onCancel: () {
-                Navigator.of(context).pop();
-              },
-              onConfirm: () async {
-                Navigator.pop(context);
-                LocationCallbackHandler.onStop();
-                ds.updateUserLocation(false);
-                setState(() {});
-              }
-          ) : LocationInfo(
-              bgColor: Colors.blue,
-              iconBgColor: Colors.green,
-              icon: const Icon(FontAwesomeIcons.earthAmericas, size: 80, color: Colors.blue),
-              title: 'Get reminders!',
-              subtitle: 'You can provide locations of a task to get a reminder when you arrive there. After pressing activate, make sure to accept the requested permissions!',
-              confirmText: 'Activate',
-              onCancel: () {
-                Navigator.of(context).pop();
-              },
-              onConfirm: () async {
-                Navigator.pop(context);
-                if (await LocationCallbackHandler.onStart()) {
-                  ds.updateUserLocation(true);
-                  setState(() {});
-                } else {
-                  print('Error starting locator (notifications problem?)');
-                }
-              }
-          )
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false, // Allows keyboard to go over widgets
       appBar: AppBar(
-        title: Stack(
-          alignment: Alignment.center,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Image.asset( // Icon at the top
               'assets/icon/icon_android.png',
-              height: 40,
+              height: 35,
               fit: BoxFit.contain,
             ),
-            Container(  // Curving text Confrm!
-              padding: const EdgeInsets.only(top: 220),
-              child: CircularText(
-                children: [
-                  TextItem(
-                    text: const Text(
-                      'Confrm!',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold
-                      ),
-                    ),
-                    space: 8,
-                    startAngle: -87,
-                    startAngleAlignment: StartAngleAlignment.center
-                  )
-                ],
+            const VerticalDivider(width: 5, color: Colors.transparent,),
+            const Text(
+              'Confrm!',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold
               ),
             ),
           ],
@@ -352,6 +275,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       onTap: () {
                         setState(() {
                           Navigator.pop(context);
+                          LocationCallbackHandler.onStop();
                           auth.signOut();
                         });
                       }
@@ -372,16 +296,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (!snapshot.hasData) {
                     return const CircularProgressIndicator();
                   } else {
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15.0),
-                      ),
-                      color: snapshot.data! ? Colors.green : Colors.blue,
-                      child: Column(
-                        children: [
-                          Hero(
-                            tag: 'locationDrawer',
-                            child: Material(
+                    return Hero(
+                      tag: 'locationDrawer',
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15.0),
+                        ),
+                        color: snapshot.data! ? Colors.green : Colors.blue,
+                        child: Column(
+                          children: [
+                            Material(
                               color: Colors.transparent,
                               child: ListTile(
                                   leading: const Icon(FontAwesomeIcons.locationDot),
@@ -389,16 +313,38 @@ class _MyHomePageState extends State<MyHomePage> {
                                   onTap: () async {
                                     Navigator.of(context).push(
                                         HeroDialogRoute(builder: (context) {
-                                          return _getLocationActivationWidget(snapshot.data!, MediaQuery
-                                              .of(context)
-                                              .size
-                                              .height / 2 - 150);
+                                          return LocationActivationWidget(
+                                              locationEnabled: snapshot.data!,
+                                              onActivate: () async {
+                                                Navigator.pop(context);
+                                                switch (await LocationCallbackHandler.onStart()) {
+                                                  case LocationStart.notificationFail:
+                                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must enable notifications')));
+                                                    break;
+                                                  case LocationStart.locationWhenInUseFail:
+                                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must enable location when in use')));
+                                                    break;
+                                                  case LocationStart.locationAlwaysFail:
+                                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must enable location always')));
+                                                    break;
+                                                  case LocationStart.success:
+                                                    ds.updateUserLocation(true);
+                                                    setState(() {});
+                                                }
+                                              },
+                                              onDisable: () async {
+                                                Navigator.pop(context);
+                                                LocationCallbackHandler.onStop();
+                                                ds.updateUserLocation(false);
+                                                setState(() {});
+                                              },
+                                              heroTag: 'locationDrawer');
                                         }));
                                   }
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   }
