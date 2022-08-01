@@ -141,7 +141,7 @@ class AccountPageState extends State<AccountPage> {
                 }
 
                 return Padding(
-                  padding: const EdgeInsets.only(left: 10, right: 10, top: 8),
+                  padding: const EdgeInsets.only(left: 10, right: 10, top: 8, bottom: 8),
                   child: ListView(
                       children: [
                         Card(

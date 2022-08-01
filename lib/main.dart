@@ -10,7 +10,6 @@ import 'package:family_tasks/pages/account.dart';
 import 'package:family_tasks/pages/task_view.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_circular_text/circular_text.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import 'Services/authentication.dart';
@@ -154,11 +153,53 @@ class _MyHomePageState extends State<MyHomePage> {
   late DatabaseService ds = DatabaseService(widget.user.famID);
 
   AuthenticationService auth = AuthenticationService();
+  bool _initialPushComplete = false;
 
   @override
   void initState() {
     super.initState();
     LocationCallbackHandler.initPlatformState(widget.user.location);
+    if (!widget.user.location) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_initialPushComplete) {
+          _showLocationInfo(context);
+        }
+        _initialPushComplete = true;
+      });
+    }
+  }
+
+  void _showLocationInfo(BuildContext context) {
+    debugPrint('showing location info');
+    Navigator.of(context).push(
+        HeroDialogRoute(builder: (context) {
+          return LocationActivationWidget(
+              locationEnabled: false,
+              onActivate: () async {
+                Navigator.pop(context);
+                switch (await LocationCallbackHandler.onStart()) {
+                  case LocationStart.notificationFail:
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must enable notifications')));
+                    break;
+                  case LocationStart.locationWhenInUseFail:
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must enable location when in use')));
+                    break;
+                  case LocationStart.locationAlwaysFail:
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must enable location always')));
+                    break;
+                  case LocationStart.success:
+                    ds.updateUserLocation(true);
+                    setState(() {});
+                }
+              },
+              onDisable: () async {
+                Navigator.pop(context);
+                LocationCallbackHandler.onStop();
+                ds.updateUserLocation(false);
+                setState(() {});
+              },
+              heroTag: 'locationDrawer');
+        }));
   }
 
   @override
@@ -264,6 +305,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       title: const Text('Leave Group', style: TextStyle(fontSize: 14)),
                       onTap: () async {
                         Navigator.pop(context);
+                        LocationCallbackHandler.onStop();
                         await ds.leaveUserFamily();
                         widget.onLeave();
                       }
