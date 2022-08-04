@@ -74,9 +74,11 @@ class _TopPageState extends State<TopPage> {
   late UserData user;
   DatabaseService ds = DatabaseService('');
   AuthenticationService as = AuthenticationService();
+  bool signingIn = false;
 
   Future<bool> _checkExists() async {
-    return Future<bool>.delayed(const Duration(seconds: 1), () async {
+    // Delay since Firebase needs time to set family ID for user on sign up
+    return Future<bool>.delayed(const Duration(milliseconds: 500), () async {
       user = await ds.getUser();
       return await ds.famExists(user.famID);
     });
@@ -88,7 +90,7 @@ class _TopPageState extends State<TopPage> {
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const AuthPage();
+            return AuthPage(onPress: () => signingIn = true);
           } else {
             return FutureBuilder<bool>(
               future: _checkExists(),
@@ -110,7 +112,7 @@ class _TopPageState extends State<TopPage> {
                     return const Text('');
                   case ConnectionState.done:
                     if (snapshot.data!) {
-                      return MyHomePage(user: user, onLeave: () => setState((){}));
+                      return MyHomePage(user: user, onLeave: () => setState((){}), signingIn: signingIn);
                     } else {
                       return JoinCreateGroupPage(user: user, onJoinOrCreate: () => setState((){}));
                     }
@@ -124,7 +126,7 @@ class _TopPageState extends State<TopPage> {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.user, required this.onLeave}) : super(key: key);
+  const MyHomePage({Key? key, required this.user, required this.onLeave, required this.signingIn}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -136,6 +138,7 @@ class MyHomePage extends StatefulWidget {
   // always marked "final".
   final UserData user;
   final Function() onLeave;
+  final bool signingIn;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -159,13 +162,15 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     LocationCallbackHandler.initPlatformState(widget.user.location);
-    if (!widget.user.location) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_initialPushComplete) {
-          _showLocationInfo(context);
-        }
-        _initialPushComplete = true;
-      });
+    if (widget.signingIn) {
+      if (!widget.user.location) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_initialPushComplete) {
+            _showLocationInfo(context);
+          }
+          _initialPushComplete = true;
+        });
+      }
     }
   }
 
@@ -318,7 +323,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         setState(() {
                           Navigator.pop(context);
                           LocationCallbackHandler.onStop();
-                          auth.signOut();
+                          Future.delayed(const Duration(milliseconds: 250), () => auth.signOut());
                         });
                       }
                     ),

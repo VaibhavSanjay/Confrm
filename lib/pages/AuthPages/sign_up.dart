@@ -4,9 +4,10 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../Services/authentication.dart';
 
 class SignUpWidget extends StatefulWidget {
-  const SignUpWidget({Key? key, required this.swap}) : super(key: key);
+  const SignUpWidget({Key? key, required this.swap, required this.onSignUp}) : super(key: key);
 
   final Function() swap;
+  final Function() onSignUp;
 
   @override
   State<SignUpWidget> createState() => _SignUpWidgetState();
@@ -124,6 +125,9 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                         break;
                       case SignResults.fail:
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('An error occurred signing up')));
+                        break;
+                      case SignResults.success:
+                        widget.onSignUp();
                         break;
                       default:
                         break;
