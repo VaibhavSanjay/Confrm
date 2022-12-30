@@ -41,20 +41,20 @@ class _LoginWidgetState extends State<LoginWidget> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 50, bottom: 10),
+            padding: const EdgeInsets.only(top: 60, bottom: 10),
             child: Image.asset( // Icon at the top
               'assets/icon/icon_android.png',
               fit: BoxFit.contain,
-              height: 150
+              height: 0.2 * MediaQuery.of(context).size.height
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
-            child: Align(alignment: Alignment.centerLeft, child: Text('Welcome', style: TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.bold))),
+          Padding(
+            padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+            child: Align(alignment: Alignment.centerLeft, child: Text('Welcome', style: TextStyle(fontSize: 0.08 * MediaQuery.of(context).size.height, color: Colors.white, fontWeight: FontWeight.bold))),
           ),
-          const Padding(
-            padding: EdgeInsets.only(left: 16, bottom: 30),
-            child: Align(alignment: Alignment.centerLeft, child: Text('Enter your email address and password.', style: TextStyle(fontSize: 17, color: Colors.white))),
+          Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 20),
+            child: Align(alignment: Alignment.centerLeft, child: Text('Enter your email address and password.', style: TextStyle(fontSize: 0.03 * MediaQuery.of(context).size.height, color: Colors.white))),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
@@ -83,7 +83,7 @@ class _LoginWidgetState extends State<LoginWidget> {
             padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16),
             child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.blue,
+                  backgroundColor: Colors.blue,
                   minimumSize: const Size.fromHeight(50), // NEW
                 ),
                 onPressed: () async {
@@ -119,8 +119,8 @@ class _LoginWidgetState extends State<LoginWidget> {
               children: [
                 const Text("Don't have an account? ", style: TextStyle(fontSize: 16)),
                 InkWell(
-                  child: const Text('Sign up', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  onTap: widget.swap
+                  onTap: widget.swap,
+                  child: const Text('Sign up', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
                 )
               ]
             ),

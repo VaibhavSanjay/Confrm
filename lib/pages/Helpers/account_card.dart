@@ -537,7 +537,7 @@ class LocationActivationWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double height = locationEnabled ? 285.0 : 400.0;
+    double height = locationEnabled ? 285.0 : 440.0;
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: MediaQuery.of(context).size.height/2 - height/2),
       child: Hero(

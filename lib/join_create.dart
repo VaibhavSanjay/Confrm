@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:family_tasks/Services/authentication.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_circular_text/circular_text/model.dart';
@@ -24,84 +25,11 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
   DatabaseService ds = DatabaseService('');
   AuthenticationService auth = AuthenticationService();
 
-  Widget _getButton(IconData icon, String text, String desc,
-      Function() onPressed) {
-    return InkWell(
-      onTap: onPressed,
-      child: Card(
-        color: Colors.blue,
-        elevation: 5,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(15))
-        ),
-        child: Container(
-          margin: const EdgeInsets.only(
-              top: 20, bottom: 20, left: 10, right: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 175,
-                child: Column(
-                    children: [
-                      Container(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 0),
-                          child: Icon(icon, size: 100, color: Colors.white)
-                      ),
-                      Container(padding: const EdgeInsets.only(left: 20),
-                          child: Text(text, style: const TextStyle(
-                              fontSize: 50, color: Colors.white)))
-                    ]
-                ),
-              ),
-              const VerticalDivider(width: 10, color: Colors.transparent),
-              Expanded(child: Text(desc, style: const TextStyle(fontSize: 16, color: Colors.white)))
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // Allows keyboard to go over widgets
-      appBar: AppBar(
-        title: Stack(
-          alignment: Alignment.center,
-          children: [
-            Image.asset( // Icon at the top
-              'assets/icon/icon_android.png',
-              height: 40,
-              fit: BoxFit.contain,
-            ),
-            Container(  // Curving text Confrm!
-              padding: const EdgeInsets.only(top: 220),
-              child: CircularText(
-                children: [
-                  TextItem(
-                      text: const Text(
-                        'Confrm!',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold
-                        ),
-                      ),
-                      space: 7,
-                      startAngle: -88,
-                      startAngleAlignment: StartAngleAlignment.center
-                  )
-                ],
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
-      ),
+        resizeToAvoidBottomInset: false, // Allows keyboard to go over widgets
+        appBar: AppBar(),
         drawer: Drawer(
             child: ListView(
                 padding: EdgeInsets.zero,
@@ -194,160 +122,200 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 10, bottom: 10),
-                child: Row(
+                padding: EdgeInsets.only(top: 0.03 * MediaQuery.of(context).size.height, bottom: 10),
+                child: Image.asset( // Icon at the top
+                    'assets/icon/icon_android.png',
+                    fit: BoxFit.contain,
+                    height: 0.2 * MediaQuery.of(context).size.height
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.35,
+                child: Column(
                   children: [
-                    Image.asset( // Icon at the top
-                        'assets/icon/icon_android.png',
-                        fit: BoxFit.contain,
-                        height: 80
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                      child: AutoSizeText(
+                        "Welcome to Confrm!",
+                        maxLines: 2,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: MediaQuery.of(context).size.height * 0.06,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),
                     ),
-                    const VerticalDivider(width: 20, color: Colors.transparent),
-                    const Expanded(child: Text('Make your tasks count!', style: TextStyle(fontSize: 30, color: Colors.white, fontWeight: FontWeight.bold)))
+                    Padding(
+                      padding: const EdgeInsets.only(top:15, right:15, left: 15),
+                      child: AutoSizeText(
+                        "Please join or create a group to start tracking your tasks.",
+                        maxLines: 3,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.height * 0.03,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const Divider(height: 20, color: Colors.transparent),
-              _getButton(
-                FontAwesomeIcons.userPlus,
-                'Create',
-                'Create a new group. Send the group ID to your team so they can join.',
-                    () {
-                  _input = '';
-                  showDialog(
-                      context: context,
-                      builder: (context) {
-                        return Form(
-                          key: _formKey,
-                          child: AlertDialog(
-                              title: const Text(
-                                  'Create New Group',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight
-                                          .bold)),
-                              contentPadding: const EdgeInsets
-                                  .only(
-                                  top: 20, left: 24, right: 24),
-                              content: TextFormField(
-                                maxLength: 20,
-                                decoration: const InputDecoration(
-                                    hintText: 'Group Name',
-                                    border: OutlineInputBorder(),
-                                    counterText: ''
-                                ),
-                                onChanged: (String? value) {
-                                  _input = value ?? '';
-                                },
-                                validator: (String? value) {
-                                  if (value == null ||
-                                      value.isEmpty) {
-                                    return 'Please enter a name';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              actions: [
-                                TextButton(
-                                    child: const Text('Cancel'),
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    }
-                                ),
-                                TextButton(
-                                    child: const Text('Create'),
-                                    onPressed: () async {
-                                      if (_formKey.currentState!
-                                          .validate()) {
-                                        Navigator.pop(context);
-                                        String famID =
-                                        await ds.addNewFamily(
-                                            _input);
-                                        await ds.setUserFamily(famID);
-                                        widget.onJoinOrCreate();
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.lightBlue,
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(32.0)),
+                      minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50),
+                    ),
+                    onPressed: () {
+                      _input = '';
+                      showDialog(
+                          context: context,
+                          builder: (context) {
+                            return Form(
+                              key: _formKey,
+                              child: AlertDialog(
+                                  title: const Text(
+                                      'Create New Group',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight
+                                              .bold)),
+                                  contentPadding: const EdgeInsets
+                                      .only(
+                                      top: 20, left: 24, right: 24),
+                                  content: TextFormField(
+                                    maxLength: 20,
+                                    decoration: const InputDecoration(
+                                        hintText: 'Group Name',
+                                        border: OutlineInputBorder(),
+                                        counterText: ''
+                                    ),
+                                    onChanged: (String? value) {
+                                      _input = value ?? '';
+                                    },
+                                    validator: (String? value) {
+                                      if (value == null ||
+                                          value.isEmpty) {
+                                        return 'Please enter a name';
                                       }
-                                    }
-                                ),
-                              ]
-                          ),
-                        );
-                      }
-                  );
-                },
-              ),
-              const Divider(
-                height: 25,
-                color: Colors.transparent,
-              ),
-              _getButton(
-                  FontAwesomeIcons.userGroup,
-                  'Join',
-                  'If someone already created a group, join it with their ID.',
-                      () {
-                    _input = '';
-                    showDialog(
-                        context: context,
-                        builder: (context) {
-                          return Form(
-                            key: _formKey,
-                            child: AlertDialog(
-                                title: const Text('Join Group',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight
-                                            .bold)),
-                                contentPadding: const EdgeInsets
-                                    .only(top: 20,
-                                    right: 24,
-                                    left: 24),
-                                content: TextFormField(
-                                  maxLength: 30,
-                                  decoration: const InputDecoration(
-                                      hintText: 'Group ID',
-                                      border: OutlineInputBorder(),
-                                      counterText: ''
+                                      return null;
+                                    },
                                   ),
-                                  onChanged: (String? value) {
-                                    _input = value ?? '';
-                                  },
-                                  validator: (String? value) {
-                                    return _foundFamily
-                                        ? null
-                                        : 'Invalid ID';
-                                  },
-                                ),
-                                actions: [
-                                  TextButton(
-                                      child: const Text(
-                                          'Cancel'),
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      }
-                                  ),
-                                  TextButton(
-                                      child: const Text('Join'),
-                                      onPressed: () async {
-                                        _foundFamily =
-                                        await ds.famExists(_input.isEmpty
-                                            ? '0'
-                                            : _input);
-                                        if (_formKey
-                                            .currentState!
-                                            .validate()) {
-                                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                                            Navigator.pop(context);
-                                          });
-                                          await ds.setUserFamily(_input);
-                                          widget.onJoinOrCreate();
+                                  actions: [
+                                    TextButton(
+                                        child: const Text('Cancel'),
+                                        onPressed: () {
+                                          Navigator.pop(context);
                                         }
-                                      }
+                                    ),
+                                    TextButton(
+                                        child: const Text('Create'),
+                                        onPressed: () async {
+                                          if (_formKey.currentState!
+                                              .validate()) {
+                                            Navigator.pop(context);
+                                            String famID =
+                                            await ds.addNewFamily(
+                                                _input);
+                                            await ds.setUserFamily(famID);
+                                            widget.onJoinOrCreate();
+                                          }
+                                        }
+                                    ),
+                                  ]
+                              ),
+                            );
+                          }
+                      );
+                    },
+                    child: const Text('Create', style: TextStyle(fontSize: 18),),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.indigo,
+                      elevation: 3,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(32.0)),
+                      minimumSize: Size(MediaQuery.of(context).size.width * 0.4, 50), //////// HERE
+                    ),
+                    onPressed: () {
+                      _input = '';
+                      showDialog(
+                          context: context,
+                          builder: (context) {
+                            return Form(
+                              key: _formKey,
+                              child: AlertDialog(
+                                  title: const Text('Join Group',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight
+                                              .bold)),
+                                  contentPadding: const EdgeInsets
+                                      .only(top: 20,
+                                      right: 24,
+                                      left: 24),
+                                  content: TextFormField(
+                                    maxLength: 30,
+                                    decoration: const InputDecoration(
+                                        hintText: 'Group ID',
+                                        border: OutlineInputBorder(),
+                                        counterText: ''
+                                    ),
+                                    onChanged: (String? value) {
+                                      _input = value ?? '';
+                                    },
+                                    validator: (String? value) {
+                                      return _foundFamily
+                                          ? null
+                                          : 'Invalid ID';
+                                    },
                                   ),
-                                ]
-                            ),
-                          );
-                        }
-                    );
-                  }
+                                  actions: [
+                                    TextButton(
+                                        child: const Text(
+                                            'Cancel'),
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        }
+                                    ),
+                                    TextButton(
+                                        child: const Text('Join'),
+                                        onPressed: () async {
+                                          _foundFamily =
+                                          await ds.famExists(_input.isEmpty
+                                              ? '0'
+                                              : _input);
+                                          if (_formKey
+                                              .currentState!
+                                              .validate()) {
+                                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                                              Navigator.pop(context);
+                                            });
+                                            await ds.setUserFamily(_input);
+                                            widget.onJoinOrCreate();
+                                          }
+                                        }
+                                    ),
+                                  ]
+                              ),
+                            );
+                          }
+                      );
+                    },
+                    child: const Text('Join', style: TextStyle(fontSize: 18),),
+                  )
+                ],
               )
             ],
           ),

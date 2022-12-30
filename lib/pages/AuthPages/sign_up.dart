@@ -44,7 +44,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 50, bottom: 10),
+            padding: const EdgeInsets.only(top: 80, bottom: 10),
             child: Image.asset( // Icon at the top
                 'assets/icon/icon_android.png',
                 fit: BoxFit.contain,
@@ -145,8 +145,8 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                 children: [
                   const Text("Already have an account? ", style: TextStyle(fontSize: 16)),
                   InkWell(
-                      child: const Text('Sign in', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      onTap: widget.swap
+                      onTap: widget.swap,
+                      child: const Text('Sign in', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
                   )
                 ]
             ),

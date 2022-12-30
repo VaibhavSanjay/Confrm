@@ -35,7 +35,7 @@ class LocationCallbackHandler {
     debugPrint('Running');
     if (location && !await BackgroundLocator.isRegisterLocationUpdate()) {
       debugPrint('Reregister background locator');
-      startLocator();
+      onStart();
     }
   }
 
@@ -90,6 +90,7 @@ class LocationCallbackHandler {
   static Future<LocationStart> onStart() async {
     debugPrint('Locator Starting.');
     if (await Notifications.requestNotifications()) {
+      Future.delayed(const Duration(seconds: 1));
       LocationStart status = await checkLocationPermission();
       if (status == LocationStart.success) {
         startLocator();
@@ -103,6 +104,7 @@ class LocationCallbackHandler {
   static Future<LocationStart> checkLocationPermission() async {
     debugPrint('Requesting Location Permission.');
     if (await Permission.locationWhenInUse.request().isGranted) {
+      debugPrint('here');
       return await Permission.locationAlways
           .request()
           .isGranted ? LocationStart.success : LocationStart.locationAlwaysFail;

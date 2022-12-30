@@ -35,14 +35,10 @@ void main() async {
       // Channel groups are only visual and are not required
       channelGroups: [
         NotificationChannelGroup(
-            channelGroupkey: 'basic_channel_group',
+            channelGroupKey: 'basic_channel_group',
             channelGroupName: 'Basic group')
       ],
       debug: true
-  );
-  AwesomeNotifications().actionStream.listen((ReceivedNotification receivedNotification){
-    debugPrint('Notification!');
-      }
   );
   runApp(const FamilyTasks());
 }
@@ -78,7 +74,7 @@ class _TopPageState extends State<TopPage> {
 
   Future<bool> _checkExists() async {
     // Delay since Firebase needs time to set family ID for user on sign up
-    return Future<bool>.delayed(const Duration(milliseconds: 500), () async {
+    return Future<bool>.delayed(const Duration(milliseconds: 2000), () async {
       user = await ds.getUser();
       return await ds.famExists(user.famID);
     });
@@ -95,27 +91,22 @@ class _TopPageState extends State<TopPage> {
             return FutureBuilder<bool>(
               future: _checkExists(),
               builder: (context, snapshot) {
-                switch (snapshot.connectionState) {
-                  case ConnectionState.none:
-                    return const Text('none');
-                  case ConnectionState.waiting:
-                    return const Scaffold(
+                if (snapshot.hasData) {
+                  if (snapshot.data!) {
+                    return MyHomePage(user: user, onLeave: () => setState((){}), signingIn: signingIn);
+                  } else {
+                    return JoinCreateGroupPage(user: user, onJoinOrCreate: () => setState((){}));
+                  }
+                } else {
+                  return const Scaffold(
                       body: Center(
-                        child: SizedBox(
-                          width: 60,
-                          height: 60,
-                          child: CircularProgressIndicator(),
-                        )
+                          child: SizedBox(
+                            width: 60,
+                            height: 60,
+                            child: CircularProgressIndicator(),
+                          )
                       )
-                    );
-                  case ConnectionState.active:
-                    return const Text('');
-                  case ConnectionState.done:
-                    if (snapshot.data!) {
-                      return MyHomePage(user: user, onLeave: () => setState((){}), signingIn: signingIn);
-                    } else {
-                      return JoinCreateGroupPage(user: user, onJoinOrCreate: () => setState((){}));
-                    }
+                  );
                 }
               }
             );
@@ -364,7 +355,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                               locationEnabled: snapshot.data!,
                                               onActivate: () async {
                                                 Navigator.pop(context);
-                                                switch (await LocationCallbackHandler.onStart()) {
+                                                LocationStart res = await LocationCallbackHandler.onStart();
+                                                switch (res) {
                                                   case LocationStart.notificationFail:
                                                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must enable notifications')));
                                                     break;
@@ -377,6 +369,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                                   case LocationStart.success:
                                                     ds.updateUserLocation(true);
                                                     setState(() {});
+                                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Activated')));
                                                 }
                                               },
                                               onDisable: () async {

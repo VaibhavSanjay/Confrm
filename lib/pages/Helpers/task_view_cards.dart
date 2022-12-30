@@ -443,6 +443,9 @@ class _EditTaskDataState extends State<EditTaskData> {
                                 padding: const EdgeInsets.only(top: 20, left: 10, right: 10),
                                 child: InkWell(
                                   onTap: () async {
+                                    //final result = await FirebaseFunctions.instance.httpsCallable('autocomplete').call({'text': 'plai'});
+                                    //print(result.data);
+
                                     String sessionToken = const Uuid().v4();
                                     Suggestion? result = await showSearch(
                                         context: context,
@@ -456,6 +459,7 @@ class _EditTaskDataState extends State<EditTaskData> {
                                       _newTask.coords = loc;
                                       setState(() {});
                                     }
+
                                   },
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,

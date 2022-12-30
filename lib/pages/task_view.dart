@@ -109,7 +109,6 @@ class TaskViewPageState extends State<TaskViewPage> {
         stream: stream,
         builder: (context, AsyncSnapshot<FamilyTaskData> snapshot) {
           if (snapshot.hasError) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to load content'),));
             return const Center(
                 child: SizedBox(
                   width: 60,
@@ -217,9 +216,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                             child: const Text('Your Tasks', style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold))
                         ),
                         SpeedDial(
-                          animationSpeed: 225,
                           switchLabelPosition: true,
-                          child: const Icon(FontAwesomeIcons.caretLeft, color: Colors.white),
                           spaceBetweenChildren: 15,
                           activeChild: const Icon(FontAwesomeIcons.caretRight, color: Colors.white),
                           overlayOpacity: 0,
@@ -268,6 +265,7 @@ class TaskViewPageState extends State<TaskViewPage> {
                                 onTap: () => setState(() {_sorting = !_sorting;})
                             )
                           ],
+                          child: const Icon(FontAwesomeIcons.caretLeft, color: Colors.white),
                         )
                       ],
                     ),

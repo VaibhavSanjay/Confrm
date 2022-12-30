@@ -1,5 +1,4 @@
 import 'package:family_tasks/Services/authentication.dart';
-import 'package:family_tasks/Services/location_callback.dart';
 import 'package:family_tasks/pages/Helpers/account_option_widgets.dart';
 import 'package:family_tasks/pages/Helpers/user_data_helper.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +23,6 @@ class AccountPage extends StatefulWidget {
 }
 
 class AccountPageState extends State<AccountPage> {
-  bool _locationEnabled = false;
   late DatabaseService ds = DatabaseService(widget.famID);
   AuthenticationService auth = AuthenticationService();
   final _formKey = GlobalKey<FormState>();
@@ -146,6 +144,9 @@ class AccountPageState extends State<AccountPage> {
                       children: [
                         Card(
                           elevation: 5,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -207,23 +208,30 @@ class AccountPageState extends State<AccountPage> {
                                     Positioned(
                                       top: 5,
                                       right: 5,
-                                      child: Hero(
-                                        tag: 'group_id',
-                                        child: CircleAvatar(
-                                          backgroundColor: Colors.cyanAccent,
-                                          child: Material(
-                                            color: Colors.transparent,
-                                            child: IconButton(
-                                              color: Colors.black,
-                                              icon: const Icon(Icons.people),
-                                              onPressed: () {
-                                                Navigator.of(context).push(HeroDialogRoute(builder: (context) {
-                                                  return FamilyIDPopUp(famID: widget.famID);
-                                                }));
-                                              },
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Hero(
+                                            tag: 'group_id',
+                                            child: CircleAvatar(
+                                              backgroundColor: Colors.cyanAccent,
+                                              child: Material(
+                                                color: Colors.transparent,
+                                                child: IconButton(
+                                                  color: Colors.black,
+                                                  icon: const Icon(Icons.people),
+                                                  onPressed: () {
+                                                    Navigator.of(context).push(HeroDialogRoute(builder: (context) {
+                                                      return FamilyIDPopUp(famID: widget.famID);
+                                                    }));
+                                                  },
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                          const Divider(color: Colors.transparent, height: 3,),
+                                          const Text('Group ID', style: TextStyle(color: Colors.white, fontSize: 12))
+                                        ],
                                       )
                                     ),
                                     Positioned(
@@ -260,9 +268,6 @@ class AccountPageState extends State<AccountPage> {
                                 ),
                               ),
                             ],
-                          ),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20))
                           )
                         ),
                         const Divider(height: 15, color: Colors.transparent),

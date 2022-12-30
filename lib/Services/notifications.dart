@@ -19,7 +19,7 @@ class Notifications {
         // Channel groups are only visual and are not required
         channelGroups: [
           NotificationChannelGroup(
-              channelGroupkey: 'basic_channel_group',
+              channelGroupKey: 'basic_channel_group',
               channelGroupName: 'Basic group')
         ],
         debug: true
@@ -38,12 +38,11 @@ class Notifications {
   }
 
   static Future<bool> requestNotifications() async {
-    AwesomeNotifications().isNotificationAllowed().then((isAllowed) {
-      if (!isAllowed) {
-        AwesomeNotifications().requestPermissionToSendNotifications();
-      }
-    });
-    return AwesomeNotifications().isNotificationAllowed();
+    var notifs = AwesomeNotifications();
+    if (!(await notifs.isNotificationAllowed())) {
+      await notifs.requestPermissionToSendNotifications();
+    }
+    return notifs.isNotificationAllowed();
   }
 
 }
