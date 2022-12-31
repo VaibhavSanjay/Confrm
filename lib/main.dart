@@ -28,7 +28,8 @@ void main() async {
             channelGroupKey: 'basic_channel_group',
             channelKey: 'basic_channel',
             channelName: 'Basic notifications',
-            channelDescription: 'Notification channel for basic tests',
+            channelDescription: 'Notification channel',
+            importance: NotificationImportance.Max,
             defaultColor: Colors.blue,
             ledColor: Colors.white)
       ],
@@ -356,6 +357,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                               onActivate: () async {
                                                 Navigator.pop(context);
                                                 LocationStart res = await LocationCallbackHandler.onStart();
+
+                                                if (!mounted) return;
                                                 switch (res) {
                                                   case LocationStart.notificationFail:
                                                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You must enable notifications')));

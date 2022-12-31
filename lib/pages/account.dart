@@ -4,7 +4,6 @@ import 'package:family_tasks/pages/Helpers/user_data_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import '../Services/authentication.dart';
 import '../Services/database.dart';
 import '../models/family_task_data.dart';
 import '../models/user_data.dart';
@@ -60,11 +59,11 @@ class AccountPageState extends State<AccountPage> {
                   color: noteColor,
                   shape: const CircleBorder(),
                   child: Align(
+                    alignment: Alignment.center,
                     child: Padding(
                       padding: const EdgeInsets.all(4),
                       child: Text(noteText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ),
-                    alignment: Alignment.center,)
+                    ),)
               ),
             )
           ],

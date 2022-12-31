@@ -44,20 +44,20 @@ class _SignUpWidgetState extends State<SignUpWidget> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 80, bottom: 10),
+            padding: EdgeInsets.only(top: 0.05 * MediaQuery.of(context).size.height, bottom: 10),
             child: Image.asset( // Icon at the top
                 'assets/icon/icon_android.png',
                 fit: BoxFit.contain,
-                height: 150
+                height: 0.2 * MediaQuery.of(context).size.height
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(left: 16, top: 8, bottom: 8),
-            child: Align(alignment: Alignment.centerLeft, child: Text('New Account', style: TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.bold))),
+          Padding(
+            padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
+            child: Align(alignment: Alignment.centerLeft, child: Text('New Account', style: TextStyle(fontSize: 0.05 * MediaQuery.of(context).size.height, color: Colors.white, fontWeight: FontWeight.bold))),
           ),
-          const Padding(
-            padding: EdgeInsets.only(left: 16, bottom: 30),
-            child: Align(alignment: Alignment.centerLeft, child: Text('Enter your email address and password.', style: TextStyle(fontSize: 17, color: Colors.white))),
+          Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 20),
+            child: Align(alignment: Alignment.centerLeft, child: Text('Create an account to get started.', style: TextStyle(fontSize: 0.03 * MediaQuery.of(context).size.height, color: Colors.white))),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
@@ -107,12 +107,14 @@ class _SignUpWidgetState extends State<SignUpWidget> {
             padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16),
             child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.blue,
+                  backgroundColor: Colors.blue,
                   minimumSize: const Size.fromHeight(50), // NEW
                 ),
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     SignResults res = await auth.signUp(nameController.text.trim(), emailController.text.trim(), passwordController.text.trim());
+
+                    if (!mounted) return;
                     switch (res) {
                       case SignResults.emailInUse:
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('An account with this email already exists')));
@@ -139,14 +141,14 @@ class _SignUpWidgetState extends State<SignUpWidget> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: 5),
             child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Already have an account? ", style: TextStyle(fontSize: 16)),
+                  Text("Already have an account? ", style: TextStyle(fontSize: 0.025 * MediaQuery.of(context).size.height)),
                   InkWell(
                       onTap: widget.swap,
-                      child: const Text('Sign in', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
+                      child: Text('Sign in', style: TextStyle(fontSize: 0.025 * MediaQuery.of(context).size.height, fontWeight: FontWeight.bold))
                   )
                 ]
             ),

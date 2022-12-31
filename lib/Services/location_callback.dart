@@ -56,6 +56,8 @@ class LocationCallbackHandler {
     FamilyTaskData ftd = await ds.getSingleSnapshot();
     List<TaskData> taskData = ftd.tasks;
 
+    print(data.latitude);
+
     for (int i = 0; i < taskData.length; i++) {
       if (taskData[i].coords.isNotEmpty) {
         double meter = distance(
@@ -74,7 +76,8 @@ class LocationCallbackHandler {
                   id: 10,
                   channelKey: 'basic_channel',
                   title: 'Reminder to complete "${taskData[i].name}"',
-                  body: 'You have arrived at ${taskData[i].location}, so remember to finish your task!'
+                  body: 'You have arrived at ${taskData[i].location}, so remember to finish your task!',
+                  wakeUpScreen: true
               )
           );
 
@@ -93,7 +96,7 @@ class LocationCallbackHandler {
       Future.delayed(const Duration(seconds: 1));
       LocationStart status = await checkLocationPermission();
       if (status == LocationStart.success) {
-        startLocator();
+        await startLocator();
       }
       return status;
     } else {
@@ -104,7 +107,6 @@ class LocationCallbackHandler {
   static Future<LocationStart> checkLocationPermission() async {
     debugPrint('Requesting Location Permission.');
     if (await Permission.locationWhenInUse.request().isGranted) {
-      debugPrint('here');
       return await Permission.locationAlways
           .request()
           .isGranted ? LocationStart.success : LocationStart.locationAlwaysFail;
@@ -113,10 +115,9 @@ class LocationCallbackHandler {
     }
   }
 
-  static Future<void> startLocator() async {
-    return await BackgroundLocator.registerLocationUpdate(callback,
+  static startLocator() async {
+    BackgroundLocator.registerLocationUpdate(callback,
         initCallback: initCallback,
-        initDataCallback: {'data': 1},
         disposeCallback: disposeCallback,
         iosSettings: const IOSSettings(
             accuracy: LocationAccuracy.NAVIGATION, distanceFilter: filterDistance),

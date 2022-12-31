@@ -501,8 +501,8 @@ class _EditTaskDataState extends State<EditTaskData> {
                                         Card(
                                           elevation: 5,
                                           shape: const CircleBorder(),
-                                          child: Container(width: 40, height: 40, color: Colors.transparent),
                                           color: _newTask.color,
+                                          child: Container(width: 40, height: 40, color: Colors.transparent),
                                         ),
                                         availableColorsStrings[availableColors.indexOf(_newTask.color)],
                                         ClipRRect(

@@ -1,8 +1,6 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:family_tasks/Services/authentication.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_circular_text/circular_text/model.dart';
-import 'package:flutter_circular_text/circular_text/widget.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'Services/database.dart';

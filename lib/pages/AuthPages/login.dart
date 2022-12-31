@@ -41,7 +41,7 @@ class _LoginWidgetState extends State<LoginWidget> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.only(top: 60, bottom: 10),
+            padding: EdgeInsets.only(top: 0.05 * MediaQuery.of(context).size.height, bottom: 10),
             child: Image.asset( // Icon at the top
               'assets/icon/icon_android.png',
               fit: BoxFit.contain,
@@ -50,7 +50,7 @@ class _LoginWidgetState extends State<LoginWidget> {
           ),
           Padding(
             padding: const EdgeInsets.only(left: 16, top: 8, bottom: 8),
-            child: Align(alignment: Alignment.centerLeft, child: Text('Welcome', style: TextStyle(fontSize: 0.08 * MediaQuery.of(context).size.height, color: Colors.white, fontWeight: FontWeight.bold))),
+            child: Align(alignment: Alignment.centerLeft, child: Text('Welcome', style: TextStyle(fontSize: 0.05 * MediaQuery.of(context).size.height, color: Colors.white, fontWeight: FontWeight.bold))),
           ),
           Padding(
             padding: const EdgeInsets.only(left: 16, bottom: 20),
@@ -88,6 +88,8 @@ class _LoginWidgetState extends State<LoginWidget> {
                 ),
                 onPressed: () async {
                   SignResults res = await auth.signIn(emailController.text.trim(), passwordController.text.trim());
+
+                  if (!mounted) return;
                   switch (res) {
                     case SignResults.noUser:
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User does not exist')));
@@ -113,14 +115,14 @@ class _LoginWidgetState extends State<LoginWidget> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: 5),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("Don't have an account? ", style: TextStyle(fontSize: 16)),
+                Text("Don't have an account? ", style: TextStyle(fontSize: 0.025 * MediaQuery.of(context).size.height)),
                 InkWell(
                   onTap: widget.swap,
-                  child: const Text('Sign up', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))
+                  child: Text('Sign up', style: TextStyle(fontSize: 0.025 * MediaQuery.of(context).size.height, fontWeight: FontWeight.bold))
                 )
               ]
             ),

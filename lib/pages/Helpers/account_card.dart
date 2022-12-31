@@ -491,11 +491,11 @@ class LateStatusCard extends StatelessWidget {
                               color: Colors.amber,
                               shape: const CircleBorder(),
                               child: Align(
+                                alignment: Alignment.center,
                                 child: Padding(
                                   padding: const EdgeInsets.all(8),
                                   child: Text('${tasks.length}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 25)),
-                                ),
-                                alignment: Alignment.center,)
+                                ),)
                           ),
                         )
                       ],
@@ -644,12 +644,12 @@ class LocationInfo extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
-                          child: const Text('Cancel'),
-                          onPressed: onCancel
+                          onPressed: onCancel,
+                          child: const Text('Cancel')
                       ),
                       TextButton(
-                          child: Text(confirmText),
-                          onPressed: onConfirm
+                          onPressed: onConfirm,
+                          child: Text(confirmText)
                       )
                     ],
                   )

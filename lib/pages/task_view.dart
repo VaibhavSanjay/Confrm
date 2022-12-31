@@ -150,7 +150,9 @@ class TaskViewPageState extends State<TaskViewPage> {
                         ds.updateTaskData(_taskData);
                       }
 
-                      Navigator.of(context).pop();
+                      if (mounted) {
+                        Navigator.of(context).pop();
+                      }
                       setState((){});
                     },
                   ));
@@ -197,7 +199,9 @@ class TaskViewPageState extends State<TaskViewPage> {
                       ds.updateTaskData(_taskData);
                     }
 
-                    Navigator.of(context).pop();
+                    if (mounted) {
+                      Navigator.of(context).pop();
+                    }
                     setState((){});
                   },
                 ));
@@ -272,11 +276,6 @@ class TaskViewPageState extends State<TaskViewPage> {
                   ),
                   crossAxisAlignment: CrossAxisAlignment.center,
                   padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                  children: tasks.isNotEmpty ? tasks : [const Padding(
-                    key: ValueKey(0),
-                    padding: EdgeInsets.all(10),
-                    child: Text('You have no assigned tasks.', style: TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.bold))
-                  )],
                   onReorder: (int oldIndex, int newIndex) {
                     setState(() {
                       // Remove task and add it back in appropriate position
@@ -286,6 +285,11 @@ class TaskViewPageState extends State<TaskViewPage> {
                     });
                   },
                   needsLongPressDraggable: true,
+                  children: tasks.isNotEmpty ? tasks : [const Padding(
+                    key: ValueKey(0),
+                    padding: EdgeInsets.all(10),
+                    child: Text('You have no tasks. Tap the arrow on the top right to add one.', style: TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.bold))
+                  )],
                 );
               case ConnectionState.done:
                 return const Center(
