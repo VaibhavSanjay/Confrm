@@ -47,6 +47,7 @@ class LocationCallbackHandler {
     debugPrint('dispose locator');
   }
 
+  @pragma('vm:entry-point')
   static Future<void> callback(LocationDto data) async {
     WidgetsFlutterBinding.ensureInitialized();
     await Firebase.initializeApp();
