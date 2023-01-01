@@ -11,6 +11,7 @@ import 'package:family_tasks/pages/task_view.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'Services/authentication.dart';
 import 'Services/location_callback.dart';
@@ -393,6 +394,35 @@ class _MyHomePageState extends State<MyHomePage> {
                   }
                 },
               )
+            ),
+            const Padding(
+              padding: EdgeInsets.all(10.0),
+              child: Text('Privacy', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                color: Colors.grey,
+                child: Column(
+                  children: [
+                    ListTile(
+                        leading: const Icon(FontAwesomeIcons.lock),
+                        title: const Text('Privacy Policy', style: TextStyle(fontSize: 14)),
+                        onTap: () async {
+                          Uri uri = Uri.parse("https://htmlpreview.github.io/?https://github.com/VaibhavSanjay/Confrm/blob/main/privacy.html");
+                          if (await canLaunchUrl(uri)){
+                            await launchUrl(uri);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to open link.'),));
+                          }
+                        }
+                    ),
+                  ],
+                ),
+              ),
             ),
           ]
         )

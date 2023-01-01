@@ -47,4 +47,5 @@ app.*.map.json
 
 /android/app/google-services.json
 /ios/GoogleService-Info.plist
+upload-keystore.jks
 *.env

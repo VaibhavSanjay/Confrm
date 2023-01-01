@@ -2,6 +2,7 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:family_tasks/Services/authentication.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'Services/database.dart';
 import 'models/user_data.dart';
@@ -97,6 +98,73 @@ class _JoinCreateGroupPageState extends State<JoinCreateGroupPage> {
                                   Navigator.pop(context);
                                   auth.signOut();
                                 });
+                              }
+                          ),
+                          const Divider(thickness: 1),
+                          ListTile(
+                              leading: const Icon(FontAwesomeIcons.xmark),
+                              title: const Text('Delete Account', style: TextStyle(fontSize: 14)),
+                              onTap: () {
+                                showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: const Text('Delete Account'),
+                                        content: const Text('This will delete all information from your account and is irreversable. Are you sure?'),
+                                        actions: [
+                                          TextButton(
+                                              child: const Text('Cancel'),
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                              }
+                                          ),
+                                          TextButton(
+                                              child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),),
+                                              onPressed: () async {
+                                                if (!await ds.deleteUser()) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(content: Text(
+                                                          'Last sign in was too long ago. Please sign out and sign in again.'
+                                                      ),));
+                                                  Navigator.of(context).pop();
+                                                } else {
+                                                  Navigator.of(context).pop();
+                                                }
+                                              }
+                                          ),
+                                        ],
+                                      );
+                                    }
+                                );
+                              }
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(10.0),
+                    child: Text('Privacy', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                      color: Colors.grey,
+                      child: Column(
+                        children: [
+                          ListTile(
+                              leading: const Icon(FontAwesomeIcons.lock),
+                              title: const Text('Privacy Policy', style: TextStyle(fontSize: 14)),
+                              onTap: () async {
+                                Uri uri = Uri.parse("https://htmlpreview.github.io/?https://github.com/VaibhavSanjay/Confrm/blob/main/privacy.html");
+                                if (await canLaunchUrl(uri)){
+                                  await launchUrl(uri);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Unable to open link.'),));
+                                }
                               }
                           ),
                         ],

@@ -178,4 +178,14 @@ class DatabaseService {
     });
     await userCollection.doc(auth.id!).update({'group': '0'});
   }
+
+  Future<bool> deleteUser() async {
+    await userCollection.doc(auth.id!).delete();
+    if (!await auth.deleteUser()) {
+      newUser(auth.id!);
+      return false;
+    } else {
+      return true;
+    }
+  }
 }

@@ -67,6 +67,15 @@ class AuthenticationService {
     return SignResults.success;
   }
 
+  Future<bool> deleteUser() async {
+    try {
+      await FirebaseAuth.instance.currentUser!.delete();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      return false;
+    }
+  }
+
   String? get email {
     return FirebaseAuth.instance.currentUser?.providerData[0].email;
   }
